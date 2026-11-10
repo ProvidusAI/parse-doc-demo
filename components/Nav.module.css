@@ -50,8 +50,11 @@
   .nav {
     padding: 0 16px;
   }
+  .nav > a:global(.btn) {
+    padding: 0 12px;
+  }
   .tabs a:not(.on),
-  .nav > a.btn:not(:global(.btn-dark)) {
+  .nav > a:global(.btn):not(:global(.btn-dark)) {
     display: none;
   }
 }

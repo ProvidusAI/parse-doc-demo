@@ -84,6 +84,7 @@ a {
   font: 500 12px var(--mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
