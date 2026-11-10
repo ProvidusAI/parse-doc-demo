@@ -7,7 +7,7 @@
   "sourcePath": "financial/receipts/004_receipt_arabic-english.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "McDonald's Egypt tax invoice; company tax reg. only"
  },
  {
@@ -18,7 +18,7 @@
   "sourcePath": "financial/invoices/KSA invoice.png",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Demo VAT invoice (demo company)"
  },
  {
@@ -29,7 +29,7 @@
   "sourcePath": "financial/utility_statements/41.png",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "NWC water bill; customer name/account/address blacked out"
  },
  {
@@ -40,7 +40,7 @@
   "sourcePath": "financial/financial_reports/65.pdf",
   "page": 14,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Almarai interim report notes page; tables, no signatures"
  },
  {
@@ -51,7 +51,7 @@
   "sourcePath": "government/official_notices/92.pdf",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Dubai Customs notice, parallel AR/EN columns"
  },
  {
@@ -62,7 +62,7 @@
   "sourcePath": "government/regulations/N15042021.pdf",
   "page": 14,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "EXPRO guidance: bid-evaluation weight tables"
  },
  {
@@ -73,7 +73,7 @@
   "sourcePath": "government/tender_documents/bid_attachment.pdf",
   "page": 20,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "TAQEEM tender booklet: quantities/price table"
  },
  {
@@ -84,7 +84,7 @@
   "sourcePath": "government/applications_and_forms/2.pdf",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Blank MoH tender requirements form; fields empty"
  },
  {
@@ -95,8 +95,8 @@
   "sourcePath": "travel_transport/boarding_passes/16.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
-  "note": "Saudia boarding pass; name/PNR/ticket/barcode already redacted"
+  "status": "approved",
+  "note": "Saudia boarding pass; name/PNR/ticket/barcode already redacted; DocAI layout found only the logo (2 runs) - kept by user as an honest result"
  },
  {
   "category": "travel_transport",
@@ -106,7 +106,7 @@
   "sourcePath": "travel_transport/transport_tickets/18.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "ONCF train ticket; ID fields redacted"
  },
  {
@@ -117,7 +117,7 @@
   "sourcePath": "travel_transport/travel_itineraries/images (6).jpg",
   "page": 1,
   "lang": "en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Haramain train booking summary; no passenger data"
  },
  {
@@ -128,7 +128,7 @@
   "sourcePath": "media/newspapers/96.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Historic Al-Qibla front page"
  },
  {
@@ -139,7 +139,7 @@
   "sourcePath": "media/magazines/11488.pdf",
   "page": 23,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Al-Adl journal article; published author byline only"
  },
  {
@@ -150,7 +150,7 @@
   "sourcePath": "media/advertisements/525468792_1159703522842383_8411012144409962264_n.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "ZATCA e-invoicing ad with mock invoice"
  },
  {
@@ -161,7 +161,7 @@
   "sourcePath": "research/research_papers/54.pdf",
   "page": 21,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "EMHJ page: Arabic abstract + English references"
  },
  {
@@ -172,7 +172,7 @@
   "sourcePath": "statistical/statistical_reports/57.pdf",
   "page": 39,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "PCBS bilingual births table"
  },
  {
@@ -183,7 +183,7 @@
   "sourcePath": "legal/court_documents/100.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "FLAG: historical manuscript with historical seals/signatures"
  },
  {
@@ -194,7 +194,7 @@
   "sourcePath": "business/proposals/88.pdf",
   "page": 20,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Iraqi tender template: bilingual clause table"
  },
  {
@@ -205,7 +205,7 @@
   "sourcePath": "administrative/letters/99.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "FLAG: historical handwritten letter with historical signatory"
  },
  {
@@ -216,7 +216,7 @@
   "sourcePath": "educational/course_materials/qr3page17.pdf",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Arabic textbook page with illustrations"
  },
  {
@@ -227,7 +227,7 @@
   "sourcePath": "other/images.jpg",
   "page": 1,
   "lang": "ar-en",
-  "status": "candidate",
+  "status": "approved",
   "note": "Old handwritten Arabic manuscript leaf"
  }
 ]
