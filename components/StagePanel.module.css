@@ -184,8 +184,7 @@
   border: 1px solid var(--border);
   padding: 11px 12px;
   margin-bottom: 8px;
-  opacity: 0;
-  animation: fade-in 0.4s ease forwards;
+  animation: fade-in 0.4s ease both;
 }
 .hover {
   cursor: pointer;
@@ -319,8 +318,7 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  opacity: 0;
-  animation: fade-in 0.4s ease forwards;
+  animation: fade-in 0.4s ease both;
 }
 .f > :global(.mono) {
   font-size: 13px;
@@ -422,4 +420,15 @@
   .fields {
     grid-template-columns: 1fr;
   }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes aurora-drift {
+  0%, 100% { transform: translate(0) scale(1); }
+  25% { transform: translate(5%, 3%) scale(1.05); }
+  50% { transform: translate(-3%, 5%) scale(0.95); }
+  75% { transform: translate(3%, -3%) scale(1.02); }
 }

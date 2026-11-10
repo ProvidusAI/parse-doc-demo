@@ -87,7 +87,7 @@ class GenerateTest(unittest.TestCase):
     def test_skip_existing_and_no_partial_write(self):
         done = self.showcase / "financial" / "invoices"
         done.mkdir(parents=True)
-        (done / "result.json").write_text("{}")
+        (done / "result.json").write_text(json.dumps({"source": {"path": "financial/invoices/a.png", "page": 1}}))
         client = FakeClient()
         self.assertIsNone(self.run_entry(entry(), client))
         self.assertEqual(client.calls, [])
@@ -97,6 +97,28 @@ class GenerateTest(unittest.TestCase):
         out = self.showcase / "financial" / "receipts"
         self.assertFalse((out / "result.json").exists())
         self.assertFalse((out / "result.json.tmp").exists())
+
+    def test_swapped_entry_is_rerun_not_skipped(self):
+        self.run_entry(entry(), FakeClient())
+        swapped = {**entry(), "sourcePath": "financial/receipts/a.png"}  # new candidate, same sub-category
+        client = FakeClient()
+        self.assertIsNotNone(self.run_entry(swapped, client))
+        self.assertIn("upload", client.calls)
+        result = json.loads((self.showcase / "financial" / "invoices" / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual(result["source"]["path"], "financial/receipts/a.png")
+
+    def test_manifest_skips_output_from_another_source(self):
+        self.run_entry(entry(), FakeClient())
+        swapped = {**entry(status="approved"), "sourcePath": "financial/receipts/a.png"}
+        self.assertEqual(generate.build_manifest([swapped], self.showcase)["categories"], [])
+
+    def test_write_wall_removes_stale_thumbnails(self):
+        wall = self.showcase / "wall"
+        wall.mkdir(parents=True)
+        for i in range(3):
+            (wall / f"w{i:03d}.jpg").write_bytes(b"old")
+        generate.write_wall(["financial/invoices/a.png"], self.corpus, self.showcase)
+        self.assertEqual(sorted(p.name for p in wall.glob("*.jpg")), ["w000.jpg"])
 
     def test_split_failure_keeps_entry(self):
         self.run_entry(entry(), FakeClient(fail={"/v1/split/runs"}))

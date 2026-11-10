@@ -36,6 +36,18 @@ def entry_id(e) -> str:
     return f"{e['category']}/{e['subCategory']}"
 
 
+def is_done(entry, showcase: Path) -> bool:
+    """Output exists AND came from this entry's source page (a swapped page must not reuse it)."""
+    f = showcase / entry_id(entry) / "result.json"
+    if not f.exists():
+        return False
+    try:
+        src = json.loads(f.read_text(encoding="utf-8")).get("source", {})
+    except ValueError:
+        return False
+    return src.get("path") == entry["sourcePath"] and src.get("page") == entry["page"]
+
+
 def _try(label, fn, *args):
     try:
         return fn(*args)
@@ -48,7 +60,7 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
     """Run one sample end to end. Returns the result path, or None when skipped."""
     rid = entry_id(entry)
     out = showcase / rid
-    if (out / "result.json").exists() and not force:
+    if is_done(entry, showcase) and not force:
         return None
     src = corpus / entry["sourcePath"]
     upload = cut_page(src, entry["page"], work / "upload" / rid)
@@ -97,7 +109,7 @@ def build_manifest(samples, showcase: Path) -> dict:
     cats = {}
     for e in samples:
         rid = entry_id(e)
-        if e["status"] != "approved" or not (showcase / rid / "result.json").exists():
+        if e["status"] != "approved" or not is_done(e, showcase):
             continue
         cat = cats.setdefault(e["category"], {"key": e["category"], "label": e["categoryLabel"], "pages": []})
         cat["pages"].append({"id": rid, "subCategoryLabel": e["subCategoryLabel"],
@@ -109,6 +121,8 @@ def build_manifest(samples, showcase: Path) -> dict:
 
 
 def write_wall(files, corpus: Path, showcase: Path):
+    for old in (showcase / "wall").glob("w*.jpg"):  # a file dropped from wall.json must leave the site
+        old.unlink()
     for i, rel in enumerate(files):
         render_wall_thumb(corpus / rel, showcase / "wall" / f"w{i:03d}.jpg")
 

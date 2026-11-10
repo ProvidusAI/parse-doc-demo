@@ -91,8 +91,7 @@
   gap: 12px;
   padding: 9px 0;
   border-bottom: 1px solid var(--border);
-  opacity: 0;
-  animation: fade-in 0.5s ease forwards;
+  animation: fade-in 0.5s ease both;
 }
 .pipe li:first-child {
   opacity: 1;
@@ -181,4 +180,13 @@
   .scroll {
     display: none;
   }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+  50% { transform: none; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
 }

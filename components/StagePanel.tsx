@@ -23,6 +23,9 @@ export interface PageViewState {
 
 interface Props {
   result: ShowcaseResult;
+  /** owned by the Inspector so it survives moving between pages */
+  lang: UiLang;
+  onLang(lang: UiLang): void;
   onView(view: PageViewState): void;
   onHighlight(key: string | null): void;
 }
@@ -70,9 +73,8 @@ function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
   return { scanning: false, boxes: [] };
 }
 
-export default function StagePanel({ result, onView, onHighlight }: Props) {
+export default function StagePanel({ result, lang, onLang, onView, onHighlight }: Props) {
   const [step, setStep] = useState(0);
-  const [lang, setLang] = useState<UiLang>("en");
   const [shownId, setShownId] = useState(result.id);
   const stepsRef = useRef<HTMLDivElement>(null);
 
@@ -103,10 +105,10 @@ export default function StagePanel({ result, onView, onHighlight }: Props) {
       <div className={styles.aur} aria-hidden="true" />
       <header className={styles.ph}>
         <div className={styles.lang} role="group" aria-label={t(lang, "language")}>
-          <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
+          <button type="button" aria-pressed={lang === "en"} onClick={() => onLang("en")}>
             EN
           </button>
-          <button type="button" className="ar" lang="ar" aria-pressed={lang === "ar"} onClick={() => setLang("ar")}>
+          <button type="button" className="ar" lang="ar" aria-pressed={lang === "ar"} onClick={() => onLang("ar")}>
             العربية
           </button>
         </div>

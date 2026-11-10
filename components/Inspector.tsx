@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { t } from "@/lib/i18n";
+import { t, type UiLang } from "@/lib/i18n";
 import { nextIndex } from "@/lib/showcase";
 import type { PageSummary, ShowcaseResult } from "@/lib/types";
 import styles from "./Inspector.module.css";
@@ -21,6 +21,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   const [boxes, setBoxes] = useState<PageBox[]>([]);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [lang, setLang] = useState<UiLang>("en");
   const closeRef = useRef<HTMLButtonElement>(null);
   const summary = pages[index];
   const n = pages.length;
@@ -104,6 +105,8 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
           {current && (
             <StagePanel
               result={current}
+              lang={lang}
+              onLang={setLang}
               onView={(v) => {
                 setBoxes(v.boxes);
                 setScanning(v.scanning);

@@ -86,10 +86,10 @@ def build_result(entry, *, file_meta, job, segments, page_image, rules, split, s
         "category": entry["category"], "categoryLabel": entry["categoryLabel"],
         "subCategory": entry["subCategory"], "subCategoryLabel": entry["subCategoryLabel"],
         "lang": entry["lang"],
-        "source": {"fileName": entry["sourcePath"].split("/")[-1], "page": entry["page"]},
+        "source": {"fileName": entry["sourcePath"].split("/")[-1], "path": entry["sourcePath"], "page": entry["page"]},
         "page": {"image": f"/showcase/{rid}/page.jpg", "thumb": f"/showcase/{rid}/thumb.jpg",
                  "width": width, "height": height},
-        "upload": {**file_meta, "pageCount": result.get("page_count") or 1, "backend": usage.get("backend"),
+        "upload": {**file_meta, "pageCount": result.get("page_count"), "backend": usage.get("backend"),
                    "ocrModel": OCR_MODELS[entry["lang"]], "elapsedSeconds": usage.get("elapsed_seconds")},
         "segments": segs,
         "splitRules": [{"id": r["id"], "name": r["name"], "description": r.get("description") or ""}

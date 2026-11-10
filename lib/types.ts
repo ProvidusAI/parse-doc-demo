@@ -45,13 +45,13 @@ export interface ShowcaseResult {
   subCategory: string;
   subCategoryLabel: string;
   lang: Lang;
-  source: { fileName: string; page: number };
+  source: { fileName: string; path: string; page: number };
   page: { image: string; thumb: string; width: number; height: number };
   upload: {
     fileName: string;
     mimeType: string;
     bytes: number;
-    pageCount: number;
+    pageCount: number | null;
     backend: string | null;
     ocrModel: string;
     elapsedSeconds: number | null;

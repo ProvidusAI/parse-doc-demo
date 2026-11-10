@@ -1,11 +1,20 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useState } from "react";
+import type { UiLang } from "@/lib/i18n";
+import type { ShowcaseResult } from "@/lib/types";
 import StagePanel from "./StagePanel";
 import { result } from "./test-fixtures";
+
+type Props = { r: ShowcaseResult; onView: () => void; onHighlight: () => void };
+function Harness({ r, onView, onHighlight }: Props) {
+  const [lang, setLang] = useState<UiLang>("en");
+  return <StagePanel result={r} lang={lang} onLang={setLang} onView={onView} onHighlight={onHighlight} />;
+}
 
 function setup(r = result) {
   const onView = vi.fn();
   const onHighlight = vi.fn();
-  const utils = render(<StagePanel result={r} onView={onView} onHighlight={onHighlight} />);
+  const utils = render(<Harness r={r} onView={onView} onHighlight={onHighlight} />);
   return { ...utils, onView, onHighlight };
 }
 
@@ -98,6 +107,28 @@ test("arabic toggle flips direction", () => {
 test("resets to first step for a new page", () => {
   const { rerender, onView, onHighlight } = setup();
   step(/Split rules/);
-  rerender(<StagePanel result={{ ...result, id: "financial/invoices" }} onView={onView} onHighlight={onHighlight} />);
+  rerender(<Harness r={{ ...result, id: "financial/invoices" }} onView={onView} onHighlight={onHighlight} />);
   expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
+});
+
+test("missing page count is not invented", () => {
+  setup({ ...result, upload: { ...result.upload, pageCount: null } });
+  const cell = screen.getByText("Pages").closest("li")!;
+  expect(cell).toHaveTextContent("Not returned by DocAI");
+});
+
+test("chunk without a box shows no page number", () => {
+  setup({ ...result, segments: [{ ...result.segments[0], box: null }] });
+  step(/Parsed chunks/);
+  expect(screen.getByText("TAX INVOICE فاتورة ضريبية").closest("li")!.textContent).not.toMatch(/P\.\d/);
+});
+
+test("model-written names keep their own direction", () => {
+  setup();
+  step(/Extract rules/);
+  expect(screen.getByText("total_amount")).toHaveAttribute("dir", "auto");
+  step(/Extracted schema/);
+  expect(screen.getByText("supplier_name")).toHaveAttribute("dir", "auto");
+  step(/Split result/);
+  expect(screen.getByText("invoice")).toHaveAttribute("dir", "auto");
 });

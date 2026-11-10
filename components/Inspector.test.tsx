@@ -6,7 +6,11 @@ import { manifest, result } from "./test-fixtures";
 const pages = manifest.categories[0].pages;
 
 beforeEach(() => {
-  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => result })));
+  // answer each page's result.json with a result carrying that page's id
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+    const id = url.replace("/showcase/", "").replace("/result.json", "");
+    return { ok: true, json: async () => ({ ...result, id }) };
+  }));
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -46,9 +50,19 @@ test("meta shows position", async () => {
 });
 
 test("stale result for another page is not shown", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => result })));
   setup(3); // financial_reports, but fetch returns the receipts result
   await new Promise((r) => setTimeout(r, 0));
   expect(screen.queryByText("receipts.png")).not.toBeInTheDocument();
+});
+
+test("panel language survives moving to the next page", async () => {
+  const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 1 of 4");
+  fireEvent.click(screen.getByRole("button", { name: "العربية" }));
+  rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 2 of 4");
+  expect(screen.getByRole("region", { name: "DocAI pipeline" })).toHaveAttribute("dir", "rtl");
 });
 
 test("fetch failure shows a message", async () => {

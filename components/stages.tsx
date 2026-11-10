@@ -37,7 +37,7 @@ export function UploadStage({ result, lang }: StageProps) {
     ["upload.file", u.fileName],
     ["upload.type", u.mimeType],
     ["upload.size", `${(u.bytes / 1024).toFixed(1)} KB`],
-    ["upload.pages", String(u.pageCount)],
+    ["upload.pages", u.pageCount == null ? null : String(u.pageCount)],
     ["upload.backend", u.backend],
     ["upload.ocrModel", u.ocrModel],
     ["upload.elapsed", u.elapsedSeconds == null ? null : `${u.elapsedSeconds.toFixed(1)} s`],
@@ -74,7 +74,7 @@ export function OcrStage({ result, lang }: StageProps) {
         {result.segments.map((s, i) => (
           <li key={s.id} className={styles.row} style={stagger(i, 40)}>
             <Tag type={s.type} />
-            {s.textless ? <span className={styles.muted}>[{s.label}]</span> : <DocText text={s.text} className={styles.tx} />}
+            {s.textless ? <DocText text={`[${s.label}]`} className={styles.muted} /> : <DocText text={s.text} className={styles.tx} />}
           </li>
         ))}
       </ul>
@@ -100,8 +100,8 @@ export function ChunksStage({ result, lang, onHighlight }: StageProps) {
         >
           <span className={styles.k}>#{i + 1}</span>
           <Tag type={s.type} />
-          {s.textless ? <span className={styles.muted}>[{s.label}]</span> : <DocText text={s.text} className={styles.tx} />}
-          <span className={styles.pg}>P.{s.box?.page ?? 1}</span>
+          {s.textless ? <DocText text={`[${s.label}]`} className={styles.muted} /> : <DocText text={s.text} className={styles.tx} />}
+          {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
         </li>
       ))}
     </ul>
@@ -139,7 +139,7 @@ export function SplitResultStage({ result, lang }: StageProps) {
             <span className={styles.idx}>{String(i + 1).padStart(2, "0")}</span>
             <span className={styles.ruleText}>
               <DocText text={r.title} className={styles.strong} />
-              {r.documentType && <span className={styles.desc}>{r.documentType}</span>}
+              {r.documentType && <DocText text={r.documentType} className={styles.desc} />}
               {r.boundaryReason && <DocText text={r.boundaryReason} className={styles.desc} />}
             </span>
             <span className={styles.recMeta}>
@@ -160,7 +160,7 @@ export function ExtractRulesStage({ result, lang }: StageProps) {
       {result.schema.fields.map((f, i) => (
         <li key={f.name} className={styles.f} style={stagger(i)}>
           <span className={styles.fhead}>
-            <span className="mono">{f.name}</span>
+            <DocText text={f.name} className="mono" />
             {f.required && <span className={styles.req}>{t(lang, "required")}</span>}
             <span className={styles.k}>{f.type.toUpperCase()}</span>
           </span>
@@ -200,7 +200,7 @@ export function ExtractedStage({ result, lang, onHighlight }: StageProps) {
               onClick={() => v.box && onHighlight(v.path)}
             >
               <span className={styles.fhead}>
-                <span className="lbl">{v.path}</span>
+                <DocText text={v.path} className="lbl" />
                 {v.confidence != null && <b className={styles.ok}>{Math.round(v.confidence * 100)}%</b>}
               </span>
               <DocText text={v.value || "—"} className="mono" />

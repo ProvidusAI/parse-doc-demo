@@ -43,6 +43,7 @@ class NormalizeTest(unittest.TestCase):
     def test_normalize_full(self):
         r = build()
         self.assertEqual(r["id"], "financial/invoices")
+        self.assertEqual(r["source"], {"fileName": "KSA invoice.png", "path": "financial/invoices/KSA invoice.png", "page": 1})
         self.assertEqual(r["page"], {"image": "/showcase/financial/invoices/page.jpg",
                                      "thumb": "/showcase/financial/invoices/thumb.jpg", "width": 600, "height": 800})
         self.assertEqual(r["upload"], {"fileName": "invoices-abc123-KSA invoice.png", "mimeType": "image/png",
@@ -74,6 +75,7 @@ class NormalizeTest(unittest.TestCase):
     def test_missing_usage_and_failed_ops(self):
         r = build(job={"job_id": "j", "status": "completed", "result": {}}, rules=None, split=None,
                   schema=None, extraction=None)
+        self.assertIsNone(r["upload"]["pageCount"])  # not invented when DocAI omits it
         self.assertIsNone(r["upload"]["backend"])
         self.assertIsNone(r["upload"]["elapsedSeconds"])
         for key in ("splitRules", "split", "schema", "extraction"):
