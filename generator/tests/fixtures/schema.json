@@ -1,0 +1,6 @@
+{"schema": {"title": "Tax invoice", "fields": [
+  {"id": "field-root-total-amount", "name": "total_amount", "type": "currency", "required": true, "description": "Invoice total incl. VAT."},
+  {"id": "field-root-supplier-name", "name": "supplier_name", "type": "string", "required": false, "description": "Supplier legal name."},
+  {"id": "field-root-items", "name": "items", "type": "array", "required": true, "description": "Line items.", "children": [
+    {"id": "field-root-items-description", "name": "description", "type": "string", "required": true, "description": "Item text."}]}
+ ]}, "modelId": "lmstudio/qwen/qwen3-vl-8b"}

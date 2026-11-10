@@ -1,0 +1,51 @@
+"""Cut one page out of a corpus file for upload, and make thumbnails."""
+import io
+import shutil
+from pathlib import Path
+
+import pypdfium2 as pdfium
+from PIL import Image
+
+CARD_WIDTH = 480
+WALL_WIDTH = 160
+
+
+def cut_page(src: Path, page: int, dst_dir: Path) -> Path:
+    """Return a single-page file DocAI can parse. `page` is 1-based."""
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    ext = src.suffix.lower()
+    if ext == ".docx":
+        raise ValueError(f"docx not supported, pick another file: {src.name}")
+    if ext == ".pdf":
+        doc = pdfium.PdfDocument(str(src))
+        if not 1 <= page <= len(doc):
+            raise ValueError(f"{src.name} has {len(doc)} pages, asked for {page}")
+        out = pdfium.PdfDocument.new()
+        out.import_pages(doc, [page - 1])
+        dst = dst_dir / f"{src.stem}-p{page}.pdf"
+        out.save(str(dst))
+        return dst
+    if ext == ".webp":
+        dst = dst_dir / f"{src.stem}.png"
+        Image.open(src).convert("RGB").save(dst, "PNG")
+        return dst
+    dst = dst_dir / src.name
+    shutil.copyfile(src, dst)
+    return dst
+
+
+def make_thumb(image: bytes | Path, dst: Path, width: int) -> None:
+    im = Image.open(io.BytesIO(image) if isinstance(image, bytes) else image).convert("RGB")
+    im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    im.save(dst, "JPEG", quality=72)
+
+
+def render_wall_thumb(src: Path, dst: Path) -> None:
+    if src.suffix.lower() == ".pdf":
+        bitmap = pdfium.PdfDocument(str(src))[0].render(scale=0.6)
+        buf = io.BytesIO()
+        bitmap.to_pil().save(buf, "PNG")
+        make_thumb(buf.getvalue(), dst, WALL_WIDTH)
+    else:
+        make_thumb(src, dst, WALL_WIDTH)

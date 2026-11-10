@@ -1,0 +1,4 @@
+{"records": [{"id": "record-1", "title": "Tax invoice ACC-SINV-2021-00002", "documentType": "invoice", "startPage": 1, "endPage": 1,
+  "confidence": "high", "boundaryReason": "Single invoice on the page.", "segmentIds": ["p1_e0000"], "metadata": {}, "warnings": []}],
+ "quality": {"status": "pass", "coverage": 1, "gapPages": [], "pageCount": 1, "recordCount": 1, "overlapPages": []},
+ "modelId": "lmstudio/qwen/qwen3-vl-8b"}

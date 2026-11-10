@@ -1,0 +1,2 @@
+{"job_id": "j1", "status": "completed",
+ "result": {"usage": {"ocr": {"calls": 3, "failures": 0}, "vlm": {"calls": 3, "failures": 0}, "backend": "glm-ocr", "elapsed_seconds": 45.6}, "page_count": 1}}

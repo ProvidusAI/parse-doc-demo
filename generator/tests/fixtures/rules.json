@@ -1,0 +1,1 @@
+{"rules": [{"id": "rule-1", "name": "Invoice boundary", "description": "Start a new record at each TAX INVOICE header."}], "modelId": "lmstudio/qwen/qwen3-vl-8b"}
