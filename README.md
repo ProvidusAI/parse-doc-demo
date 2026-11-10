@@ -8,7 +8,7 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 ## What it shows
 
-21 pages in 11 categories: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. There is one page per document type. Click a page to open the inspector. It has the page on the left and the 7 DocAI stages on the right:
+21 pages in 11 categories: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. There is one page per document type. The **All** tab shows every page grouped by category. Click a page to open the inspector. It has the page on the left and the 7 DocAI stages on the right:
 
 | # | Stage | What you see |
 |---|---|---|
@@ -53,6 +53,8 @@ npm start
 ```
 
 The site is fully static. It reads the saved DocAI outputs from `public/showcase/` and never calls DocAI at runtime.
+
+**Load testing:** open `http://localhost:3000/?stress=400` to see how the grid behaves with 400 pages. The real pages are duplicated in the browser only; nothing on disk changes. The limit is 2000.
 
 ## Where the data lives
 
