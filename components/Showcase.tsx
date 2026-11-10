@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Manifest } from "@/lib/types";
+import DatasetBrowser from "./DatasetBrowser";
 import Hero from "./Hero";
 import Nav from "./Nav";
 import PageWall from "./PageWall";
@@ -11,6 +12,8 @@ const FADE_PX = 420;
 
 export default function Showcase({ manifest }: { manifest: Manifest }) {
   const [progress, setProgress] = useState(0);
+  const [active, setActive] = useState(manifest.categories[0]?.key ?? "");
+  const [openId, setOpenId] = useState<string | null>(null);
   const dataRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -32,7 +35,9 @@ export default function Showcase({ manifest }: { manifest: Manifest }) {
       <Nav />
       <PageWall thumbs={manifest.wall} blur={progress * 4} />
       <Hero categories={manifest.categories.length} pages={pages} progress={progress} onExplore={explore} />
-      <main id="dataset" ref={dataRef} className={styles.data} />
+      <main id="dataset" ref={dataRef} className={styles.data}>
+        <DatasetBrowser manifest={manifest} active={active} onActive={setActive} onOpen={setOpenId} />
+      </main>
     </div>
   );
 }
