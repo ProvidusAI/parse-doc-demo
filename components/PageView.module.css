@@ -1,7 +1,7 @@
 .page {
   position: relative;
   aspect-ratio: var(--ar);
-  width: min(100%, calc((100vh - 190px) * var(--ratio)));
+  width: min(calc((100vh - 190px) * var(--ratio)), var(--page-max, 100%));
   background: #fff;
   border: 1px solid var(--border);
   box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.25);

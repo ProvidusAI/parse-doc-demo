@@ -1,11 +1,16 @@
 .modal {
+  --pad-x: 96px;
+  --panel-w: 460px;
+  --gap: 28px;
+  /* widest the page may be so page + gap + panel always fit, centred */
+  --page-max: calc(100vw - 2 * var(--pad-x) - var(--panel-w) - var(--gap));
   position: fixed;
   inset: 0;
   z-index: 80;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 72px 96px 32px;
+  padding: 72px var(--pad-x) 32px;
 }
 .veil {
   position: absolute;
@@ -15,17 +20,19 @@
   -webkit-backdrop-filter: blur(6px);
   animation: fade 0.25s both;
 }
+/* columns size to their content and the pair is centred as one block */
 .wrap {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 460px;
-  gap: 28px;
+  grid-template-columns: auto var(--panel-w);
+  justify-content: center;
+  gap: var(--gap);
   width: 100%;
-  max-width: 1240px;
   height: 100%;
   animation: fade-in 0.35s ease both;
 }
 .pagecol {
+  width: min-content; /* exactly the page's width, so nothing pushes the pair off-centre */
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -41,6 +48,7 @@
   min-width: 0;
 }
 .meta {
+  overflow-wrap: anywhere;
   text-align: right;
   font: 14px var(--mono);
   color: var(--t2);
@@ -92,10 +100,9 @@
 }
 @media (max-width: 1100px) {
   .modal {
-    padding: 72px 72px 24px;
-  }
-  .wrap {
-    grid-template-columns: minmax(0, 1fr) 380px;
+    --pad-x: 72px;
+    --panel-w: 380px;
+    padding: 72px var(--pad-x) 24px;
   }
   .left {
     left: 14px;
@@ -116,6 +123,7 @@
     gap: 16px;
   }
   .pagecol {
+    width: auto;
     align-items: stretch;
   }
   .arr {

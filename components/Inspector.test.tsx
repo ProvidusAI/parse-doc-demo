@@ -49,11 +49,18 @@ test("meta shows position", async () => {
   expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
 });
 
-test("stale result for another page is not shown", async () => {
-  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => result })));
-  setup(3); // financial_reports, but fetch returns the receipts result
-  await new Promise((r) => setTimeout(r, 0));
-  expect(screen.queryByText("receipts.png")).not.toBeInTheDocument();
+test("a slow response for a page you already left is ignored", async () => {
+  // page 1 answers late, page 2 answers at once
+  vi.stubGlobal("fetch", vi.fn((url: string) => {
+    const id = url.replace("/showcase/", "").replace("/result.json", "");
+    const body = { ok: true, json: async () => ({ ...result, id, source: { ...result.source, fileName: `${id}.file` } }) };
+    return new Promise((r) => setTimeout(() => r(body), id.endsWith("receipts") ? 50 : 0));
+  }));
+  const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  expect(await screen.findByText("financial/invoices.file")).toBeInTheDocument();
+  await new Promise((r) => setTimeout(r, 80));
+  expect(screen.queryByText("financial/receipts.file")).not.toBeInTheDocument();
 });
 
 test("panel language survives moving to the next page", async () => {
@@ -87,4 +94,10 @@ test("page view draws page-1 boxes and highlights one", () => {
   expect(drawn).toHaveLength(1);
   expect(drawn[0]).toHaveAttribute("data-hi");
   expect(drawn[0]).toHaveStyle({ left: "30%", top: "2%", width: "40%", height: "4%" });
+});
+
+test("duplicated pages that share a result file still load", async () => {
+  const dupes = [{ ...pages[0], id: "financial/receipts~1" }, { ...pages[0], id: "financial/receipts~2" }];
+  render(<Inspector pages={dupes} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  expect(await screen.findByText("Financial · Receipts · 2 of 2")).toBeInTheDocument();
 });

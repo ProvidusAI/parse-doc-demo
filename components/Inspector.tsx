@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function Inspector({ pages, index, onIndex, onClose }: Props) {
-  const [result, setResult] = useState<ShowcaseResult | null>(null);
+  const [loaded, setLoaded] = useState<{ url: string; result: ShowcaseResult } | null>(null);
   const [error, setError] = useState(false);
   const [boxes, setBoxes] = useState<PageBox[]>([]);
   const [highlight, setHighlight] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     setHighlight(null);
     fetch(summary.result)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((r: ShowcaseResult) => live && setResult(r))
+      .then((r: ShowcaseResult) => live && setLoaded({ url: summary.result, result: r }))
       .catch(() => live && setError(true));
     return () => {
       live = false;
@@ -60,7 +60,8 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     };
   }, []);
 
-  const current = result && result.id === summary.id ? result : null;
+  // match on the file we fetched, so a stale response for another page is never shown
+  const current = loaded && loaded.url === summary.result ? loaded.result : null;
 
   return (
     <div className={styles.modal} role="dialog" aria-modal="true" aria-label={summary.subCategoryLabel}>
