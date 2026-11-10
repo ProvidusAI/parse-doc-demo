@@ -66,3 +66,14 @@ test("zoom resets to fit when the page set changes", () => {
   expect(onZoom.mock.lastCall![0]).toBeGreaterThan(fit); // fewer pages → bigger fitted tiles, not the old zoom
   expect(screen.getAllByRole("button")).toHaveLength(10);
 });
+
+test("a few pages get exactly that many columns, no empty tracks", () => {
+  const { container } = setup(items.slice(0, 4));
+  const grid = container.querySelector("[class*=grid]") as HTMLElement;
+  expect(grid.style.gridTemplateColumns).toMatch(/^repeat\(4, /);
+});
+
+test("plain scroll is left to the page (never swallowed)", () => {
+  const { box } = setup();
+  expect(fireEvent.wheel(box, { deltaY: 120 })).toBe(true); // true = not preventDefault-ed
+});

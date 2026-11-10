@@ -16,17 +16,17 @@ export function fitTiles(n: number, w: number, h: number, gap: number): { cols: 
     h = 700;
   }
   const count = Math.max(1, n);
-  // more columns than pages is fine: it just means one short row of capped tiles
+  // may try more columns than pages to keep tiles short enough; the returned count is capped at the pages
   for (let cols = 1; ; cols++) {
     const tileW = (w - gap * (cols - 1)) / cols;
     if (tileW < MIN_TILE) break;
     const rows = Math.ceil(count / cols);
     if (rows * tileW * RATIO + gap * (rows - 1) <= h) {
       const capped = Math.min(Math.floor(tileW), MAX_TILE);
-      return { cols: Math.max(1, Math.floor((w + gap) / (capped + gap))), tileW: capped };
+      return { cols: Math.min(count, Math.max(1, Math.floor((w + gap) / (capped + gap)))), tileW: capped };
     }
   }
-  return { cols: Math.max(1, Math.floor((w + gap) / (MIN_TILE + gap))), tileW: MIN_TILE };
+  return { cols: Math.min(count, Math.max(1, Math.floor((w + gap) / (MIN_TILE + gap)))), tileW: MIN_TILE };
 }
 
 /** One Ctrl+scroll step: `direction` < 0 zooms in. */

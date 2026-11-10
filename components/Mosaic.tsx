@@ -49,7 +49,7 @@ export default function Mosaic({ items, onOpen, onZoom }: Props) {
   const zoomed = zoom && zoom.sig === sig ? zoom.tileW : null;
   const tileW = zoomed ?? fit.tileW;
   const width = size.w > 0 ? size.w : 1200; // jsdom/first paint have no size yet
-  const cols = zoomed ? Math.max(1, Math.floor((width + GAP) / (tileW + GAP))) : fit.cols;
+  const cols = zoomed ? Math.min(items.length, Math.max(1, Math.floor((width + GAP) / (tileW + GAP)))) : fit.cols;
 
   useEffect(() => onZoom(tileW), [tileW, onZoom]);
 

@@ -48,3 +48,8 @@ describe("zoomTile", () => {
     expect(zoomTile(480, -1)).toBe(480);
   });
 });
+
+test("fitTiles never returns more columns than pages", () => {
+  expect(fitTiles(4, 1900, 750, 4).cols).toBe(4);
+  expect(fitTiles(1, 1900, 750, 4).cols).toBe(1);
+});

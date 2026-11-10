@@ -6,7 +6,7 @@
   cursor: grab;
   user-select: none;
   scrollbar-width: none;
-  overscroll-behavior: contain;
+  /* no overscroll-behavior: the mosaic fills the screen, so wheel/touchpad scroll must reach the page */
 }
 .box::-webkit-scrollbar {
   display: none;
@@ -14,9 +14,10 @@
 .box:active {
   cursor: grabbing;
 }
+/* tiles start at the left edge, like parsebench.ai */
 .grid {
   display: grid;
-  justify-content: center;
+  justify-content: start;
   align-content: start;
 }
 .tile {
