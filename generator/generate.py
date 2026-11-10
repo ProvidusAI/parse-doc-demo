@@ -1,0 +1,175 @@
+"""Run showcase samples through local DocAI and write static outputs for the site.
+
+    python -m generator.generate --lang ar-en      # run a batch (skips finished entries)
+    python -m generator.generate --lang en --only financial/invoices --force
+    python -m generator.generate --wall            # render wall.json thumbnails
+    python -m generator.generate --review          # write generator/out/review.html
+    python -m generator.generate --manifest        # write public/showcase/manifest.json (approved only)
+"""
+import argparse
+import html
+import json
+import mimetypes
+import os
+import sys
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+
+from generator.docai_client import DocAI, DocAIError
+from generator.normalize import OCR_MODELS, build_result
+from generator.pages import CARD_WIDTH, cut_page, make_thumb, render_wall_thumb
+
+ROOT = Path(__file__).resolve().parent.parent
+CORPUS = ROOT / "providus-arabic-english-dataset"
+SHOWCASE = ROOT / "public" / "showcase"
+WORK = ROOT / "generator" / "out"
+
+ENGINE_HINT = {
+    "ar-en": "DocAI's default GLM engine (no change needed) - docai-arabic-ocr-e4c",
+    "en": "DOCAI_OCR_ENGINE=paddle-vl and DOCAI_OCR_MODEL=translate-studio/paddleocr-vl-1.6 "
+          "(local-dev/.env.dev + models.ocr.model), then `bash local-dev/dev-up.sh -d`",
+}
+
+
+def entry_id(e) -> str:
+    return f"{e['category']}/{e['subCategory']}"
+
+
+def _try(label, fn, *args):
+    try:
+        return fn(*args)
+    except DocAIError as err:
+        print(f"    {label} failed: {err}", file=sys.stderr)
+        return None
+
+
+def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=False):
+    """Run one sample end to end. Returns the result path, or None when skipped."""
+    rid = entry_id(entry)
+    out = showcase / rid
+    if (out / "result.json").exists() and not force:
+        return None
+    src = corpus / entry["sourcePath"]
+    upload = cut_page(src, entry["page"], work / "upload" / rid)
+    name = f"{entry['subCategory']}-{uuid.uuid4().hex[:6]}-{upload.name}"  # DocAI rejects duplicate filenames
+    file_id = client.upload(upload, name)
+    options = {"backend": "glm-ocr", "ocr_model": OCR_MODELS[entry["lang"]], "force": True}
+    job = client.wait_job(file_id, client.parse(file_id, options))
+    segments, png = client.segments(file_id), client.page_image(file_id)
+
+    rules = _try("split rules", client.run_op, "/v1/split/rules/suggest", {"file_id": file_id})
+    split = (_try("split", client.run_op, "/v1/split/runs", {"file_id": file_id, "rules": rules["rules"]})
+             if rules and rules.get("rules") else None)
+    schema = _try("schema", client.run_op, "/v1/extract/schemas/generate", {"file_id": file_id})
+    extraction = (_try("extract", client.run_op, "/v1/extract/runs", {"file_id": file_id, "schema": schema["schema"]})
+                  if schema and schema.get("schema") else None)
+
+    file_meta = {"fileName": name, "mimeType": mimetypes.guess_type(upload.name)[0] or "application/octet-stream",
+                 "bytes": upload.stat().st_size}
+    result = build_result(entry, file_meta=file_meta, job=job, segments=segments, page_png=png, rules=rules,
+                          split=split, schema=schema, extraction=extraction)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "page.png").write_bytes(png)
+    make_thumb(png, out / "thumb.jpg", CARD_WIDTH)
+    tmp = out / "result.json.tmp"
+    tmp.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(out / "result.json")
+    return out / "result.json"
+
+
+def run_batch(entries, lang, client, corpus, showcase, work, only=None, force=False):
+    """Run every non-rejected entry of `lang`. Returns ids that failed."""
+    failed = []
+    for e in entries:
+        if e["lang"] != lang or e["status"] == "rejected" or (only and entry_id(e) != only):
+            continue
+        try:
+            done = run_entry(e, client, corpus, showcase, work, force=force)
+            print(f"  {entry_id(e)}: {'ok' if done else 'skipped'}")
+        except (DocAIError, ValueError, OSError) as err:
+            print(f"  {entry_id(e)}: FAILED {err}", file=sys.stderr)
+            failed.append(entry_id(e))
+    return failed
+
+
+def build_manifest(samples, showcase: Path) -> dict:
+    cats = {}
+    for e in samples:
+        rid = entry_id(e)
+        if e["status"] != "approved" or not (showcase / rid / "result.json").exists():
+            continue
+        cat = cats.setdefault(e["category"], {"key": e["category"], "label": e["categoryLabel"], "pages": []})
+        cat["pages"].append({"id": rid, "subCategoryLabel": e["subCategoryLabel"],
+                             "fileName": e["sourcePath"].split("/")[-1],
+                             "thumb": f"/showcase/{rid}/thumb.jpg", "result": f"/showcase/{rid}/result.json"})
+    wall = sorted(f"/showcase/wall/{p.name}" for p in (showcase / "wall").glob("*.jpg"))
+    return {"generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "wall": wall,
+            "categories": list(cats.values())}
+
+
+def write_wall(files, corpus: Path, showcase: Path):
+    for i, rel in enumerate(files):
+        render_wall_thumb(corpus / rel, showcase / "wall" / f"w{i:03d}.jpg")
+
+
+def write_review(samples, showcase: Path, dst: Path):
+    rows = []
+    for e in samples:
+        rid, f = entry_id(e), showcase / entry_id(e) / "result.json"
+        if not f.exists():
+            rows.append(f"<tr><td>{rid}<br><b>{e['status']}</b></td><td colspan=2>not generated</td></tr>")
+            continue
+        r = json.loads(f.read_text(encoding="utf-8"))
+        segs = "".join(f"<li><code>{s['type']}</code> {html.escape(s['text'][:120])}</li>" for s in r["segments"][:25])
+        vals = "".join(f"<li><code>{html.escape(v['path'])}</code> {html.escape(v['value'][:80])} "
+                       f"({v['confidence']})</li>" for v in (r["extraction"] or {}).get("values", [])[:25])
+        split = r["split"] and f"{len(r['split']['records'])} record(s), {r['split']['qualityStatus']}"
+        rows.append(f"<tr><td>{rid}<br>{html.escape(e['sourcePath'])}<br>lang {e['lang']}<br><b>{e['status']}</b>"
+                    f"<br>backend {r['upload']['backend']}<br>split: {split}</td>"
+                    f"<td><img src='../../public{r['page']['image']}' width=360></td>"
+                    f"<td><ol dir=auto>{segs}</ol><ul dir=auto>{vals or '<li>no extraction</li>'}</ul></td></tr>")
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text("<!doctype html><meta charset=utf-8><title>Showcase review</title>"
+                   "<style>body{font:13px system-ui}td{vertical-align:top;border-top:1px solid #ddd;padding:8px}"
+                   "</style><table>" + "".join(rows) + "</table>", encoding="utf-8")
+
+
+def api_key() -> str:
+    if os.environ.get("DOCAI_API_KEY"):
+        return os.environ["DOCAI_API_KEY"]
+    for line in (ROOT / ".env.x-api-key").read_text(encoding="utf-8").splitlines():
+        if line.startswith("api-key="):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    raise SystemExit("no API key: set DOCAI_API_KEY or api-key= in .env.x-api-key")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--lang", choices=sorted(OCR_MODELS))
+    ap.add_argument("--only")
+    ap.add_argument("--force", action="store_true")
+    ap.add_argument("--wall", action="store_true")
+    ap.add_argument("--review", action="store_true")
+    ap.add_argument("--manifest", action="store_true")
+    a = ap.parse_args(argv)
+    samples = json.loads((ROOT / "samples.json").read_text(encoding="utf-8"))
+    if a.wall:
+        write_wall(json.loads((ROOT / "wall.json").read_text(encoding="utf-8")), CORPUS, SHOWCASE)
+    if a.lang:
+        print(f"OCR engine for this batch: {ENGINE_HINT[a.lang]}")
+        client = DocAI(os.environ.get("DOCAI_BASE_URL", "http://localhost:8787"), api_key())
+        failed = run_batch(samples, a.lang, client, CORPUS, SHOWCASE, WORK, only=a.only, force=a.force)
+        if failed:
+            print(f"failed: {', '.join(failed)}", file=sys.stderr)
+    if a.review:
+        write_review(samples, SHOWCASE, WORK / "review.html")
+        print(f"wrote {WORK / 'review.html'}")
+    if a.manifest:
+        (SHOWCASE / "manifest.json").write_text(json.dumps(build_manifest(samples, SHOWCASE), ensure_ascii=False,
+                                                           indent=1), encoding="utf-8")
+        print(f"wrote {SHOWCASE / 'manifest.json'}")
+
+
+if __name__ == "__main__":
+    main()
