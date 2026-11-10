@@ -17,7 +17,7 @@ export default function Nav() {
       <a className="btn" href="https://providus.ai" target="_blank" rel="noreferrer">
         Docs
       </a>
-      <a className="btn btn-dark" href="https://providus.ai" target="_blank" rel="noreferrer">
+      <a className="btn btn-dark" href="https://platform.providus.ai/" target="_blank" rel="noreferrer">
         Try DocAI
       </a>
     </nav>

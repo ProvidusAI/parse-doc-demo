@@ -33,3 +33,10 @@ test("hero copy is present in both scripts", () => {
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Document intelligence that reads Arabic");
   expect(screen.getByText("ذكاء المستندات باللغتين العربية والإنجليزية")).toBeInTheDocument();
 });
+
+test("Try DocAI opens the Providus platform in a new tab", () => {
+  render(<Showcase manifest={manifest} />);
+  const link = screen.getByRole("link", { name: "Try DocAI" });
+  expect(link).toHaveAttribute("href", "https://platform.providus.ai/");
+  expect(link).toHaveAttribute("target", "_blank");
+});
