@@ -67,7 +67,8 @@ def _extraction(extraction, schema, boxes):
     values = []
     for path, val in _leaves(extraction.get("jsonResult") or {}):
         c = cites.pop(re.sub(r"\[\d+\]", "", path), None)  # one citation per field: first row only
-        seg = c.get("segmentId") if c else None
+        # the model sometimes echoes the evidence label: "p1_e0002|p.1|table"
+        seg = (c.get("segmentId") or "").split("|")[0] or None if c else None
         values.append({"path": path, "value": "" if val is None else str(val),
                        "confidence": c.get("confidence") if c else None, "segmentId": seg, "box": boxes.get(seg)})
     return {"json": extraction.get("jsonResult"), "values": values}

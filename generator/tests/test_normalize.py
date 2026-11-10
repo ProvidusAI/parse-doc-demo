@@ -90,6 +90,13 @@ class NormalizeTest(unittest.TestCase):
         self.assertEqual(v["confidence"], 0.9)
         self.assertIsNone(v["box"])
 
+    def test_citation_segment_id_with_evidence_label(self):
+        ex = load("extract.json")
+        ex["citations"][0]["segmentId"] = "p1_e0002|p.1|table"  # seen from qwen3-vl-8b on a real run
+        v = value(build(extraction=ex), "total_amount")
+        self.assertEqual(v["segmentId"], "p1_e0002")
+        self.assertEqual(v["box"], {"page": 1, "x0": 40, "y0": 200, "x1": 960, "y1": 600})
+
     def test_table_text_strips_html(self):
         self.assertEqual(table_text("<table><tr><td>Item</td><td>Qty</td></tr><tr><td>A &amp; B</td></tr></table>"),
                          "Item · Qty · A & B")
