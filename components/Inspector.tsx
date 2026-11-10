@@ -6,6 +6,7 @@ import { nextIndex } from "@/lib/showcase";
 import type { PageSummary, ShowcaseResult } from "@/lib/types";
 import styles from "./Inspector.module.css";
 import PageView, { type PageBox } from "./PageView";
+import StagePanel from "./StagePanel";
 
 interface Props {
   pages: PageSummary[];
@@ -99,7 +100,18 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
             <div className={styles.loading}>{error ? "Could not load this page." : ""}</div>
           )}
         </div>
-        <div className={styles.panelcol} />
+        <div className={styles.panelcol}>
+          {current && (
+            <StagePanel
+              result={current}
+              onView={(v) => {
+                setBoxes(v.boxes);
+                setScanning(v.scanning);
+              }}
+              onHighlight={setHighlight}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
