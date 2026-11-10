@@ -24,10 +24,23 @@
   - **IBM Plex Mono** (400/500).
   - **IBM Plex Sans Arabic** (400/500).
 - Animations: `fade-in` (opacity 0, translateY 8px), `bounce`, `aurora-drift`, scan-line. All of them are turned off under `prefers-reduced-motion: reduce`.
-- OCR model by `lang`: `ar-en` → `docai-arabic-ocr-e4c`; `en` → `paddle-ocr-vl-1.6`. Parse options are `{"backend":"glm-ocr","ocr_model":<model>,"force":true}`, which forces the OCR lane.
+- OCR model by `lang`: `ar-en` → `docai-arabic-ocr-e4c`; `en` → `translate-studio/paddleocr-vl-1.6`. Parse options are `{"backend":"glm-ocr","ocr_model":<model>,"force":true}`, which forces the OCR lane.
 - The DocAI job record does not report the OCR model id. The Upload stage therefore shows the `backend` that DocAI reports, and labels the model "OCR model (requested)", using the value the generator sent.
 - Personal data: no shown page or wall thumbnail may contain private names, ID/VAT/account numbers, faces or private signatures.
-- Never commit `providus-arabic-english-dataset/`, `design.md/`, `.scratch/`, `generator/out/`, or anything holding the API key. The key comes only from the `DOCAI_API_KEY` env var. The base URL comes from `DOCAI_BASE_URL`, default `http://localhost:8080`.
+- Never commit `providus-arabic-english-dataset/`, `design.md/`, `.scratch/`, `generator/out/`, or anything holding the API key. The key comes from `DOCAI_API_KEY` or the git-ignored `.env.x-api-key` (`api-key=`), and is never printed. The base URL comes from `DOCAI_BASE_URL`, default `http://localhost:8080`.
+
+## Verified against the running DocAI (2026-11-10 smoke runs)
+
+- The whole pipeline works locally. A receipt took about 90s and an Arabic invoice about 2.5 min (parse, rules, split, schema, extract), so 21 pages is roughly 45 min.
+- `docai-arabic-ocr-e4c` reads Arabic correctly under the **current** engine (`resolved_ocr_engine: glm`), even though DocAI labels it non-matching. The `ar-en` batch therefore needs **no engine switch**. Only the `en` batch switches, to `DOCAI_OCR_ENGINE=paddle-vl` with `DOCAI_OCR_MODEL=translate-studio/paddleocr-vl-1.6`, which is the exact LM Studio id.
+- Uploading the same filename twice returns `409 duplicate_filename`. Uploads are therefore named `<sub-category>-<runid6>-<original name>`.
+- The parse response is `{jobId, job:{job_id,...}}`.
+- `job.result.usage` = `{ocr:{calls,failures}, vlm:{calls,failures}, backend, elapsed_seconds, billing}`.
+- Citation `path` is a **schema field-id path** (e.g. `/field-root-merchant-name`), not a `jsonResult` key. Map it through the schema's `fields[].id`, which is nested by `children`.
+- Table segments' `markdown` is an HTML `<table>`.
+- The dev org starts with 0 credits. They were granted per `local-dev/TESTING.md` §2b.
+- Filenames lie about language: `003_receipt_arabic-english.jpg` is English-only. Set `lang` by looking at the page.
+- The API key lives in the git-ignored `providus-bench.ai/.env.x-api-key` as `api-key=...`. The generator reads it from there, and `DOCAI_API_KEY` overrides it.
 
 ## Review Focus
 
@@ -141,7 +154,7 @@ export interface Manifest { generatedAt: string; wall: string[];
   - `upload.backend` and `upload.elapsedSeconds` come from `job.result.usage`. When `usage` is absent, both are `None`.
   - Extraction values:
     - Walk `jsonResult` into leaf `path → str(value)` pairs.
-    - Attach the citation with the same `path`, taking its `confidence` and `segmentId`.
+    - Map each citation `path` (a field-id path such as `/field-root-merchant-name`) to the field's name path using `schema.fields[].id`, nested through `children`. Then attach the citation to that leaf, taking its `confidence` and `segmentId`.
     - Fill `box` by looking up that segment.
     - Leave unmatched citations with `box: null`.
 
@@ -155,6 +168,7 @@ export interface Manifest { generatedAt: string; wall: string[];
   - `test_missing_usage_and_failed_ops`:
     - `job` has no `usage`, and `split=None` and `extraction=None` are passed in.
     - Assert `upload.backend is None` and `split is None`.
+  - `test_citation_path_maps_field_id`: citation path `/field-root-merchant-name`, with the schema field `{id:"field-root-merchant-name", name:"merchant_name"}`, attaches to the value `merchant_name`.
   - `test_citation_without_segment`: a `segmentId` not found in the segments gives `box is None`.
   - `test_box_clamped`: `xmax: 1200` becomes `1000`.
 
@@ -173,7 +187,7 @@ export interface Manifest { generatedAt: string; wall: string[];
 - Consumes: `pages.cut_page`, `pages.make_thumb`, `normalize.build_result` (Task 2).
 - Produces the CLI: `python -m generator.generate --lang {ar-en,en} [--only <id>] [--force] [--review] [--manifest]`.
 - `DocAI(base_url: str, api_key: str)` has these methods. Every one sends the `x-api-key` header, and every one raises `DocAIError` when the status is not 2xx.
-  - `upload(path) -> file_id`: `POST /v1/files` multipart, field `file`, `auto_parse=false`. Returns `file.id`.
+  - `upload(path, name) -> file_id`: `POST /v1/files` multipart, field `file` with the unique upload `name`, `auto_parse=false`. Returns `file.id`.
   - `parse(file_id, options) -> job_id`: `POST /v1/files/{id}/parse` with `{options}`.
   - `wait_job(file_id, job_id, timeout=900) -> job`: polls `GET /v1/files/{id}/jobs/{job}` until `completed` and raises on `failed` or `cancelled`. Polling starts every 2s, backs off ×1.5, and caps at 10s.
   - `segments(file_id) -> list`
@@ -195,8 +209,8 @@ export interface Manifest { generatedAt: string; wall: string[];
   - It skips an entry when `result.json` already exists, unless `force` is set.
 - The batch runs only entries where `entry.lang == --lang` and `status != "rejected"`.
 - Before the batch starts, it prints the engine to set:
-  - `ar-en`: `DOCAI_OCR_MODEL=docai-arabic-ocr-e4c`.
-  - `en`: `DOCAI_OCR_ENGINE=paddle-vl`, `DOCAI_OCR_MODEL=paddle-ocr-vl-1.6`.
+  - `ar-en`: the current GLM engine, with no change needed.
+  - `en`: `DOCAI_OCR_ENGINE=paddle-vl`, `DOCAI_OCR_MODEL=translate-studio/paddleocr-vl-1.6`.
   - Remind the operator to edit `models.ocr.model` too and restart the worker.
 
 - [ ] **Step 1: Write the failing tests.** They use `unittest.mock`, with a fake client object, not HTTP.
@@ -348,6 +362,7 @@ export interface Manifest { generatedAt: string; wall: string[];
   - `ExtractRulesStage`: field name, type badge and REQ marker.
   - `ExtractedStage`: a Fields/JSON toggle. Clicking a value with a `box` calls `onHighlight`. The confidence badge appears only when the value is non-null.
 - Any stage whose data is `null` renders `t(lang, 'notReturned')`.
+- A segment whose `markdown` holds an HTML `<table>` is shown as plain cell text joined with ` · `. Strip the tags and never inject the HTML.
 - Every DocAI text node gets `dir="auto"` and the class `ar` when it contains Arabic. Detect Arabic with `/[؀-ۿ]/`.
 - The stepper styles done, current and pending steps differently, scrolls the active step into view, and lets any step be clicked. The footer reads `t('stepOf')`.
 
@@ -377,12 +392,13 @@ export interface Manifest { generatedAt: string; wall: string[];
 
 ### Task 10: Run DocAI and review the outputs (operator task, needs the user)
 
-**Prerequisites:**
-- The user starts DocAI with `bash local-dev/dev-up.sh -d` in the DocAI repo.
-- The user creates a full-access API key (Settings → API Keys, or `POST /v1/api-keys`) and exports it as `DOCAI_API_KEY`. Never write it to a file.
+**Prerequisites (already done 2026-11-10):**
+- The DocAI dev stack is up.
+- The API key is in `.env.x-api-key`.
+- The org has credits.
 
-- [ ] **Step 1:** Ask the user to set the `ar-en` engine config, using the text the CLI prints, and restart the worker. Then run `python -m generator.generate --lang ar-en`. Expected: every `ar-en` entry prints `ok` or `skipped`.
-- [ ] **Step 2:** Ask the user to switch to `DOCAI_OCR_ENGINE=paddle-vl` and `DOCAI_OCR_MODEL=paddle-ocr-vl-1.6`, and restart the worker. Then run `python -m generator.generate --lang en`.
+- [ ] **Step 1:** The `ar-en` batch uses the current engine, so no switch is needed. Run `python -m generator.generate --lang ar-en`. Expected: every `ar-en` entry prints `ok` or `skipped`.
+- [ ] **Step 2:** Ask the user to switch to `DOCAI_OCR_ENGINE=paddle-vl` and `DOCAI_OCR_MODEL=translate-studio/paddleocr-vl-1.6` (in `.env.dev` and `models.ocr.model`), and to run `bash local-dev/dev-up.sh -d` again. Afterwards, switch back the same way. Then run `python -m generator.generate --lang en`.
 - [ ] **Step 3:** Run `python -m generator.generate --review`, which writes `generator/out/review.html`. Open it in the browser pane. The user marks entries `approved` or `rejected` (with a `note`) in `samples.json`. For each rejected entry, pick another clean file from the same sub-category and repeat Steps 1–3 for that `--only <id>`.
 - [ ] **Step 4:** Run `python -m generator.generate --manifest`, which writes `public/showcase/manifest.json` from the approved entries only, plus the wall list.
 - [ ] **Step 5:** Commit: `feat: add reviewed DocAI showcase outputs`. Bullets: N pages, which models, review date.
