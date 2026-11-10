@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ALL, expandForStress, pagesFor } from "@/lib/showcase";
 import type { Manifest } from "@/lib/types";
 import DatasetBrowser from "./DatasetBrowser";
 import Hero from "./Hero";
@@ -11,11 +12,21 @@ import styles from "./Showcase.module.css";
 
 const FADE_PX = 420;
 
-export default function Showcase({ manifest }: { manifest: Manifest }) {
+const MAX_STRESS = 2000;
+
+export default function Showcase({ manifest: real }: { manifest: Manifest }) {
   const [progress, setProgress] = useState(0);
-  const [active, setActive] = useState(manifest.categories[0]?.key ?? "");
+  const [active, setActive] = useState(ALL);
+  const [stress, setStress] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const dataRef = useRef<HTMLElement>(null);
+
+  // load testing: /?stress=400 duplicates the real pages in the browser only
+  useEffect(() => {
+    const n = Number(new URLSearchParams(window.location.search).get("stress"));
+    if (Number.isFinite(n) && n > 0) setStress(Math.min(Math.floor(n), MAX_STRESS));
+  }, []);
+  const manifest = useMemo(() => (stress ? expandForStress(real, stress) : real), [real, stress]);
 
   useEffect(() => {
     const onScroll = () => setProgress(Math.min(1, window.scrollY / FADE_PX));
@@ -30,8 +41,8 @@ export default function Showcase({ manifest }: { manifest: Manifest }) {
   }, []);
 
   const pages = manifest.categories.reduce((n, c) => n + c.pages.length, 0);
-  const category = manifest.categories.find((c) => c.key === active) ?? manifest.categories[0];
-  const openIndex = category ? category.pages.findIndex((p) => p.id === openId) : -1;
+  const tabPages = pagesFor(manifest, active);
+  const openIndex = tabPages.findIndex((p) => p.id === openId);
 
   return (
     <div className={styles.root} data-on-data={progress > 0.85 || undefined}>
@@ -41,11 +52,11 @@ export default function Showcase({ manifest }: { manifest: Manifest }) {
       <main id="dataset" ref={dataRef} className={styles.data}>
         <DatasetBrowser manifest={manifest} active={active} onActive={setActive} onOpen={setOpenId} />
       </main>
-      {category && openIndex >= 0 && (
+      {openIndex >= 0 && (
         <Inspector
-          pages={category.pages}
+          pages={tabPages}
           index={openIndex}
-          onIndex={(i) => setOpenId(category.pages[i].id)}
+          onIndex={(i) => setOpenId(tabPages[i].id)}
           onClose={() => setOpenId(null)}
         />
       )}

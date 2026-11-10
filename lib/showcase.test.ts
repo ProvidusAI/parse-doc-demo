@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import { loadManifest } from "./manifest";
-import { boxToPercent, filterPages, hasArabic, nextIndex } from "./showcase";
+import { ALL, boxToPercent, expandForStress, filterPages, hasArabic, nextIndex, pagesFor } from "./showcase";
 import { STAGES, t } from "./i18n";
-import type { PageSummary } from "./types";
+import type { Manifest, PageSummary } from "./types";
 
 const pages: PageSummary[] = [
   { id: "financial/receipts", subCategoryLabel: "Receipts", fileName: "r.jpg", thumb: "", result: "" },
@@ -71,5 +71,40 @@ describe("loadManifest", () => {
   test("missing file gives empty manifest", () => {
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
     expect(loadManifest()).toEqual({ generatedAt: "", wall: [], categories: [] });
+  });
+});
+
+const m: Manifest = {
+  generatedAt: "",
+  wall: [],
+  categories: [
+    { key: "financial", label: "Financial", pages },
+    { key: "legal", label: "Legal", pages: [{ id: "legal/laws", subCategoryLabel: "Laws", fileName: "l.pdf", thumb: "", result: "/r/l.json" }] },
+  ],
+};
+
+describe("pagesFor", () => {
+  test("All flattens every category in order", () => {
+    expect(pagesFor(m, ALL).map((p) => p.id)).toEqual(["financial/receipts", "financial/invoices", "legal/laws"]);
+  });
+  test("a category returns its own pages", () => {
+    expect(pagesFor(m, "legal").map((p) => p.id)).toEqual(["legal/laws"]);
+  });
+  test("unknown key returns nothing", () => {
+    expect(pagesFor(m, "nope")).toEqual([]);
+  });
+});
+
+describe("expandForStress", () => {
+  test("duplicates pages up to the requested total, round-robin across categories", () => {
+    const big = expandForStress(m, 12);
+    const all = pagesFor(big, ALL);
+    expect(all).toHaveLength(12);
+    expect(new Set(all.map((p) => p.id)).size).toBe(12);
+    expect(big.categories.map((c) => c.pages.length)).toEqual([8, 4]);
+    expect(all.every((p) => p.result.startsWith("/r/") || p.result === "")).toBe(true);
+  });
+  test("never shrinks the real data", () => {
+    expect(pagesFor(expandForStress(m, 1), ALL)).toHaveLength(3);
   });
 });

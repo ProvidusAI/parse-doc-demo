@@ -40,3 +40,15 @@ test("Try DocAI opens the Providus platform in a new tab", () => {
   expect(link).toHaveAttribute("href", "https://platform.providus.ai/");
   expect(link).toHaveAttribute("target", "_blank");
 });
+
+test("All is the default tab", () => {
+  render(<Showcase manifest={manifest} />);
+  expect(screen.getAllByRole("tab")[0]).toHaveAttribute("aria-selected", "true");
+});
+
+test("?stress=N duplicates pages to N for load testing", async () => {
+  window.history.pushState({}, "", "/?stress=40");
+  render(<Showcase manifest={manifest} />);
+  expect(await screen.findAllByRole("button", { name: /1 page/ })).toHaveLength(40);
+  window.history.pushState({}, "", "/");
+});

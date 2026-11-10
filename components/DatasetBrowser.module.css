@@ -85,6 +85,9 @@
   margin: 0 auto;
   padding: 28px 32px 120px;
 }
+.group + .group {
+  margin-top: 56px;
+}
 .head {
   display: flex;
   align-items: baseline;
