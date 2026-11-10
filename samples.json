@@ -106,8 +106,8 @@
   "sourcePath": "travel_transport/boarding_passes/1747775738363.jpg",
   "page": 1,
   "lang": "en",
-  "status": "approved",
-  "note": "flydubai pass; passenger name, PNR and barcodes blacked out before upload",
+  "status": "rejected",
+  "note": "flydubai pass; passenger name, PNR and barcodes blacked out before upload; replaced by user-supplied specimen pass 2026-11-10",
   "redact": [
    [
     58,
@@ -158,6 +158,17 @@
     234
    ]
   ]
+ },
+ {
+  "category": "travel_transport",
+  "categoryLabel": "Travel & transport",
+  "subCategory": "boarding_passes",
+  "subCategoryLabel": "Boarding passes",
+  "sourcePath": "travel_transport/boarding_passes/specimen_jfk_ist.png",
+  "page": 1,
+  "lang": "en",
+  "status": "approved",
+  "note": "user-supplied specimen pass (JOHN DOE, JFK-IST); no real personal data"
  },
  {
   "category": "travel_transport",
