@@ -95,8 +95,69 @@
   "sourcePath": "travel_transport/boarding_passes/16.jpg",
   "page": 1,
   "lang": "ar-en",
+  "status": "rejected",
+  "note": "DocAI layout found only the logo; replaced on user request 2026-11-10"
+ },
+ {
+  "category": "travel_transport",
+  "categoryLabel": "Travel & transport",
+  "subCategory": "boarding_passes",
+  "subCategoryLabel": "Boarding passes",
+  "sourcePath": "travel_transport/boarding_passes/1747775738363.jpg",
+  "page": 1,
+  "lang": "en",
   "status": "approved",
-  "note": "Saudia boarding pass; name/PNR/ticket/barcode already redacted; DocAI layout found only the logo (2 runs) - kept by user as an honest result"
+  "note": "flydubai pass; passenger name, PNR and barcodes blacked out before upload",
+  "redact": [
+   [
+    58,
+    47,
+    214,
+    61
+   ],
+   [
+    430,
+    47,
+    568,
+    61
+   ],
+   [
+    338,
+    94,
+    384,
+    105
+   ],
+   [
+    338,
+    157,
+    384,
+    170
+   ],
+   [
+    438,
+    104,
+    484,
+    116
+   ],
+   [
+    438,
+    170,
+    484,
+    182
+   ],
+   [
+    54,
+    182,
+    220,
+    234
+   ],
+   [
+    438,
+    186,
+    568,
+    234
+   ]
+  ]
  },
  {
   "category": "travel_transport",
@@ -183,8 +244,19 @@
   "sourcePath": "legal/court_documents/100.jpg",
   "page": 1,
   "lang": "ar-en",
+  "status": "rejected",
+  "note": "historical manuscript; replaced on user request 2026-11-10"
+ },
+ {
+  "category": "legal",
+  "categoryLabel": "Legal",
+  "subCategory": "laws",
+  "subCategoryLabel": "Laws",
+  "sourcePath": "government/regulations/labor-law.pdf",
+  "page": 5,
+  "lang": "ar-en",
   "status": "approved",
-  "note": "FLAG: historical manuscript with historical seals/signatures"
+  "note": "Saudi Labor Law, chapter 1 definitions; public law text"
  },
  {
   "category": "business",
