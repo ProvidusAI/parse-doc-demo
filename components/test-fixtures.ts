@@ -34,7 +34,7 @@ export const result: ShowcaseResult = {
   subCategoryLabel: "Receipts",
   lang: "ar-en",
   source: { fileName: "receipts.png", page: 1 },
-  page: { image: "/showcase/financial/receipts/page.png", thumb: "/showcase/financial/receipts/thumb.jpg", width: 600, height: 800 },
+  page: { image: "/showcase/financial/receipts/page.jpg", thumb: "/showcase/financial/receipts/thumb.jpg", width: 600, height: 800 },
   upload: {
     fileName: "receipts-abc123-receipts.png",
     mimeType: "image/png",

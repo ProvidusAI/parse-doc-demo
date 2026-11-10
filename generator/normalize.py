@@ -74,9 +74,9 @@ def _extraction(extraction, schema, boxes):
     return {"json": extraction.get("jsonResult"), "values": values}
 
 
-def build_result(entry, *, file_meta, job, segments, page_png, rules, split, schema, extraction):
+def build_result(entry, *, file_meta, job, segments, page_image, rules, split, schema, extraction):
     rid = f"{entry['category']}/{entry['subCategory']}"
-    width, height = Image.open(io.BytesIO(page_png)).size
+    width, height = Image.open(io.BytesIO(page_image)).size
     result = (job or {}).get("result") or {}
     usage = result.get("usage") or {}
     segs = [_segment(s) for s in segments or []]
@@ -87,7 +87,7 @@ def build_result(entry, *, file_meta, job, segments, page_png, rules, split, sch
         "subCategory": entry["subCategory"], "subCategoryLabel": entry["subCategoryLabel"],
         "lang": entry["lang"],
         "source": {"fileName": entry["sourcePath"].split("/")[-1], "page": entry["page"]},
-        "page": {"image": f"/showcase/{rid}/page.png", "thumb": f"/showcase/{rid}/thumb.jpg",
+        "page": {"image": f"/showcase/{rid}/page.jpg", "thumb": f"/showcase/{rid}/thumb.jpg",
                  "width": width, "height": height},
         "upload": {**file_meta, "pageCount": result.get("page_count") or 1, "backend": usage.get("backend"),
                    "ocrModel": OCR_MODELS[entry["lang"]], "elapsedSeconds": usage.get("elapsed_seconds")},

@@ -78,7 +78,9 @@ class GenerateTest(unittest.TestCase):
         out = self.showcase / "financial" / "invoices"
         result = json.loads((out / "result.json").read_text(encoding="utf-8"))
         self.assertEqual(result["upload"]["ocrModel"], "docai-arabic-ocr-e4c")
-        self.assertTrue((out / "page.png").exists() and (out / "thumb.jpg").exists())
+        self.assertTrue((out / "page.jpg").exists() and (out / "thumb.jpg").exists())
+        self.assertFalse((out / "page.png").exists())
+        self.assertEqual(result["page"]["image"], "/showcase/financial/invoices/page.jpg")
         self.assertEqual(client.parse_options,
                          {"backend": "glm-ocr", "ocr_model": "docai-arabic-ocr-e4c", "force": True})
 

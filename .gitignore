@@ -11,3 +11,4 @@ generator/out/
 __pycache__/
 next-env.d.ts
 *.tsbuildinfo
+generator/*.log

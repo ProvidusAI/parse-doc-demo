@@ -8,6 +8,7 @@ from PIL import Image
 
 CARD_WIDTH = 480
 WALL_WIDTH = 160
+PAGE_MAX_SIDE = 2400  # boxes are 0–1000 normalised, so downscaling is safe
 
 
 def cut_page(src: Path, page: int, dst_dir: Path) -> Path:
@@ -32,6 +33,15 @@ def cut_page(src: Path, page: int, dst_dir: Path) -> Path:
     dst = dst_dir / src.name
     shutil.copyfile(src, dst)
     return dst
+
+
+def page_jpeg(png: bytes, max_side: int = PAGE_MAX_SIDE) -> bytes:
+    """DocAI page renders can be 15 MB+ PNGs; the inspector needs a light JPEG."""
+    im = Image.open(io.BytesIO(png)).convert("RGB")
+    im.thumbnail((max_side, max_side), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=85, optimize=True)
+    return buf.getvalue()
 
 
 def make_thumb(image: bytes | Path, dst: Path, width: int) -> None:

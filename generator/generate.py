@@ -18,7 +18,7 @@ from pathlib import Path
 
 from generator.docai_client import DocAI, DocAIError
 from generator.normalize import OCR_MODELS, build_result
-from generator.pages import CARD_WIDTH, cut_page, make_thumb, render_wall_thumb
+from generator.pages import CARD_WIDTH, cut_page, make_thumb, page_jpeg, render_wall_thumb
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "providus-arabic-english-dataset"
@@ -56,7 +56,7 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
     file_id = client.upload(upload, name)
     options = {"backend": "glm-ocr", "ocr_model": OCR_MODELS[entry["lang"]], "force": True}
     job = client.wait_job(file_id, client.parse(file_id, options))
-    segments, png = client.segments(file_id), client.page_image(file_id)
+    segments, page = client.segments(file_id), page_jpeg(client.page_image(file_id))
 
     rules = _try("split rules", client.run_op, "/v1/split/rules/suggest", {"file_id": file_id})
     split = (_try("split", client.run_op, "/v1/split/runs", {"file_id": file_id, "rules": rules["rules"]})
@@ -67,11 +67,11 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
 
     file_meta = {"fileName": name, "mimeType": mimetypes.guess_type(upload.name)[0] or "application/octet-stream",
                  "bytes": upload.stat().st_size}
-    result = build_result(entry, file_meta=file_meta, job=job, segments=segments, page_png=png, rules=rules,
+    result = build_result(entry, file_meta=file_meta, job=job, segments=segments, page_image=page, rules=rules,
                           split=split, schema=schema, extraction=extraction)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "page.png").write_bytes(png)
-    make_thumb(png, out / "thumb.jpg", CARD_WIDTH)
+    (out / "page.jpg").write_bytes(page)
+    make_thumb(page, out / "thumb.jpg", CARD_WIDTH)
     tmp = out / "result.json.tmp"
     tmp.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(out / "result.json")

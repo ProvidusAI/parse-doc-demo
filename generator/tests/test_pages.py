@@ -5,7 +5,7 @@ from pathlib import Path
 import pypdfium2 as pdfium
 from PIL import Image
 
-from generator.pages import cut_page, make_thumb, render_wall_thumb
+from generator.pages import cut_page, make_thumb, page_jpeg, render_wall_thumb
 
 
 def size(path):
@@ -62,6 +62,21 @@ class PagesTest(unittest.TestCase):
         dst = self.tmp / "t.jpg"
         make_thumb(src.read_bytes(), dst, 480)
         self.assertEqual(size(dst), (480, 640))
+
+    def test_page_jpeg_caps_longest_side(self):
+        import io
+        buf = io.BytesIO()
+        Image.new("RGB", (3000, 6000), "white").save(buf, "PNG")
+        out = page_jpeg(buf.getvalue(), 2400)
+        with Image.open(io.BytesIO(out)) as im:
+            self.assertEqual((im.format, im.size), ("JPEG", (1200, 2400)))
+
+    def test_page_jpeg_keeps_small_pages(self):
+        import io
+        buf = io.BytesIO()
+        Image.new("RGB", (600, 800), "white").save(buf, "PNG")
+        with Image.open(io.BytesIO(page_jpeg(buf.getvalue(), 2400))) as im:
+            self.assertEqual(im.size, (600, 800))
 
     def test_render_wall_thumb_pdf(self):
         src = self.tmp / "doc.pdf"

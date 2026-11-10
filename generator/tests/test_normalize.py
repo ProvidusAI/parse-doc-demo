@@ -28,7 +28,7 @@ def png(w=600, h=800):
 
 
 def build(**over):
-    kw = dict(file_meta=FILE_META, job=load("job.json"), segments=load("segments.json"), page_png=png(),
+    kw = dict(file_meta=FILE_META, job=load("job.json"), segments=load("segments.json"), page_image=png(),
               rules=load("rules.json"), split=load("split.json"), schema=load("schema.json"),
               extraction=load("extract.json"))
     kw.update(over)
@@ -43,7 +43,7 @@ class NormalizeTest(unittest.TestCase):
     def test_normalize_full(self):
         r = build()
         self.assertEqual(r["id"], "financial/invoices")
-        self.assertEqual(r["page"], {"image": "/showcase/financial/invoices/page.png",
+        self.assertEqual(r["page"], {"image": "/showcase/financial/invoices/page.jpg",
                                      "thumb": "/showcase/financial/invoices/thumb.jpg", "width": 600, "height": 800})
         self.assertEqual(r["upload"], {"fileName": "invoices-abc123-KSA invoice.png", "mimeType": "image/png",
                                        "bytes": 52011, "pageCount": 1, "backend": "glm-ocr",
