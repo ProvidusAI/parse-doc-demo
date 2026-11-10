@@ -19,8 +19,20 @@ test("tabs show counts and switch category", () => {
   expect(onActive).toHaveBeenCalledWith("government");
 });
 
+const fitPage = () => fireEvent.click(screen.getByRole("button", { name: "Fit page" }));
+
+test("Grid is the default view: a mosaic of tiles, ParseBench style", () => {
+  setup("all");
+  expect(screen.getByRole("button", { name: "Grid" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getAllByRole("button", { name: / · / })).toHaveLength(5);
+  expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
+  expect(screen.getByText(/scroll to zoom · Drag to pan · Click to inspect/)).toBeInTheDocument();
+  expect(screen.getByLabelText("Zoom")).toHaveTextContent(/%$/);
+});
+
 test("heading shows active category and count", () => {
   setup();
+  fitPage();
   expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Financial");
   expect(screen.getByText("4 document types · 1 page each")).toBeInTheDocument();
 });
@@ -43,7 +55,7 @@ test("empty search state", () => {
   expect(screen.getByText("No pages match")).toBeInTheDocument();
 });
 
-test("fit page toggle", () => {
+test("fit page shows captioned cards", () => {
   setup();
   const fit = screen.getByRole("button", { name: "Fit page" });
   fireEvent.click(fit);
@@ -66,20 +78,23 @@ test("All tab comes first with the total count", () => {
   expect(onActive).toHaveBeenCalledWith("all");
 });
 
-test("All view groups every page under its category", () => {
+test("Fit page in All groups every page under its category", () => {
   setup("all");
+  fitPage();
   expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Financial", "Government"]);
   expect(screen.getAllByRole("button", { name: /1 page/ })).toHaveLength(5);
 });
 
 test("search in All keeps categories that still match", () => {
   setup("all");
+  fitPage();
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "regul" } });
   expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Government"]);
 });
 
 test("card stagger is capped for long lists", () => {
   render(<DatasetBrowser manifest={expandForStress(manifest, 300)} active="all" onActive={vi.fn()} onOpen={vi.fn()} />);
+  fitPage();
   const cards = screen.getAllByRole("button", { name: /1 page/ });
   expect(cards).toHaveLength(300);
   const delays = cards.map((c) => parseInt(c.style.animationDelay || "0", 10));

@@ -49,6 +49,6 @@ test("All is the default tab", () => {
 test("?stress=N duplicates pages to N for load testing", async () => {
   window.history.pushState({}, "", "/?stress=40");
   render(<Showcase manifest={manifest} />);
-  expect(await screen.findAllByRole("button", { name: /1 page/ })).toHaveLength(40);
+  expect(await screen.findAllByRole("button", { name: / · / })).toHaveLength(40);
   window.history.pushState({}, "", "/");
 });

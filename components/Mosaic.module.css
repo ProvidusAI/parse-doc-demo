@@ -1,0 +1,50 @@
+/* fills the screen under the nav + toolbar; pans inside itself when zoomed in */
+.box {
+  height: calc(100vh - var(--nav-h) - var(--bar-h, 58px));
+  overflow: auto;
+  padding: 6px;
+  cursor: grab;
+  user-select: none;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.box::-webkit-scrollbar {
+  display: none;
+}
+.box:active {
+  cursor: grabbing;
+}
+.grid {
+  display: grid;
+  justify-content: center;
+  align-content: start;
+}
+.tile {
+  padding: 0;
+  border: 1px solid var(--border);
+  background: #fff;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  animation: fade 0.4s ease both;
+}
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  pointer-events: none;
+}
+.tile:hover,
+.tile:focus-visible {
+  border-color: #000;
+  transform: scale(1.04);
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.45);
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}

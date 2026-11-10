@@ -36,7 +36,7 @@ export default function Showcase({ manifest: real }: { manifest: Manifest }) {
   }, []);
 
   const explore = useCallback(() => {
-    const top = (dataRef.current?.offsetTop ?? FADE_PX) - 64;
+    const top = dataRef.current?.offsetTop ?? FADE_PX;
     window.scrollTo({ top, behavior: "smooth" });
   }, []);
 

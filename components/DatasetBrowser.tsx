@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
+import { THUMB_WIDTH } from "@/lib/mosaic";
 import { ALL, filterPages } from "@/lib/showcase";
 import type { Manifest } from "@/lib/types";
 import styles from "./DatasetBrowser.module.css";
+import Mosaic from "./Mosaic";
 
 interface Props {
   manifest: Manifest;
@@ -15,7 +17,20 @@ interface Props {
 
 export default function DatasetBrowser({ manifest, active, onActive, onOpen }: Props) {
   const [query, setQuery] = useState("");
-  const [fit, setFit] = useState(false);
+  const [fit, setFit] = useState(false); // false = Grid (mosaic), true = Fit page (captioned cards)
+  const [tileW, setTileW] = useState(0);
+  const [barH, setBarH] = useState(58);
+  const barRef = useRef<HTMLDivElement>(null);
+  const onZoom = useCallback((w: number) => setTileW(w), []);
+
+  // the mosaic fills the screen under the toolbar, whose height changes when its tabs wrap
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setBarH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   if (manifest.categories.length === 0) {
     return (
       <p className={styles.empty}>
@@ -33,9 +48,13 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
   // cap the stagger so a 400-card grid doesn't take half a minute to appear
   const delay = (i: number) => ({ animationDelay: `${Math.min(i, 12) * 70}ms` });
 
+  const tiles = visible.flatMap((c) =>
+    c.matches.map((p) => ({ id: p.id, label: c.label, sub: p.subCategoryLabel, thumb: p.thumb })),
+  );
+
   return (
-    <>
-      <div className={styles.bar}>
+    <div style={{ "--bar-h": `${barH}px` } as React.CSSProperties}>
+      <div className={styles.bar} ref={barRef}>
         <div className={styles.tabs} role="tablist" aria-label="Categories">
           <button type="button" role="tab" aria-selected={isAll} className={styles.chip} onClick={() => onActive(ALL)}>
             All
@@ -69,8 +88,22 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
             Fit page
           </button>
         </div>
+        {!fit && (
+          <span className={styles.zoom} aria-label="Zoom">
+            {tileW ? Math.round((tileW / THUMB_WIDTH) * 100) : 0}%
+          </span>
+        )}
       </div>
 
+      {!fit ? (
+        <div role="tabpanel" aria-label={isAll ? "All" : cats[0].label}>
+          {tiles.length === 0 ? (
+            <p className={`${styles.none} ${styles.noneGrid}`}>{t("en", "noMatch")}</p>
+          ) : (
+            <Mosaic items={tiles} onOpen={onOpen} onZoom={onZoom} />
+          )}
+        </div>
+      ) : (
       <div className={styles.section} role="tabpanel" aria-label={isAll ? "All" : cats[0].label}>
         {visible.length === 0 ? (
           <>
@@ -81,7 +114,7 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
           visible.map((c) => (
             <section key={c.key} className={styles.group}>
               <SectionHead label={c.label} count={c.pages.length} />
-              <div className={`${styles.grid} ${fit ? styles.fit : ""}`} key={`${c.key}-${active}`}>
+              <div className={styles.grid} key={`${c.key}-${active}`}>
                 {c.matches.map((p, i) => (
                   <button key={p.id} type="button" className={styles.card} style={delay(i)} onClick={() => onOpen(p.id)}>
                     <span className={styles.th}>
@@ -99,8 +132,12 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
           ))
         )}
       </div>
-      <div className={styles.hint}>{t("en", "hint")}</div>
-    </>
+      )}
+      <div className={`${styles.hint} ${fit ? "" : styles.hintGrid}`}>
+        {!fit && <span className={styles.hintIcon} aria-hidden="true">⛶</span>}
+        {t("en", fit ? "hint" : "hintGrid")}
+      </div>
+    </div>
   );
 }
 
