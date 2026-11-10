@@ -1,15 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
-import type { Box, Manifest, PageSummary } from "./types";
-
-const EMPTY: Manifest = { generatedAt: "", wall: [], categories: [] };
-
-/** Server-only: read the generated manifest at build time. */
-export function loadManifest(): Manifest {
-  const file = path.join(process.cwd(), "public", "showcase", "manifest.json");
-  if (!fs.existsSync(file)) return EMPTY;
-  return JSON.parse(fs.readFileSync(file, "utf8")) as Manifest;
-}
+import type { Box, PageSummary } from "./types";
 
 export function nextIndex(i: number, n: number, dir: 1 | -1): number {
   return (((i + dir) % n) + n) % n;

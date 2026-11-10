@@ -1,0 +1,130 @@
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 96px 32px;
+}
+.veil {
+  position: absolute;
+  inset: 0;
+  background: var(--veil);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fade 0.25s both;
+}
+.wrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 460px;
+  gap: 28px;
+  width: 100%;
+  max-width: 1240px;
+  height: 100%;
+  animation: fade-in 0.35s ease both;
+}
+.pagecol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 0;
+}
+.panelcol {
+  display: flex;
+  min-height: 0;
+}
+.panelcol > * {
+  flex: 1;
+  min-width: 0;
+}
+.meta {
+  text-align: right;
+  font: 14px var(--mono);
+  color: var(--t2);
+  margin-top: 12px;
+}
+.meta small {
+  display: block;
+  color: var(--t3);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.loading {
+  color: var(--t3);
+  align-self: center;
+}
+.arr,
+.x {
+  position: absolute;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.arr:hover,
+.x:hover {
+  border-color: #000;
+}
+.arr {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.left {
+  left: 28px;
+}
+.right {
+  right: 28px;
+}
+.x {
+  top: 18px;
+  right: 24px;
+}
+@media (max-width: 1100px) {
+  .modal {
+    padding: 72px 72px 24px;
+  }
+  .wrap {
+    grid-template-columns: minmax(0, 1fr) 380px;
+  }
+  .left {
+    left: 14px;
+  }
+  .right {
+    right: 14px;
+  }
+}
+@media (max-width: 760px) {
+  .modal {
+    display: block;
+    padding: 72px 16px 88px;
+    overflow-y: auto;
+  }
+  .wrap {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 16px;
+  }
+  .pagecol {
+    align-items: stretch;
+  }
+  .arr {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    transform: none;
+  }
+  .x {
+    position: fixed;
+  }
+}

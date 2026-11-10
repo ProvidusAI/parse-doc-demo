@@ -1,0 +1,45 @@
+.page {
+  position: relative;
+  aspect-ratio: var(--ar);
+  width: min(100%, calc((100vh - 190px) * var(--ratio)));
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.page img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.box {
+  position: absolute;
+  background: var(--ring-soft);
+  outline: 1px solid var(--ring);
+  transition: background 0.2s, outline-width 0.2s;
+  animation: fade 0.3s ease both;
+}
+.box[data-hi] {
+  background: var(--ring-hi);
+  outline-width: 2px;
+  z-index: 1;
+}
+.scan {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  top: -60px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 119, 199, 0.16), transparent);
+  border-bottom: 1.5px solid var(--ring);
+}
+.scanning .scan {
+  display: block;
+  animation: scan 1.8s ease-in-out infinite;
+}
+@media (max-width: 760px) {
+  .page {
+    width: 100%;
+  }
+}

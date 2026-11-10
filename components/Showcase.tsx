@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Manifest } from "@/lib/types";
 import DatasetBrowser from "./DatasetBrowser";
 import Hero from "./Hero";
+import Inspector from "./Inspector";
 import Nav from "./Nav";
 import PageWall from "./PageWall";
 import styles from "./Showcase.module.css";
@@ -29,6 +30,8 @@ export default function Showcase({ manifest }: { manifest: Manifest }) {
   }, []);
 
   const pages = manifest.categories.reduce((n, c) => n + c.pages.length, 0);
+  const category = manifest.categories.find((c) => c.key === active) ?? manifest.categories[0];
+  const openIndex = category ? category.pages.findIndex((p) => p.id === openId) : -1;
 
   return (
     <div className={styles.root} data-on-data={progress > 0.85 || undefined}>
@@ -38,6 +41,14 @@ export default function Showcase({ manifest }: { manifest: Manifest }) {
       <main id="dataset" ref={dataRef} className={styles.data}>
         <DatasetBrowser manifest={manifest} active={active} onActive={setActive} onOpen={setOpenId} />
       </main>
+      {category && openIndex >= 0 && (
+        <Inspector
+          pages={category.pages}
+          index={openIndex}
+          onIndex={(i) => setOpenId(category.pages[i].id)}
+          onClose={() => setOpenId(null)}
+        />
+      )}
     </div>
   );
 }

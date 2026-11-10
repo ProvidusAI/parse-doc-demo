@@ -1,5 +1,6 @@
 import fs from "node:fs";
-import { boxToPercent, filterPages, hasArabic, loadManifest, nextIndex } from "./showcase";
+import { loadManifest } from "./manifest";
+import { boxToPercent, filterPages, hasArabic, nextIndex } from "./showcase";
 import { STAGES, t } from "./i18n";
 import type { PageSummary } from "./types";
 
