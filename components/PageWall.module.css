@@ -1,0 +1,25 @@
+.wall {
+  position: fixed;
+  inset: var(--nav-h) 0 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px;
+  padding: 6px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wall img,
+.wall i {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+/* fallback cells before the generator has run: abstract page lines */
+.wall i {
+  background: linear-gradient(#ddd 0 8%, #fff 8% 14%, #eee 14% 18%, #fff 18% 24%, #eee 24% 28%, #fff 28% 40%,
+      #d6e6f5 40% 62%, #fff 62% 70%, #eee 70% 74%, #fff 74%);
+}

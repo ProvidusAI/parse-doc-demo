@@ -1,3 +1,6 @@
+import Showcase from "@/components/Showcase";
+import { loadManifest } from "@/lib/showcase";
+
 export default function Home() {
-  return <h1>ProvidusBench</h1>;
+  return <Showcase manifest={loadManifest()} />;
 }

@@ -1,0 +1,35 @@
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import Showcase from "./Showcase";
+import { manifest } from "./test-fixtures";
+
+beforeEach(() => {
+  Object.defineProperty(window, "scrollY", { value: 0, configurable: true });
+});
+
+function stat(label: string) {
+  return screen.getByText(label).previousElementSibling?.textContent;
+}
+
+test("hero shows manifest counts", () => {
+  render(<Showcase manifest={manifest} />);
+  expect(stat("Categories")).toBe("2");
+  expect(stat("Document types")).toBe("5");
+  expect(stat("Pipeline stages")).toBe("7");
+});
+
+test("scroll sets data-on-data", () => {
+  const { container } = render(<Showcase manifest={manifest} />);
+  const root = container.firstElementChild!;
+  expect(root).not.toHaveAttribute("data-on-data");
+  act(() => {
+    Object.defineProperty(window, "scrollY", { value: 500, configurable: true });
+    fireEvent.scroll(window);
+  });
+  expect(root).toHaveAttribute("data-on-data");
+});
+
+test("hero copy is present in both scripts", () => {
+  render(<Showcase manifest={manifest} />);
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Document intelligence that reads Arabic");
+  expect(screen.getByText("ذكاء المستندات باللغتين العربية والإنجليزية")).toBeInTheDocument();
+});
