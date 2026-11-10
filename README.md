@@ -6,6 +6,8 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 ![Landing page](docs/screenshots/01-landing.png)
 
+<sub>Shown in the stress view (<code>/?stress=400</code>); the live dataset has 21 pages.</sub>
+
 ## What it shows
 
 21 pages in 11 categories: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. There is one page per document type. The **All** tab shows every page grouped by category. Click a page to open the inspector. It has the page on the left and the 7 DocAI stages on the right:
@@ -22,18 +24,24 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 Anything DocAI did not return is shown as *"Not returned by DocAI"*. Numbers are never filled in. The panel switches between **English and Arabic (RTL)**, and ← / → move between document types in a category.
 
-| Dataset | OCR regions |
+> The screenshots below use the stress view (`/?stress=400`). The 21 real pages are duplicated to 400 to show how the site behaves with a large corpus.
+
+| All tab: 400 pages, ParseBench-style mosaic | Ctrl/⌘ + scroll to zoom, drag to pan |
 |---|---|
-| ![Dataset grid](docs/screenshots/02-dataset.png) | ![OCR regions](docs/screenshots/03-ocr-regions.png) |
-| **Parsed chunks with grounding** | **Split result** |
-| ![Parsed chunks](docs/screenshots/04-parsed-chunks.png) | ![Split result](docs/screenshots/05-split-result.png) |
-| **Extracted values, grounded on the page** | **Arabic panel (RTL)** |
-| ![Extracted schema](docs/screenshots/06-extracted-schema.png) | ![Arabic panel](docs/screenshots/07-arabic-panel.png) |
+| ![All tab mosaic](docs/screenshots/02-dataset.png) | ![Zoomed mosaic](docs/screenshots/10-mosaic-zoomed.png) |
+| **OCR regions** | **Parsed chunks with grounding** |
+| ![OCR regions](docs/screenshots/03-ocr-regions.png) | ![Parsed chunks](docs/screenshots/04-parsed-chunks.png) |
+| **Split result** | **Extracted values, grounded on the page** |
+| ![Split result](docs/screenshots/05-split-result.png) | ![Extracted schema](docs/screenshots/06-extracted-schema.png) |
+| **Arabic panel (RTL)** | |
+| ![Arabic panel](docs/screenshots/07-arabic-panel.png) | |
 
 <p>
-  <img src="docs/screenshots/08-mobile-landing.png" alt="Mobile landing" width="260">
+  <img src="docs/screenshots/08-mobile-landing.png" alt="Mobile landing" width="240">
   &nbsp;
-  <img src="docs/screenshots/09-mobile-inspector.png" alt="Mobile inspector" width="260">
+  <img src="docs/screenshots/11-mobile-mosaic.png" alt="Mobile mosaic" width="240">
+  &nbsp;
+  <img src="docs/screenshots/09-mobile-inspector.png" alt="Mobile inspector" width="240">
 </p>
 
 ## Run it
