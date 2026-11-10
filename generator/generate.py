@@ -25,6 +25,9 @@ CORPUS = ROOT / "providus-arabic-english-dataset"
 SHOWCASE = ROOT / "public" / "showcase"
 WORK = ROOT / "generator" / "out"
 
+# DocAI picks the engine family from DOCAI_OCR_ENGINE; a model from the other family degrades silently.
+EXPECTED_ENGINE = {"ar-en": "glm", "en": "paddle-vl"}
+
 ENGINE_HINT = {
     "ar-en": "DocAI's default GLM engine (no change needed) - docai-arabic-ocr-e4c",
     "en": "DOCAI_OCR_ENGINE=paddle-vl and DOCAI_OCR_MODEL=translate-studio/paddleocr-vl-1.6 "
@@ -56,14 +59,14 @@ def _try(label, fn, *args):
         return None
 
 
-def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=False):
+def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=False, ocr_engine=None):
     """Run one sample end to end. Returns the result path, or None when skipped."""
     rid = entry_id(entry)
     out = showcase / rid
     if is_done(entry, showcase) and not force:
         return None
     src = corpus / entry["sourcePath"]
-    upload = cut_page(src, entry["page"], work / "upload" / rid)
+    upload = cut_page(src, entry["page"], work / "upload" / rid, redact=entry.get("redact"))
     name = f"{entry['subCategory']}-{uuid.uuid4().hex[:6]}-{upload.name}"  # DocAI rejects duplicate filenames
     file_id = client.upload(upload, name)
     options = {"backend": "glm-ocr", "ocr_model": OCR_MODELS[entry["lang"]], "force": True}
@@ -80,7 +83,8 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
     file_meta = {"fileName": name, "mimeType": mimetypes.guess_type(upload.name)[0] or "application/octet-stream",
                  "bytes": upload.stat().st_size}
     result = build_result(entry, file_meta=file_meta, job=job, segments=segments, page_image=page, rules=rules,
-                          split=split, schema=schema, extraction=extraction)
+                          split=split, schema=schema, extraction=extraction,
+                          ocr_engine=ocr_engine)
     out.mkdir(parents=True, exist_ok=True)
     (out / "page.jpg").write_bytes(page)
     make_thumb(page, out / "thumb.jpg", CARD_WIDTH)
@@ -92,12 +96,16 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
 
 def run_batch(entries, lang, client, corpus, showcase, work, only=None, force=False):
     """Run every non-rejected entry of `lang`. Returns ids that failed."""
+    engine = client.ocr_engine()
+    if engine != EXPECTED_ENGINE[lang]:
+        raise SystemExit(f"DocAI is running the {engine} OCR engine; the {lang} batch needs "
+                         f"{EXPECTED_ENGINE[lang]}. Set: {ENGINE_HINT[lang]}")
     failed = []
     for e in entries:
         if e["lang"] != lang or e["status"] == "rejected" or (only and entry_id(e) != only):
             continue
         try:
-            done = run_entry(e, client, corpus, showcase, work, force=force)
+            done = run_entry(e, client, corpus, showcase, work, force=force, ocr_engine=engine)
             print(f"  {entry_id(e)}: {'ok' if done else 'skipped'}")
         except (DocAIError, ValueError, OSError) as err:
             print(f"  {entry_id(e)}: FAILED {err}", file=sys.stderr)

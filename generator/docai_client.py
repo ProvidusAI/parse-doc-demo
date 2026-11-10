@@ -53,6 +53,10 @@ class DocAI:
             raise DocAIError(f"{method} {path} -> {status}: {data}")
         return status, data
 
+    def ocr_engine(self) -> str:
+        """The OCR engine family DocAI is running ("glm" / "paddle-vl"), as DocAI reports it."""
+        return self._ok("GET", "/v1/ai/models?capability=ocr")[1]["resolved_ocr_engine"]
+
     def upload(self, path: Path, name: str) -> str:
         boundary = uuid.uuid4().hex
         ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"

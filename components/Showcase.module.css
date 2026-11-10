@@ -8,5 +8,5 @@
   margin-top: 100vh;
   min-height: 100vh;
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 120px);
-  padding-top: 120px;
+  padding-top: var(--nav-h);
 }

@@ -32,6 +32,7 @@ def build(**over):
               rules=load("rules.json"), split=load("split.json"), schema=load("schema.json"),
               extraction=load("extract.json"))
     kw.update(over)
+    kw.setdefault("ocr_engine", "glm")
     return build_result(ENTRY, **kw)
 
 
@@ -48,7 +49,8 @@ class NormalizeTest(unittest.TestCase):
                                      "thumb": "/showcase/financial/invoices/thumb.jpg", "width": 600, "height": 800})
         self.assertEqual(r["upload"], {"fileName": "invoices-abc123-KSA invoice.png", "mimeType": "image/png",
                                        "bytes": 52011, "pageCount": 1, "backend": "glm-ocr",
-                                       "ocrModel": "docai-arabic-ocr-e4c", "elapsedSeconds": 45.6})
+                                       "ocrModel": "docai-arabic-ocr-e4c", "ocrEngine": "glm",
+                                       "elapsedSeconds": 45.6})
         self.assertEqual(r["segments"][0], {"id": "p1_e0000", "type": "header", "label": "header",
                                             "text": "TAX INVOICE فاتورة ضريبية", "textless": False,
                                             "box": {"page": 1, "x0": 300, "y0": 20, "x1": 700, "y1": 60}})

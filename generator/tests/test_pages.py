@@ -50,6 +50,16 @@ class PagesTest(unittest.TestCase):
         out = cut_page(src, 1, self.tmp / "out")
         self.assertEqual(out.read_bytes(), src.read_bytes())
 
+    def test_cut_page_redacts_boxes(self):
+        src = self.tmp / "pass.jpg"
+        Image.new("RGB", (100, 50), "white").save(src, "JPEG")
+        out = cut_page(src, 1, self.tmp / "out", redact=[[10, 10, 40, 20]])
+        self.assertEqual(out.suffix, ".png")
+        with Image.open(out) as im:
+            self.assertEqual(im.getpixel((20, 15)), (0, 0, 0))
+            self.assertEqual(im.getpixel((60, 30)), (255, 255, 255))
+        self.assertNotEqual(out.read_bytes(), src.read_bytes())
+
     def test_cut_docx_raises(self):
         src = self.tmp / "form.docx"
         src.write_bytes(b"PK")

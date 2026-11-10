@@ -1,8 +1,7 @@
+/* sticky inside the dataset section: it takes real space, so the heading below is never hidden */
 .bar {
-  position: fixed;
+  position: sticky;
   top: var(--nav-h);
-  left: 0;
-  right: 0;
   z-index: 40;
   display: flex;
   flex-wrap: wrap;

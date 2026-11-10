@@ -42,6 +42,7 @@ export const result: ShowcaseResult = {
     pageCount: 1,
     backend: "glm-ocr",
     ocrModel: "docai-arabic-ocr-e4c",
+    ocrEngine: "glm",
     elapsedSeconds: 45.6,
   },
   segments: [

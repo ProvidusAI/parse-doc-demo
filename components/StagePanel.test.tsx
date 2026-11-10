@@ -24,8 +24,9 @@ const heading = () => screen.getByRole("heading", { level: 3 });
 test("starts on upload with real job values", () => {
   setup();
   expect(heading()).toHaveTextContent("Document ingestion");
-  expect(screen.getByText("glm-ocr")).toBeInTheDocument();
-  expect(screen.getByText("docai-arabic-ocr-e4c")).toBeInTheDocument();
+  expect(screen.getByText("OCR engine").closest("li")).toHaveTextContent("GLM-OCR");
+  expect(screen.getByText("OCR model").closest("li")).toHaveTextContent("docai-arabic-ocr-e4c");
+  expect(screen.queryByText(/requested/)).not.toBeInTheDocument();
   expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
 });
 
@@ -131,4 +132,20 @@ test("model-written names keep their own direction", () => {
   expect(screen.getByText("supplier_name")).toHaveAttribute("dir", "auto");
   step(/Split result/);
   expect(screen.getByText("invoice")).toHaveAttribute("dir", "auto");
+});
+
+test("paddle engine is named as such", () => {
+  setup({ ...result, upload: { ...result.upload, ocrEngine: "paddle-vl", ocrModel: "translate-studio/paddleocr-vl-1.6" } });
+  expect(screen.getByText("OCR engine").closest("li")).toHaveTextContent("PaddleOCR-VL");
+});
+
+test("choosing a step scrolls only the stepper, never the panel", () => {
+  const intoView = vi.fn();
+  const scrollTo = vi.fn();
+  Element.prototype.scrollIntoView = intoView;
+  Element.prototype.scrollTo = scrollTo as unknown as typeof Element.prototype.scrollTo;
+  setup();
+  step(/Extracted schema/);
+  expect(intoView).not.toHaveBeenCalled();
+  expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
 });

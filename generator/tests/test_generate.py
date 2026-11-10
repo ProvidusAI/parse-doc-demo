@@ -30,14 +30,17 @@ def entry(sub="invoices", lang="ar-en", status="candidate"):
 
 
 class FakeClient:
-    def __init__(self, fail=None):
-        self.fail, self.calls = fail or set(), []
+    def __init__(self, fail=None, engine="glm"):
+        self.fail, self.calls, self.engine = fail or set(), [], engine
 
     def _call(self, name, value):
         self.calls.append(name)
         if name in self.fail:
             raise DocAIError(f"{name} failed")
         return value
+
+    def ocr_engine(self):
+        return self._call("ocr_engine", self.engine)
 
     def upload(self, path, name):
         return self._call("upload", "file-1")
@@ -70,7 +73,7 @@ class GenerateTest(unittest.TestCase):
             Image.new("RGB", (60, 80), "white").save(self.corpus / "financial" / sub / "a.png")
 
     def run_entry(self, e, client, force=False):
-        return generate.run_entry(e, client, self.corpus, self.showcase, self.work, force=force)
+        return generate.run_entry(e, client, self.corpus, self.showcase, self.work, force=force, ocr_engine="glm")
 
     def test_run_entry_writes_outputs(self):
         client = FakeClient()
@@ -78,6 +81,7 @@ class GenerateTest(unittest.TestCase):
         out = self.showcase / "financial" / "invoices"
         result = json.loads((out / "result.json").read_text(encoding="utf-8"))
         self.assertEqual(result["upload"]["ocrModel"], "docai-arabic-ocr-e4c")
+        self.assertEqual(result["upload"]["ocrEngine"], "glm")
         self.assertTrue((out / "page.jpg").exists() and (out / "thumb.jpg").exists())
         self.assertFalse((out / "page.png").exists())
         self.assertEqual(result["page"]["image"], "/showcase/financial/invoices/page.jpg")
@@ -131,6 +135,17 @@ class GenerateTest(unittest.TestCase):
         with mock.patch.object(generate, "run_entry") as run:
             generate.run_batch(entries, "ar-en", FakeClient(), self.corpus, self.showcase, self.work)
         self.assertEqual([c.args[0]["subCategory"] for c in run.call_args_list], ["invoices"])
+
+    def test_batch_refuses_wrong_engine(self):
+        with mock.patch.object(generate, "run_entry") as run:
+            with self.assertRaisesRegex(SystemExit, "paddle-vl"):
+                generate.run_batch([entry()], "ar-en", FakeClient(engine="paddle-vl"), self.corpus, self.showcase, self.work)
+        run.assert_not_called()
+
+    def test_batch_passes_engine_reported_by_docai(self):
+        with mock.patch.object(generate, "run_entry") as run:
+            generate.run_batch([entry(lang="en")], "en", FakeClient(engine="paddle-vl"), self.corpus, self.showcase, self.work)
+        self.assertEqual(run.call_args.kwargs["ocr_engine"], "paddle-vl")
 
     def test_batch_continues_after_entry_failure(self):
         entries = [entry("invoices"), entry("receipts")]

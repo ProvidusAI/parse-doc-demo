@@ -92,8 +92,10 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight }
   }, [stage, result]);
 
   useEffect(() => {
-    const el = stepsRef.current?.children[step] as HTMLElement | undefined;
-    el?.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" });
+    // scroll only the stepper strip: scrollIntoView would also scroll the panel itself sideways
+    const strip = stepsRef.current;
+    const el = strip?.children[step] as HTMLElement | undefined;
+    if (strip && el) strip.scrollTo?.({ left: el.offsetLeft - (strip.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
   }, [step]);
 
   const Body = BODY[stage];

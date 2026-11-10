@@ -54,6 +54,8 @@ export interface ShowcaseResult {
     pageCount: number | null;
     backend: string | null;
     ocrModel: string;
+    /** engine family DocAI reported for the batch ("glm" | "paddle-vl") */
+    ocrEngine: string | null;
     elapsedSeconds: number | null;
   };
   segments: Segment[];

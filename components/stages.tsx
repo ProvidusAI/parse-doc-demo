@@ -29,6 +29,8 @@ function Missing({ lang }: { lang: UiLang }) {
   return <p className={styles.missing}>{t(lang, "notReturned")}</p>;
 }
 
+const ENGINE_NAME: Record<string, string> = { glm: "GLM-OCR", "paddle-vl": "PaddleOCR-VL" };
+
 const stagger = (i: number, ms = 60) => ({ animationDelay: `${i * ms}ms` });
 
 export function UploadStage({ result, lang }: StageProps) {
@@ -38,7 +40,7 @@ export function UploadStage({ result, lang }: StageProps) {
     ["upload.type", u.mimeType],
     ["upload.size", `${(u.bytes / 1024).toFixed(1)} KB`],
     ["upload.pages", u.pageCount == null ? null : String(u.pageCount)],
-    ["upload.backend", u.backend],
+    ["upload.engine", u.ocrEngine && (ENGINE_NAME[u.ocrEngine] ?? u.ocrEngine)],
     ["upload.ocrModel", u.ocrModel],
     ["upload.elapsed", u.elapsedSeconds == null ? null : `${u.elapsedSeconds.toFixed(1)} s`],
   ];

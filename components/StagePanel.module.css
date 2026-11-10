@@ -72,6 +72,7 @@
   border-radius: 50%;
 }
 .steps {
+  position: relative; /* offsetParent for centring the active step */
   display: flex;
   gap: 4px;
   overflow-x: auto;
@@ -179,7 +180,7 @@
 }
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   border: 1px solid var(--border);
   padding: 11px 12px;
@@ -215,12 +216,13 @@
   border-color: #cddff3;
   color: var(--ring);
 }
+/* full text: DocAI paragraphs are the point of the demo, never truncate them */
 .tx {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
 }
 .muted {
   flex: 1;
