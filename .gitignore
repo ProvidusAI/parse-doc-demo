@@ -1,0 +1,9 @@
+# source corpus (663 MB) and reference screenshots stay local
+providus-arabic-english-dataset/
+design.md/
+.scratch/
+
+node_modules/
+.next/
+out/
+.env*
