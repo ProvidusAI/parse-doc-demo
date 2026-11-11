@@ -21,13 +21,13 @@ function setup(r = result) {
 const step = (name: RegExp | string) => fireEvent.click(screen.getByRole("button", { name }));
 const heading = () => screen.getByRole("heading", { level: 3 });
 
-test("starts on upload with real job values", () => {
+test("starts on parsing & ocr with the engine DocAI used", () => {
   setup();
-  expect(heading()).toHaveTextContent("Document ingestion");
+  expect(heading()).toHaveTextContent("Layout parsing & OCR");
+  expect(screen.queryByRole("button", { name: /Upload/ })).not.toBeInTheDocument();
   expect(screen.getByText("OCR engine").closest("li")).toHaveTextContent("GLM-OCR");
   expect(screen.getByText("OCR model").closest("li")).toHaveTextContent("docai-arabic-ocr-e4c");
-  expect(screen.queryByText(/requested/)).not.toBeInTheDocument();
-  expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
+  expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
 });
 
 test("clicking a step switches body", () => {
@@ -35,12 +35,11 @@ test("clicking a step switches body", () => {
   step(/Split result/);
   expect(heading()).toHaveTextContent("Split result");
   expect(screen.getByText("Tax invoice")).toBeInTheDocument();
-  expect(screen.getByText("Step 5 of 7")).toBeInTheDocument();
+  expect(screen.getByText("Step 4 of 6")).toBeInTheDocument();
 });
 
 test("ocr step scans and draws every region", () => {
   const { onView } = setup();
-  step(/Parsing & OCR/);
   expect(onView).toHaveBeenLastCalledWith({ scanning: true, boxes: expect.any(Array) });
   expect(onView.mock.lastCall![0].boxes).toHaveLength(3);
 });
@@ -101,20 +100,19 @@ test("arabic toggle flips direction", () => {
   const root = container.firstElementChild!;
   expect(root).toHaveAttribute("dir", "rtl");
   expect(root).toHaveAttribute("lang", "ar");
-  expect(screen.getByRole("button", { name: /الرفع/ })).toBeInTheDocument();
-  expect(screen.getByText("الخطوة 1 من 7")).toBeInTheDocument();
+  expect(screen.getByText("الخطوة 1 من 6")).toBeInTheDocument();
 });
 
 test("resets to first step for a new page", () => {
   const { rerender, onView, onHighlight } = setup();
   step(/Split rules/);
   rerender(<Harness r={{ ...result, id: "financial/invoices" }} onView={onView} onHighlight={onHighlight} />);
-  expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
+  expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
 });
 
-test("missing page count is not invented", () => {
-  setup({ ...result, upload: { ...result.upload, pageCount: null } });
-  const cell = screen.getByText("Pages").closest("li")!;
+test("missing parse time is not invented", () => {
+  setup({ ...result, upload: { ...result.upload, elapsedSeconds: null } });
+  const cell = screen.getByText("Parse time").closest("li")!;
   expect(cell).toHaveTextContent("Not returned by DocAI");
 });
 

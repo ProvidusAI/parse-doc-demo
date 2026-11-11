@@ -12,7 +12,6 @@ import {
   OcrStage,
   SplitResultStage,
   SplitRulesStage,
-  UploadStage,
   type StageProps,
 } from "./stages";
 
@@ -31,7 +30,6 @@ interface Props {
 }
 
 const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
-  upload: UploadStage,
   ocr: OcrStage,
   chunks: ChunksStage,
   splitRules: SplitRulesStage,
@@ -43,8 +41,6 @@ const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
 /** Header pill: a count of what DocAI returned for this step (never an invented metric). */
 function pill(stage: Stage, r: ShowcaseResult, lang: UiLang): string | null {
   switch (stage) {
-    case "upload":
-      return r.upload.mimeType;
     case "ocr":
       return t(lang, "regions", { n: r.segments.length });
     case "chunks":

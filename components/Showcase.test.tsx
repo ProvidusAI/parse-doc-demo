@@ -14,7 +14,7 @@ test("hero shows manifest counts", () => {
   render(<Showcase manifest={manifest} />);
   expect(stat("Categories")).toBe("2");
   expect(stat("Document types")).toBe("5");
-  expect(stat("Pipeline stages")).toBe("7");
+  expect(stat("Pipeline stages")).toBe("6");
 });
 
 test("scroll sets data-on-data", () => {

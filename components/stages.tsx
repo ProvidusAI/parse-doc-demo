@@ -33,38 +33,24 @@ const ENGINE_NAME: Record<string, string> = { glm: "GLM-OCR", "paddle-vl": "Padd
 
 const stagger = (i: number, ms = 60) => ({ animationDelay: `${i * ms}ms` });
 
-export function UploadStage({ result, lang }: StageProps) {
+export function OcrStage({ result, lang }: StageProps) {
+  const counts = result.segments.reduce<Record<string, number>>((m, s) => ({ ...m, [s.type]: (m[s.type] ?? 0) + 1 }), {});
   const u = result.upload;
-  const cells: [Parameters<typeof t>[1], string | null][] = [
-    ["upload.file", u.fileName],
-    ["upload.type", u.mimeType],
-    ["upload.size", `${(u.bytes / 1024).toFixed(1)} KB`],
-    ["upload.pages", u.pageCount == null ? null : String(u.pageCount)],
+  const run: [Parameters<typeof t>[1], string | null][] = [
     ["upload.engine", u.ocrEngine && (ENGINE_NAME[u.ocrEngine] ?? u.ocrEngine)],
     ["upload.ocrModel", u.ocrModel],
     ["upload.elapsed", u.elapsedSeconds == null ? null : `${u.elapsedSeconds.toFixed(1)} s`],
   ];
   return (
     <>
-      <div className={styles.prog}>
-        <i />
-      </div>
-      <ul className={styles.fields}>
-        {cells.map(([key, value], i) => (
-          <li key={key} className={`${styles.f} ${key === "upload.file" ? styles.wide : ""}`} style={stagger(i)}>
+      <ul className={`${styles.fields} ${styles.run}`}>
+        {run.map(([key, value], i) => (
+          <li key={key} className={styles.f} style={stagger(i)}>
             <span className="lbl">{t(lang, key)}</span>
             {value == null ? <span className={styles.missing}>{t(lang, "notReturned")}</span> : <span className="mono">{value}</span>}
           </li>
         ))}
       </ul>
-    </>
-  );
-}
-
-export function OcrStage({ result, lang }: StageProps) {
-  const counts = result.segments.reduce<Record<string, number>>((m, s) => ({ ...m, [s.type]: (m[s.type] ?? 0) + 1 }), {});
-  return (
-    <>
       <div className={styles.types}>
         {Object.entries(counts).map(([type, n]) => (
           <span key={type} className={styles.typeCount}>

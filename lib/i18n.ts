@@ -1,15 +1,12 @@
 export type UiLang = "en" | "ar";
 
 const en = {
-  "stage.upload": "Upload",
   "stage.ocr": "Parsing & OCR",
   "stage.chunks": "Parsed chunks",
   "stage.splitRules": "Split rules",
   "stage.splitResult": "Split result",
   "stage.extractRules": "Extract rules",
   "stage.extracted": "Extracted schema",
-  "title.upload": "Document ingestion",
-  "sub.upload": "The page as it was sent to DocAI",
   "title.ocr": "Layout parsing & OCR",
   "sub.ocr": "Regions and text DocAI detected on the page",
   "title.chunks": "Parsed chunks & grounding",
@@ -23,16 +20,12 @@ const en = {
   "title.extracted": "Extracted record",
   "sub.extracted": "Structured values with grounded citations",
   category: "Category",
-  stepOf: "Step {n} of 7",
+  stepOf: "Step {n} of 6",
   notReturned: "Not returned by DocAI",
   noMatch: "No pages match",
   hint: "Click a page to see what DocAI produced · ← → to move between types",
   hintGrid: "⌘/Ctrl + scroll to zoom · Drag to pan · Click to inspect",
   docTypes: "{n} document types · 1 page each",
-  "upload.file": "File",
-  "upload.type": "Type",
-  "upload.size": "Size",
-  "upload.pages": "Pages",
   "upload.engine": "OCR engine",
   "upload.ocrModel": "OCR model",
   "upload.elapsed": "Parse time",
@@ -52,20 +45,18 @@ const en = {
   next: "Next type",
   language: "Panel language",
   model: "Model",
+  magnifier: "Magnifier",
 };
 
 export type UiKey = keyof typeof en;
 
 const ar: Record<UiKey, string> = {
-  "stage.upload": "الرفع",
   "stage.ocr": "التحليل والتعرّف الضوئي",
   "stage.chunks": "المقاطع المستخرجة",
   "stage.splitRules": "قواعد التقسيم",
   "stage.splitResult": "نتيجة التقسيم",
   "stage.extractRules": "قواعد الاستخراج",
   "stage.extracted": "المخطط المستخرج",
-  "title.upload": "استلام المستند",
-  "sub.upload": "الصفحة كما أُرسلت إلى DocAI",
   "title.ocr": "تحليل التخطيط والتعرّف الضوئي",
   "sub.ocr": "المناطق والنصوص التي اكتشفها DocAI في الصفحة",
   "title.chunks": "المقاطع وربطها بالصفحة",
@@ -79,16 +70,12 @@ const ar: Record<UiKey, string> = {
   "title.extracted": "السجل المستخرج",
   "sub.extracted": "قيم منظّمة مع إحالات إلى موضعها في الصفحة",
   category: "الفئة",
-  stepOf: "الخطوة {n} من 7",
+  stepOf: "الخطوة {n} من 6",
   notReturned: "لم يُرجعه DocAI",
   noMatch: "لا توجد صفحات مطابقة",
   hint: "انقر على صفحة لترى ما أنتجه DocAI · استخدم ← → للتنقّل بين الأنواع",
   hintGrid: "⌘/Ctrl مع التمرير للتكبير · اسحب للتنقّل · انقر للفحص",
   docTypes: "{n} أنواع مستندات · صفحة واحدة لكلٍّ منها",
-  "upload.file": "الملف",
-  "upload.type": "النوع",
-  "upload.size": "الحجم",
-  "upload.pages": "الصفحات",
   "upload.engine": "محرّك التعرّف الضوئي",
   "upload.ocrModel": "نموذج التعرّف الضوئي",
   "upload.elapsed": "مدة التحليل",
@@ -108,6 +95,7 @@ const ar: Record<UiKey, string> = {
   next: "النوع التالي",
   language: "لغة اللوحة",
   model: "النموذج",
+  magnifier: "المكبّر",
 };
 
 const STRINGS: Record<UiLang, Record<UiKey, string>> = { en, ar };
@@ -116,5 +104,5 @@ export function t(lang: UiLang, key: UiKey, vars: Record<string, string | number
   return STRINGS[lang][key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
 }
 
-export const STAGES = ["upload", "ocr", "chunks", "splitRules", "splitResult", "extractRules", "extracted"] as const;
+export const STAGES = ["ocr", "chunks", "splitRules", "splitResult", "extractRules", "extracted"] as const;
 export type Stage = (typeof STAGES)[number];

@@ -101,3 +101,22 @@ test("duplicated pages that share a result file still load", async () => {
   render(<Inspector pages={dupes} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
   expect(await screen.findByText("Financial · Receipts · 2 of 2")).toBeInTheDocument();
 });
+
+test("magnifier shows a zoomed lens of the page under the pointer", () => {
+  render(<PageView result={result} boxes={[]} highlight={null} scanning={false} />);
+  const toggle = screen.getByRole("button", { name: "Magnifier" });
+  const page = screen.getByRole("img").parentElement!;
+  fireEvent.pointerMove(page, { clientX: 50, clientY: 50 });
+  expect(page.querySelector("[data-lens]")).toBeNull(); // off by default
+
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute("aria-pressed", "true");
+  fireEvent.pointerMove(page, { clientX: 50, clientY: 50 });
+  const lens = page.querySelector<HTMLElement>("[data-lens]")!;
+  expect(lens.style.backgroundImage).toContain(result.page.image);
+
+  fireEvent.pointerLeave(page);
+  expect(page.querySelector("[data-lens]")).toBeNull();
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+});

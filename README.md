@@ -1,6 +1,6 @@
 # ProvidusBench
 
-A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Visitors browse a wall of pages by category, open any page, and step through what DocAI actually produced for it, from upload to the extracted schema. Every value on screen comes from a saved DocAI run; nothing is mocked.
+A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Visitors browse a wall of pages by category, open any page, and step through what DocAI actually produced for it, from OCR to the extracted schema. Every value on screen comes from a saved DocAI run; nothing is mocked.
 
 **Try DocAI:** [platform.providus.ai](https://platform.providus.ai/)
 
@@ -10,19 +10,18 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 ## What it shows
 
-21 pages in 11 categories: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. There is one page per document type. The **All** tab shows every page grouped by category. Click a page to open the inspector. It has the page on the left and the 7 DocAI stages on the right:
+21 pages in 11 categories: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. There is one page per document type. The **All** tab shows every page grouped by category. Click a page to open the inspector. It has the page on the left and the 6 DocAI stages on the right:
 
 | # | Stage | What you see |
 |---|---|---|
-| 1 | Upload | File, type, size, pages, the OCR engine and model DocAI used, parse time |
-| 2 | Parsing & OCR | Every detected region drawn on the page, with its type and text |
-| 3 | Parsed chunks | Chunks with grounding: hover one to highlight it on the page |
-| 4 | Split rules | Boundary rules DocAI suggested for the document |
-| 5 | Split result | Logical documents found, page ranges, confidence, quality |
-| 6 | Extract rules | The extraction schema DocAI generated (fields, types, required) |
-| 7 | Extracted schema | Extracted values with confidence. Click one to see where it came from, or switch to the raw JSON |
+| 1 | Parsing & OCR | The OCR engine and model DocAI used, parse time, and every detected region drawn on the page with its type and text |
+| 2 | Parsed chunks | Chunks with grounding: hover one to highlight it on the page |
+| 3 | Split rules | Boundary rules DocAI suggested for the document |
+| 4 | Split result | Logical documents found, page ranges, confidence, quality |
+| 5 | Extract rules | The extraction schema DocAI generated (fields, types, required) |
+| 6 | Extracted schema | Extracted values with confidence. Click one to see where it came from, or switch to the raw JSON |
 
-Anything DocAI did not return is shown as *"Not returned by DocAI"*. Numbers are never filled in. The panel switches between **English and Arabic (RTL)**, and ← / → move between document types in a category.
+Anything DocAI did not return is shown as *"Not returned by DocAI"*. Numbers are never filled in. The panel switches between **English and Arabic (RTL)**, and ← / → move between document types in a category. The magnifier button on the page turns on a lens that enlarges the page 2.5× under the cursor.
 
 > The screenshots below use the stress view (`/?stress=400`). The 21 real pages are duplicated to 400 to show how the site behaves with a large corpus.
 
@@ -69,7 +68,7 @@ The site is fully static. It reads the saved DocAI outputs from `public/showcase
 | Path | In git | What it is |
 |---|---|---|
 | `public/showcase/manifest.json` | yes | The list the site renders: categories, pages, thumbnails, wall images |
-| `public/showcase/<category>/<type>/result.json` | yes | DocAI output for one page, normalised for all 7 stages |
+| `public/showcase/<category>/<type>/result.json` | yes | DocAI output for one page, normalised for all 6 stages |
 | `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg` | yes | The page image DocAI rendered (max 2400px) and its card thumbnail |
 | `public/showcase/wall/` | yes | 160px thumbnails for the decorative background wall |
 | `samples.json` | yes | Which corpus page is shown for each type, its language and its review status |

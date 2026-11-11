@@ -326,8 +326,10 @@
   font-size: 13px;
   overflow-wrap: anywhere;
 }
-.wide {
-  grid-column: 1 / -1;
+/* OCR engine · model · parse time above the regions */
+.run {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
 }
 .fhead {
   display: flex;
@@ -377,25 +379,6 @@
   overflow: auto;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-.prog {
-  height: 3px;
-  background: var(--muted);
-  margin: 0 0 14px;
-  overflow: hidden;
-}
-.prog i {
-  display: block;
-  height: 100%;
-  background: var(--ring);
-  width: 100%;
-  animation: grow 1.4s ease both;
-  transform-origin: left;
-}
-@keyframes grow {
-  from {
-    transform: scaleX(0);
-  }
 }
 .missing {
   color: var(--t3);
