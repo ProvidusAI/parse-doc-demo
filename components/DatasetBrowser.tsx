@@ -21,6 +21,20 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
   const [tileW, setTileW] = useState(0);
   const [barH, setBarH] = useState(58);
   const barRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  // a plain mouse wheel scrolls the tab strip sideways (touchpads already can)
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY) || el.scrollWidth <= el.clientWidth) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
   const onZoom = useCallback((w: number) => setTileW(w), []);
 
   // the mosaic fills the screen under the toolbar, whose height changes when its tabs wrap
@@ -55,7 +69,7 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
   return (
     <div style={{ "--bar-h": `${barH}px` } as React.CSSProperties}>
       <div className={styles.bar} ref={barRef}>
-        <div className={styles.tabs} role="tablist" aria-label="Categories">
+        <div className={styles.tabs} ref={tabsRef} role="tablist" aria-label="Categories">
           <button type="button" role="tab" aria-selected={isAll} className={styles.chip} onClick={() => onActive(ALL)}>
             All
             <em>{total}</em>

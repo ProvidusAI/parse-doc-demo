@@ -5,6 +5,7 @@
     python -m generator.generate --wall            # render wall.json thumbnails
     python -m generator.generate --review          # write generator/out/review.html
     python -m generator.generate --manifest        # write public/showcase/manifest.json (approved only)
+    python -m generator.generate --import-parsed   # pages already parsed elsewhere ("parsed" entries)
 """
 import argparse
 import html
@@ -24,6 +25,9 @@ ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "providus-arabic-english-dataset"
 SHOWCASE = ROOT / "public" / "showcase"
 WORK = ROOT / "generator" / "out"
+# pages a teammate already parsed with DocAI: <industry>/<name>.segments.json + the original images
+PARSED = Path(os.environ.get("PARSED_DIR", ROOT.parent / "Industry-documents-E4c-parsed"))
+PARSED_IMAGES = Path(os.environ.get("PARSED_IMAGES_DIR", ROOT.parent.parent / "Indusry documents"))
 
 # DocAI picks the engine family from DOCAI_OCR_ENGINE; a model from the other family degrades silently.
 EXPECTED_ENGINE = {"ar-en": "glm", "en": "paddle-vl"}
@@ -85,6 +89,27 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
     result = build_result(entry, file_meta=file_meta, job=job, segments=segments, page_image=page, rules=rules,
                           split=split, schema=schema, extraction=extraction,
                           ocr_engine=ocr_engine)
+    return _write(out, page, result)
+
+
+def import_entry(entry, parsed: Path, images: Path, showcase: Path, force=False):
+    """A page already parsed elsewhere: its segments.json + original image, no DocAI call.
+    Split/extract were not run there, so those stages show 'Not returned by DocAI'."""
+    if is_done(entry, showcase) and not force:
+        return None
+    src = images / entry["sourcePath"]
+    segments = json.loads((parsed / f"{entry['parsed']}.segments.json").read_text(encoding="utf-8"))
+    doc = json.loads((parsed / f"{entry['parsed']}.extraction.json").read_text(encoding="utf-8"))["document"]
+    page = page_jpeg(src.read_bytes())
+    file_meta = {"fileName": src.name, "mimeType": mimetypes.guess_type(src.name)[0] or "application/octet-stream",
+                 "bytes": src.stat().st_size}
+    result = build_result(entry, file_meta=file_meta, job={"result": {"page_count": doc.get("page_count")}},
+                          segments=segments, page_image=page, rules=None, split=None, schema=None, extraction=None,
+                          ocr_engine=entry.get("ocrEngine"))
+    return _write(showcase / entry_id(entry), page, result)
+
+
+def _write(out: Path, page: bytes, result: dict) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     (out / "page.jpg").write_bytes(page)
     make_thumb(page, out / "thumb.jpg", CARD_WIDTH)
@@ -102,7 +127,7 @@ def run_batch(entries, lang, client, corpus, showcase, work, only=None, force=Fa
                          f"{EXPECTED_ENGINE[lang]}. Set: {ENGINE_HINT[lang]}")
     failed = []
     for e in entries:
-        if e["lang"] != lang or e["status"] == "rejected" or (only and entry_id(e) != only):
+        if e["lang"] != lang or e["status"] == "rejected" or e.get("parsed") or (only and entry_id(e) != only):
             continue
         try:
             done = run_entry(e, client, corpus, showcase, work, force=force, ocr_engine=engine)
@@ -174,6 +199,7 @@ def main(argv=None):
     ap.add_argument("--wall", action="store_true")
     ap.add_argument("--review", action="store_true")
     ap.add_argument("--manifest", action="store_true")
+    ap.add_argument("--import-parsed", action="store_true")
     a = ap.parse_args(argv)
     samples = json.loads((ROOT / "samples.json").read_text(encoding="utf-8"))
     if a.wall:
@@ -184,6 +210,11 @@ def main(argv=None):
         failed = run_batch(samples, a.lang, client, CORPUS, SHOWCASE, WORK, only=a.only, force=a.force)
         if failed:
             print(f"failed: {', '.join(failed)}", file=sys.stderr)
+    if a.import_parsed:
+        for e in samples:
+            if e.get("parsed") and e["status"] != "rejected" and (not a.only or entry_id(e) == a.only):
+                done = import_entry(e, PARSED, PARSED_IMAGES, SHOWCASE, force=a.force)
+                print(f"  {entry_id(e)}: {'ok' if done else 'skipped'}")
     if a.review:
         write_review(samples, SHOWCASE, WORK / "review.html")
         print(f"wrote {WORK / 'review.html'}")

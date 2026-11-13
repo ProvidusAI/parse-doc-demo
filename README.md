@@ -6,11 +6,11 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 ![Landing page](docs/screenshots/01-landing.png)
 
-<sub>Shown in the stress view (<code>/?stress=400</code>); the live dataset has 21 pages.</sub>
+<sub>Shown in the stress view (<code>/?stress=400</code>); the live dataset has 94 pages.</sub>
 
 ## What it shows
 
-21 pages in 11 categories: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. There is one page per document type. The **All** tab shows every page grouped by category. Click a page to open the inspector. It has the page on the left and the 6 DocAI stages on the right:
+94 pages in 18 categories. 21 of them, one per document type, were run through every DocAI stage: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. The other 73 are industry documents (chemical, education, health, manufacturing, marine, municipality, postal, sports) that a teammate had already parsed with the E4c OCR model. Those show the parse stages only; split and extract were not run on them. The **All** tab shows every page grouped by category. Click a page to open the inspector. It has the page on the left and the 6 DocAI stages on the right:
 
 | # | Stage | What you see |
 |---|---|---|
@@ -23,7 +23,7 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 Anything DocAI did not return is shown as *"Not returned by DocAI"*. Numbers are never filled in. The panel switches between **English and Arabic (RTL)**, and ← / → move between document types in a category. The magnifier button on the page turns on a lens that enlarges the page 2.5× under the cursor.
 
-> The screenshots below use the stress view (`/?stress=400`). The 21 real pages are duplicated to 400 to show how the site behaves with a large corpus.
+> The screenshots below use the stress view (`/?stress=400`). The real pages are duplicated to 400 to show how the site behaves with a large corpus.
 
 | All tab: 400 pages, ParseBench-style mosaic | Ctrl/⌘ + scroll to zoom, drag to pan |
 |---|---|
@@ -106,6 +106,12 @@ python -m generator.generate --lang en --only travel_transport/boarding_passes -
 python -m generator.generate --review                     # writes generator/out/review.html
 python -m generator.generate --manifest                   # publishes approved pages to the site
 python -m generator.generate --wall                       # re-renders the background wall
+```
+
+**Pages parsed elsewhere.** Entries with a `"parsed"` key (e.g. `"Chemical/01-eng"`) are not sent to DocAI. `--import-parsed` reads `<parsed>.segments.json` and `.extraction.json` from `../Industry-documents-E4c-parsed` (or `PARSED_DIR`) and the page image `sourcePath` from `../../Indusry documents` (or `PARSED_IMAGES_DIR`), then writes the same files as a DocAI run. The entry's `ocrModel` / `ocrEngine` say what was used; anything not recorded, like parse time, shows as "Not returned by DocAI".
+
+```bash
+python -m generator.generate --import-parsed --manifest
 ```
 
 Only entries with `"status": "approved"` appear on the site. To replace a page, mark the old entry `rejected`, add a new one for the same type, then run it and approve it. Image pages can carry `"redact": [[x0, y0, x1, y1], ...]` boxes, which are blacked out before upload.

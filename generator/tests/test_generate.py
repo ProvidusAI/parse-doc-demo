@@ -168,6 +168,49 @@ class GenerateTest(unittest.TestCase):
              "result": "/showcase/financial/invoices/result.json"}]}])
 
 
+def parsed_entry(status="approved"):
+    return {"category": "chemical", "categoryLabel": "Chemical", "subCategory": "01-eng",
+            "subCategoryLabel": "Safety Data Sheet", "sourcePath": "Chemical/01-eng.webp", "page": 1, "lang": "en",
+            "status": status, "parsed": "Chemical/01-eng", "ocrModel": "docai-arabic-ocr-e4c", "ocrEngine": "glm"}
+
+
+class ImportParsedTest(unittest.TestCase):
+    """Pages a teammate already parsed: segments.json + original image, no DocAI call."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.parsed, self.images, self.showcase = self.root / "parsed", self.root / "images", self.root / "showcase"
+        (self.parsed / "Chemical").mkdir(parents=True)
+        (self.images / "Chemical").mkdir(parents=True)
+        Image.new("RGB", (60, 80), "white").save(self.images / "Chemical" / "01-eng.webp")
+        (self.parsed / "Chemical" / "01-eng.segments.json").write_text(json.dumps(load("segments.json")), encoding="utf-8")
+        (self.parsed / "Chemical" / "01-eng.extraction.json").write_text(
+            json.dumps({"document": {"page_count": 1}}), encoding="utf-8")
+
+    def test_import_writes_result_without_docai(self):
+        generate.import_entry(parsed_entry(), self.parsed, self.images, self.showcase)
+        out = self.showcase / "chemical" / "01-eng"
+        r = json.loads((out / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(r["segments"]), len(load("segments.json")))
+        self.assertEqual((r["upload"]["ocrModel"], r["upload"]["ocrEngine"]), ("docai-arabic-ocr-e4c", "glm"))
+        self.assertEqual(r["upload"]["pageCount"], 1)
+        self.assertIsNone(r["upload"]["elapsedSeconds"])  # not recorded by the teammate's run: never invented
+        self.assertEqual((r["split"], r["schema"], r["extraction"], r["splitRules"]), (None, None, None, None))
+        self.assertEqual((r["page"]["width"], r["page"]["height"]), (60, 80))
+        self.assertTrue((out / "page.jpg").exists() and (out / "thumb.jpg").exists())
+        self.assertIsNone(generate.import_entry(parsed_entry(), self.parsed, self.images, self.showcase))  # done
+
+    def test_docai_batch_never_uploads_imported_pages(self):
+        with mock.patch.object(generate, "run_entry") as run:
+            generate.run_batch([parsed_entry()], "en", FakeClient(engine="paddle-vl"), None, None, None)
+        run.assert_not_called()
+
+    def test_imported_pages_reach_the_manifest(self):
+        generate.import_entry(parsed_entry(), self.parsed, self.images, self.showcase)
+        cats = generate.build_manifest([parsed_entry()], self.showcase)["categories"]
+        self.assertEqual(cats[0]["pages"][0]["fileName"], "01-eng.webp")
+
+
 class ClientTest(unittest.TestCase):
     def test_run_op_polls_until_completed(self):
         c = DocAI("http://x", "k")

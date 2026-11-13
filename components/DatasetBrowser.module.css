@@ -28,6 +28,21 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+/* one row however many categories: the strip scrolls sideways, search and view stay put */
+.tabs {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tabs .chip {
+  flex: none;
+}
 .chip {
   height: 34px;
   padding: 0 12px;
@@ -56,7 +71,7 @@
   border-color: #000;
 }
 .sp {
-  flex: 1;
+  flex: none;
 }
 .search {
   height: 34px;

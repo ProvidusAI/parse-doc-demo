@@ -90,7 +90,7 @@ def build_result(entry, *, file_meta, job, segments, page_image, rules, split, s
         "page": {"image": f"/showcase/{rid}/page.jpg", "thumb": f"/showcase/{rid}/thumb.jpg",
                  "width": width, "height": height},
         "upload": {**file_meta, "pageCount": result.get("page_count"), "backend": usage.get("backend"),
-                   "ocrModel": OCR_MODELS[entry["lang"]], "ocrEngine": ocr_engine,
+                   "ocrModel": entry.get("ocrModel") or OCR_MODELS[entry["lang"]], "ocrEngine": ocr_engine,
                    "elapsedSeconds": usage.get("elapsed_seconds")},
         "segments": segs,
         "splitRules": [{"id": r["id"], "name": r["name"], "description": r.get("description") or ""}
