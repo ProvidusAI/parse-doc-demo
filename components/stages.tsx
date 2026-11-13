@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
+import { segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
 import type { ShowcaseResult } from "@/lib/types";
 import styles from "./StagePanel.module.css";
@@ -19,10 +20,13 @@ export function DocText({ text, className = "" }: { text: string; className?: st
   );
 }
 
-const TAG_TONE: Record<string, string> = { header: "hd", title: "hd", table: "tb" };
-
+/** Element type chip in DocAI's colour for that type, matching its box on the page. */
 function Tag({ type }: { type: string }) {
-  return <span className={`${styles.k} ${styles[TAG_TONE[type] ?? ""] ?? ""}`}>{type.toUpperCase()}</span>;
+  return (
+    <span className={`${styles.k} ${styles.typed}`} style={{ "--c": segmentHex(type) } as React.CSSProperties}>
+      {type.toUpperCase()}
+    </span>
+  );
 }
 
 function Missing({ lang }: { lang: UiLang }) {

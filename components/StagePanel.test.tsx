@@ -44,6 +44,14 @@ test("ocr step scans and draws every region", () => {
   expect(onView.mock.lastCall![0].boxes).toHaveLength(3);
 });
 
+test("chunks step labels every box with its number and type", () => {
+  const { onView } = setup();
+  step(/Parsed chunks/);
+  const boxes = onView.mock.lastCall![0].boxes;
+  expect(boxes.map((b: { tag: string }) => b.tag)).toEqual(["1.header", "2.table", "3.logo"]);
+  expect(boxes[1]).toMatchObject({ key: "seg-2", type: "table" });
+});
+
 test("chunk hover highlights", () => {
   const { onHighlight } = setup();
   step(/Parsed chunks/);

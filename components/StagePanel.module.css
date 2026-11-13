@@ -206,15 +206,10 @@
   flex: none;
   white-space: nowrap;
 }
-.k.tb {
-  background: #e9f6ef;
-  border-color: #c5e7d4;
-  color: var(--ok);
-}
-.k.hd {
-  background: #eef3fb;
-  border-color: #cddff3;
-  color: var(--ring);
+.k.typed {
+  color: color-mix(in srgb, var(--c) 80%, #000);
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+  border-color: color-mix(in srgb, var(--c) 35%, #fff);
 }
 /* full text: DocAI paragraphs are the point of the demo, never truncate them */
 .tx {

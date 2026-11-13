@@ -14,15 +14,30 @@
 }
 .box {
   position: absolute;
-  background: var(--ring-soft);
-  outline: 1px solid var(--ring);
+  background: color-mix(in srgb, var(--c, var(--ring)) 8%, transparent);
+  outline: 1px solid var(--c, var(--ring));
   transition: background 0.2s, outline-width 0.2s;
   animation: fade 0.3s ease both;
 }
 .box[data-hi] {
-  background: var(--ring-hi);
+  background: color-mix(in srgb, var(--c, var(--ring)) 20%, transparent);
   outline-width: 2px;
   z-index: 1;
+}
+/* DocAI-style corner label: "3.table" in the type colour */
+.tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 4px;
+  font: 600 10px/1 var(--mono);
+  color: #fff;
+  background: var(--c, var(--ring));
+  pointer-events: none;
 }
 .scan {
   display: none;

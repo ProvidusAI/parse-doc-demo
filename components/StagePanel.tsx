@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { STAGES, t, type Stage, type UiLang } from "@/lib/i18n";
+import { segmentTag } from "@/lib/segments";
 import type { ShowcaseResult } from "@/lib/types";
 import type { PageBox } from "./PageView";
 import styles from "./StagePanel.module.css";
@@ -60,7 +61,10 @@ function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
   if (stage === "ocr" || stage === "chunks") {
     return {
       scanning: stage === "ocr",
-      boxes: r.segments.flatMap((s) => (s.box ? [{ key: s.id, box: s.box }] : [])),
+      // coloured by element type; the chunks step also tags each box "n.type" like DocAI
+      boxes: r.segments.flatMap((s, i) =>
+        s.box ? [{ key: s.id, box: s.box, type: s.type, tag: stage === "chunks" ? segmentTag(i + 1, s.type) : undefined }] : [],
+      ),
     };
   }
   if (stage === "extracted") {

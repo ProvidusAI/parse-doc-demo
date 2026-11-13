@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { t } from "@/lib/i18n";
+import { segmentHex } from "@/lib/segments";
 import { boxToPercent } from "@/lib/showcase";
 import type { Box, ShowcaseResult } from "@/lib/types";
 import styles from "./PageView.module.css";
@@ -7,6 +8,10 @@ import styles from "./PageView.module.css";
 export interface PageBox {
   key: string;
   box: Box;
+  /** element type: colours the box like DocAI */
+  type?: string;
+  /** corner label, e.g. "3.table" */
+  tag?: string;
 }
 
 interface Props {
@@ -57,8 +62,10 @@ export default function PageView({ result, boxes, highlight, scanning }: Props) 
             data-box={b.key}
             data-hi={b.key === highlight || undefined}
             className={styles.box}
-            style={boxToPercent(b.box)}
-          />
+            style={{ ...boxToPercent(b.box), ...(b.type && { "--c": segmentHex(b.type) }) } as React.CSSProperties}
+          >
+            {b.tag && <span className={styles.tag}>{b.tag}</span>}
+          </div>
         ))}
       <div className={styles.scan} aria-hidden="true" />
       {magnify && lens && <div data-lens className={styles.lens} style={{ ...lens, width: LENS, height: LENS }} aria-hidden="true" />}

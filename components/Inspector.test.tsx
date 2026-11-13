@@ -96,6 +96,20 @@ test("page view draws page-1 boxes and highlights one", () => {
   expect(drawn[0]).toHaveStyle({ left: "30%", top: "2%", width: "40%", height: "4%" });
 });
 
+test("labelled boxes show their tag in the type colour", () => {
+  const { container } = render(
+    <PageView
+      result={result}
+      boxes={[{ key: "seg-2", box: { page: 1, x0: 40, y0: 200, x1: 960, y1: 600 }, type: "table", tag: "2.table" }]}
+      highlight={null}
+      scanning={false}
+    />,
+  );
+  const box = container.querySelector<HTMLElement>("[data-box]")!;
+  expect(box).toHaveTextContent("2.table");
+  expect(box.style.getPropertyValue("--c")).toBe("#f97316");
+});
+
 test("duplicated pages that share a result file still load", async () => {
   const dupes = [{ ...pages[0], id: "financial/receipts~1" }, { ...pages[0], id: "financial/receipts~2" }];
   render(<Inspector pages={dupes} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
