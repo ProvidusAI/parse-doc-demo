@@ -15,16 +15,46 @@ interface Props {
   onClose(): void;
 }
 
+/** how long the opening scan plays before the panel slides in; matches the `scan` keyframe in PageView.module.css */
+export const INTRO_MS = 1500;
+
+const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
 export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   const [loaded, setLoaded] = useState<{ url: string; result: ShowcaseResult } | null>(null);
   const [error, setError] = useState(false);
   const [boxes, setBoxes] = useState<PageBox[]>([]);
   const [highlight, setHighlight] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
+  const [reduced] = useState(reducedMotion);
+  const [phase, setPhase] = useState<"intro" | "ready">(reduced ? "ready" : "intro");
+  const [scanning, setScanning] = useState(!reduced);
   const [lang, setLang] = useState<UiLang>("en");
   const closeRef = useRef<HTMLButtonElement>(null);
   const summary = pages[index];
   const n = pages.length;
+  const [scannedId, setScannedId] = useState(summary.id);
+
+  // a new page after the intro replays one scan pass (during the intro the running scan just carries on)
+  if (scannedId !== summary.id) {
+    setScannedId(summary.id);
+    if (phase === "ready" && !reduced) setScanning(true);
+  }
+
+  // one intro timer from opening, however many pages are visited meanwhile
+  useEffect(() => {
+    if (phase !== "intro") return;
+    const id = setTimeout(() => {
+      setPhase("ready");
+      setScanning(false);
+    }, INTRO_MS);
+    return () => clearTimeout(id);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "ready" || !scanning) return;
+    const id = setTimeout(() => setScanning(false), INTRO_MS);
+    return () => clearTimeout(id);
+  }, [phase, scanning, summary.id]);
 
   useEffect(() => {
     let live = true;
@@ -86,7 +116,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
         ›
       </button>
 
-      <div className={styles.wrap} key={summary.id}>
+      <div className={styles.wrap} key={summary.id} data-phase={phase}>
         <div className={styles.pagecol}>
           {current ? (
             <>
@@ -102,19 +132,21 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
             <div className={styles.loading}>{error ? "Could not load this page." : ""}</div>
           )}
         </div>
-        <div className={styles.panelcol}>
-          {current && (
-            <StagePanel
-              result={current}
-              lang={lang}
-              onLang={setLang}
-              onView={(v) => {
-                setBoxes(v.boxes);
-              }}
-              onHighlight={setHighlight}
-            />
-          )}
-        </div>
+        {phase === "ready" && (
+          <div className={styles.panelcol}>
+            {current && (
+              <StagePanel
+                result={current}
+                lang={lang}
+                onLang={setLang}
+                onView={(v) => {
+                  setBoxes(v.boxes);
+                }}
+                onHighlight={setHighlight}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

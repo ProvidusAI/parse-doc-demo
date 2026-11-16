@@ -31,6 +31,10 @@
   height: 100%;
   animation: fade-in 0.35s ease both;
 }
+/* intro: the page alone, centred, while it scans */
+.wrap[data-phase="intro"] {
+  grid-template-columns: auto;
+}
 .pagecol {
   width: min-content; /* exactly the page's width, so nothing pushes the pair off-centre */
   display: flex;
@@ -42,6 +46,7 @@
 .panelcol {
   display: flex;
   min-height: 0;
+  animation: panel-in 0.45s ease both;
 }
 .panelcol > * {
   flex: 1;
@@ -117,7 +122,8 @@
     padding: 72px 16px 88px;
     overflow-y: auto;
   }
-  .wrap {
+  .wrap,
+  .wrap[data-phase="intro"] {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
     gap: 16px;
@@ -143,4 +149,7 @@
 }
 @keyframes fade {
   from { opacity: 0; }
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(24px); }
 }

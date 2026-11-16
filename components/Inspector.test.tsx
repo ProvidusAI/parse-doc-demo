@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import Inspector from "./Inspector";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import Inspector, { INTRO_MS } from "./Inspector";
 import PageView from "./PageView";
 import { manifest, result } from "./test-fixtures";
 
@@ -12,7 +12,17 @@ beforeEach(() => {
     return { ok: true, json: async () => ({ ...result, id }) };
   }));
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+// fake clock that still ticks in real time, so findBy* keeps polling
+const fakeClock = () => vi.useFakeTimers({ shouldAdvanceTime: true });
+const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
+const pipeline = () => screen.queryByRole("region", { name: "DocAI pipeline" });
+const pageEl = () => screen.getByRole("img").parentElement!;
+const wrap = () => screen.getByRole("dialog").querySelector("[data-phase]")!;
 
 function setup(index = 0) {
   const onIndex = vi.fn();
@@ -64,8 +74,10 @@ test("a slow response for a page you already left is ignored", async () => {
 });
 
 test("panel language survives moving to the next page", async () => {
+  fakeClock();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
   await screen.findByText("Financial · Receipts · 1 of 4");
+  advance(INTRO_MS);
   fireEvent.click(screen.getByRole("button", { name: "العربية" }));
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
   await screen.findByText("Financial · Receipts · 2 of 4");
@@ -133,4 +145,64 @@ test("magnifier shows a zoomed lens of the page under the pointer", () => {
   expect(page.querySelector("[data-lens]")).toBeNull();
   fireEvent.click(toggle);
   expect(toggle).toHaveAttribute("aria-pressed", "false");
+});
+
+test("intro shows the page alone, then the panel on Parsed chunks", async () => {
+  fakeClock();
+  setup(0);
+  await screen.findByText("receipts.png");
+  expect(wrap()).toHaveAttribute("data-phase", "intro");
+  expect(pipeline()).toBeNull();
+  expect(pageEl()).toHaveClass("scanning");
+  advance(INTRO_MS);
+  expect(wrap()).toHaveAttribute("data-phase", "ready");
+  expect(screen.getByRole("heading", { name: "Parsed chunks & grounding" })).toBeInTheDocument();
+  expect(pageEl()).not.toHaveClass("scanning");
+});
+
+test("reduced motion skips the intro", async () => {
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+  setup(0);
+  await screen.findByText("receipts.png");
+  expect(wrap()).toHaveAttribute("data-phase", "ready");
+  expect(pipeline()).toBeInTheDocument();
+  expect(pageEl()).not.toHaveClass("scanning");
+});
+
+test("closing during the intro leaves no pending timer", async () => {
+  fakeClock();
+  const errors = vi.spyOn(console, "error");
+  const { unmount } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("receipts.png");
+  unmount();
+  expect(vi.getTimerCount()).toBe(0);
+  advance(INTRO_MS * 2);
+  expect(errors).not.toHaveBeenCalled();
+});
+
+test("arrow during the intro does not restart it", async () => {
+  fakeClock();
+  const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 1 of 4");
+  advance(INTRO_MS - 100);
+  rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 2 of 4");
+  expect(pipeline()).toBeNull();
+  advance(100);
+  expect(wrap()).toHaveAttribute("data-phase", "ready");
+  expect(pipeline()).toBeInTheDocument();
+});
+
+test("arrow after the intro replays only the scan", async () => {
+  fakeClock();
+  const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 1 of 4");
+  advance(INTRO_MS);
+  rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 2 of 4");
+  expect(wrap()).toHaveAttribute("data-phase", "ready");
+  expect(pipeline()).toBeInTheDocument();
+  expect(pageEl()).toHaveClass("scanning");
+  advance(INTRO_MS);
+  expect(pageEl()).not.toHaveClass("scanning");
 });

@@ -19,8 +19,9 @@
   transition: background 0.2s, outline-width 0.2s;
   animation: fade 0.3s ease both;
 }
+/* type colour + a dark shade, so the hovered box reads on coloured and dark pages too */
 .box[data-hi] {
-  background: color-mix(in srgb, var(--c, var(--ring)) 20%, transparent);
+  background: color-mix(in srgb, var(--c, var(--ring)) 35%, rgba(0, 0, 0, 0.18));
   outline-width: 2px;
   z-index: 1;
 }
@@ -51,7 +52,7 @@
 }
 .scanning .scan {
   display: block;
-  animation: scan 1.8s ease-in-out infinite;
+  animation: scan 1.5s ease-in-out 1 both; /* one pass = INTRO_MS in Inspector.tsx */
 }
 /* magnifier: a round lens showing the page at ZOOM× under the pointer */
 .magnify {
