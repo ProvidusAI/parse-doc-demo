@@ -28,6 +28,8 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   const [reduced] = useState(reducedMotion);
   const [phase, setPhase] = useState<"intro" | "ready">(reduced ? "ready" : "intro");
   const [scanning, setScanning] = useState(!reduced);
+  // panel slides in only as the intro ends; on later pages it just appears
+  const [entering, setEntering] = useState(false);
   const [lang, setLang] = useState<UiLang>("en");
   const closeRef = useRef<HTMLButtonElement>(null);
   const summary = pages[index];
@@ -37,6 +39,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   // a new page after the intro replays one scan pass (during the intro the running scan just carries on)
   if (scannedId !== summary.id) {
     setScannedId(summary.id);
+    setEntering(false);
     if (phase === "ready" && !reduced) setScanning(true);
   }
 
@@ -46,6 +49,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     const id = setTimeout(() => {
       setPhase("ready");
       setScanning(false);
+      setEntering(true);
     }, INTRO_MS);
     return () => clearTimeout(id);
   }, [phase]);
@@ -133,7 +137,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
           )}
         </div>
         {phase === "ready" && (
-          <div className={styles.panelcol}>
+          <div className={styles.panelcol} data-enter={entering || undefined}>
             {current && (
               <StagePanel
                 result={current}

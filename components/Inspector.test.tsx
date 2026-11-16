@@ -206,3 +206,14 @@ test("arrow after the intro replays only the scan", async () => {
   advance(INTRO_MS);
   expect(pageEl()).not.toHaveClass("scanning");
 });
+
+test("the panel slides in once, when the intro ends, not on arrows", async () => {
+  fakeClock();
+  const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 1 of 4");
+  advance(INTRO_MS);
+  expect(pipeline()!.parentElement).toHaveAttribute("data-enter");
+  rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  await screen.findByText("Financial · Receipts · 2 of 4");
+  expect(pipeline()!.parentElement).not.toHaveAttribute("data-enter");
+});

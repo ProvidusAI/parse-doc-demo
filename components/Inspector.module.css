@@ -46,6 +46,8 @@
 .panelcol {
   display: flex;
   min-height: 0;
+}
+.panelcol[data-enter] {
   animation: panel-in 0.45s ease both;
 }
 .panelcol > * {
