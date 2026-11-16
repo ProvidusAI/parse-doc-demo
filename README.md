@@ -27,8 +27,8 @@ Anything DocAI did not return is shown as *"Not returned by DocAI"*. Numbers are
 | All tab: 400 pages, ParseBench-style mosaic | Ctrl/⌘ + scroll to zoom, drag to pan |
 |---|---|
 | ![All tab mosaic](docs/screenshots/02-dataset.png) | ![Zoomed mosaic](docs/screenshots/10-mosaic-zoomed.png) |
-| **OCR regions** | **Parsed chunks with grounding** |
-| ![OCR regions](docs/screenshots/03-ocr-regions.png) | ![Parsed chunks](docs/screenshots/04-parsed-chunks.png) |
+| **Page regions** | **Parsed chunks with grounding** |
+| ![Page regions](docs/screenshots/03-ocr-regions.png) | ![Parsed chunks](docs/screenshots/04-parsed-chunks.png) |
 | **Split result** | **Extracted values, grounded on the page** |
 | ![Split result](docs/screenshots/05-split-result.png) | ![Extracted schema](docs/screenshots/06-extracted-schema.png) |
 | **Arabic panel (RTL)** | |
