@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from generator.normalize import _segment, build_result, table_grid, table_text
+from generator.normalize import _segment, build_result, mirror_rtl_cells, table_grid, table_text
 
 FIX = Path(__file__).parent / "fixtures"
 ENTRY = {
@@ -180,3 +180,72 @@ class TableGridTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+MEASURED = {"rows": "detected", "cols": "detected"}
+
+
+def _row(r, widths, texts):
+    """One span-free row of site cells, boxes side by side left to right."""
+    out, x = [], 0
+    for c, (w, t) in enumerate(zip(widths, texts)):
+        out.append({"row": r, "col": c, "rowSpan": 1, "colSpan": 1, "text": t, "header": False,
+                    "box": {"page": 1, "x0": x, "y0": r * 10, "x1": x + w, "y1": r * 10 + 10}})
+        x += w
+    return out
+
+
+def _texts(cells):
+    return [[c["text"] for c in cells if c["row"] == r] for r in sorted({c["row"] for c in cells})]
+
+
+class MirrorRtlCellsTests(unittest.TestCase):
+    # DocAI pairs TableFormer's left-to-right columns with OCR text in reading order; for Arabic that
+    # order is sometimes right-to-left, so the label lands in the numbers' box (utility statement page)
+    def test_mirrored_table_is_put_back(self):
+        cells = (_row(0, [34, 41, 35, 68], ["الفاتورة", "", "", ""])
+                 + _row(1, [61, 42, 58, 129], ["قيمة استهلاك المياه", "2078.30", "103.92", "2,182.22"])
+                 + _row(2, [36, 32, 33, 179], ["قيمة الصرف الصحي", "0.00", "0.00", "0.00"])
+                 + _row(3, [36, 33, 34, 124], ["رسوم خدمة العداد", "4.67", "0.23", "4.90"])
+                 + _row(4, [36, 13, 33, 52], ["تسويات", "0.00", "-", "0.00"]))  # weak on its own, follows the table
+        self.assertEqual(_texts(mirror_rtl_cells(cells, MEASURED)), [
+            ["", "", "", "الفاتورة"],
+            ["2,182.22", "103.92", "2078.30", "قيمة استهلاك المياه"],
+            ["0.00", "0.00", "0.00", "قيمة الصرف الصحي"],
+            ["4.90", "0.23", "4.67", "رسوم خدمة العداد"],
+            ["0.00", "-", "0.00", "تسويات"],
+        ])
+
+    def test_only_clearly_mirrored_rows_flip_in_a_mostly_correct_table(self):
+        cells = (_row(0, [81, 40], ["بداية الفترة 1439/04/27", "التاريخ"])
+                 + _row(1, [43, 76], ["28.00", "القراءة"])
+                 + _row(2, [24, 132], ["فترة الاستهلاك (يوم)", "28"]))
+        self.assertEqual(_texts(mirror_rtl_cells(cells, MEASURED)), [
+            ["بداية الفترة 1439/04/27", "التاريخ"], ["28.00", "القراءة"], ["28", "فترة الاستهلاك (يوم)"]])
+
+    def test_latin_tables_and_fixed_tables_are_left_alone(self):
+        latin = _row(0, [24, 132], ["Consumption period (days)", "28"])
+        self.assertEqual(mirror_rtl_cells(latin, MEASURED), latin)
+        once = mirror_rtl_cells(_row(0, [24, 132], ["فترة الاستهلاك (يوم)", "28"]), MEASURED)
+        self.assertEqual(mirror_rtl_cells(once, MEASURED), once)  # running it again changes nothing
+
+    def test_a_row_with_a_gap_reverses_among_its_own_cells(self):
+        # a merged cell from the row above covers column 0, so this row starts at column 1
+        cells = [{**c, "col": c["col"] + 1} for c in _row(1, [24, 132], ["فترة الاستهلاك (يوم)", "28"])]
+        self.assertEqual(_texts(mirror_rtl_cells(cells, MEASURED)), [["28", "فترة الاستهلاك (يوم)"]])
+
+    def test_only_tables_with_both_axes_measured(self):
+        cells = _row(0, [24, 132], ["فترة الاستهلاك (يوم)", "28"])
+        for grid in ({"rows": "estimated", "cols": "detected"}, {"rows": "detected", "cols": "estimated"}, None):
+            self.assertEqual(mirror_rtl_cells(cells, grid), cells)
+
+    def test_segment_puts_mirrored_cell_text_back(self):
+        cell = lambda col, x1, x2, t: {"row": 0, "col": col, "text": t, "bbox": {"x1": x1, "y1": 0.1, "x2": x2, "y2": 0.2}}
+        seg = _segment({"id": "t", "type": "table", "markdown": "", "coordinates": None, "cellsSource": "table-former",
+                        "cells": [cell(0, 0.10, 0.13, "فترة الاستهلاك (يوم)"), cell(1, 0.13, 0.30, "28")]})
+        self.assertEqual([c["text"] for c in seg["cells"]], ["28", "فترة الاستهلاك (يوم)"])
+
+    def test_rows_with_spans_are_not_touched(self):
+        cells = _row(0, [24, 132], ["فترة الاستهلاك (يوم)", "28"])
+        cells[0]["colSpan"] = 2
+        self.assertEqual(mirror_rtl_cells(cells, MEASURED), cells)

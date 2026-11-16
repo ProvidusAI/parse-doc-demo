@@ -143,6 +143,51 @@ def _cells(s):
     return out or None
 
 
+_ARABIC = re.compile(r"[؀-ۿ]")
+_MIRRORED = 1.25  # a row votes "mirrored" when its text fits its boxes this much better reversed
+_LONE_ROW = 1.5  # a row flipped on its own, in a table that mostly reads right, needs a clearer signal
+
+
+def _fit(boxes, texts):
+    """How well text length follows box width (rearrangement inequality: higher = long text in wide boxes)."""
+    widths = [b["x1"] - b["x0"] for b in boxes]
+    sw, sl = sum(widths) or 1, sum(len(t.strip()) for t in texts) or 1
+    return sum((w / sw) * (len(t.strip()) / sl) for w, t in zip(widths, texts))
+
+
+def mirror_rtl_cells(cells, grid):
+    """Put text back in the box it was read from on right-to-left tables.
+
+    DocAI pairs TableFormer's columns (always counted left to right) with the OCR's text grid in reading
+    order (docai-core tableformer_cells.py: `md_rows[r][c]`); on Arabic tables the OCR sometimes reads right
+    to left, so each text lands in the mirrored column. Long text belongs in wide boxes: a row whose text fits
+    clearly better reversed is mirrored back, and when most rows are, the whole table is (header rows too).
+    Only when DocAI measured both axes: widths mean nothing on estimated columns, and on estimated rows a
+    row's box is not where its text is. Rows without column spans only. Reversing a fixed row makes it fit worse, so a second run changes nothing.
+    """
+    if grid != {"rows": "detected", "cols": "detected"} or not any(_ARABIC.search(c["text"]) for c in cells):
+        return cells
+    rows = {}
+    for c in cells:
+        rows.setdefault(c["row"], []).append(c)
+    ratio = {}
+    for r, row in rows.items():
+        row.sort(key=lambda c: c["col"])
+        texts = [c["text"] for c in row]
+        if any(c["colSpan"] > 1 for c in row) or sum(1 for t in texts if t.strip()) < 2:
+            continue
+        kept = _fit([c["box"] for c in row], texts)
+        ratio[r] = _fit([c["box"] for c in row], texts[::-1]) / kept if kept else 1
+    decided = list(ratio.values())
+    whole = len(decided) >= 3 and sum(x >= _MIRRORED for x in decided) >= 0.75 * len(decided)
+    out = []
+    for r, row in rows.items():
+        flip = not any(c["colSpan"] > 1 for c in row) and (whole or ratio.get(r, 0) >= _LONE_ROW)
+        # reverse among the row's own cells: a row under a merged cell from above has a gap at one end
+        out += [{**c, "text": t} for c, t in zip(row, [c["text"] for c in row][::-1])] if flip else row
+    return sorted(out, key=lambda c: (c["row"], c["col"]))
+
+
 def _cell_grid(s):
     """How far to trust the cell boxes — DocAI's cellConfidence: cellGrid, else detected unless the source is an estimate."""
     if not s.get("cells"):
@@ -160,9 +205,10 @@ def _segment(s):
     if full is not None:
         text = table_text(full)
     cells = _cells(s)
+    grid = _cell_grid(s) if cells else None
     return {"id": s["id"], "type": s.get("type") or "other", "label": s.get("title") or s.get("type") or "",
             "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table,
-            "cells": cells, "cellGrid": _cell_grid(s) if cells else None}
+            "cells": mirror_rtl_cells(cells, grid) if cells else None, "cellGrid": grid}
 
 
 def _field_paths(fields, prefix=""):
