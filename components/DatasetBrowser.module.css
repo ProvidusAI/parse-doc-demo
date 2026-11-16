@@ -246,6 +246,8 @@
     scrollbar-width: none;
   }
   .tabs {
+    flex: none; /* the whole bar scrolls here, so the strip needs its own width */
+    width: 62vw;
     flex-wrap: nowrap;
   }
   .chip {
