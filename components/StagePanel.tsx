@@ -30,6 +30,8 @@ interface Props {
   highlight?: string | null;
   /** a picked table cell to draw on the page, or null */
   onCell?(cell: PageBox | null): void;
+  /** the picked cell's key, from the panel or the page */
+  pickedCell?: string | null;
 }
 
 const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
@@ -79,7 +81,7 @@ function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
   return { boxes: [] };
 }
 
-export default function StagePanel({ result, lang, onLang, onView, onHighlight, highlight = null, onCell }: Props) {
+export default function StagePanel({ result, lang, onLang, onView, onHighlight, highlight = null, onCell, pickedCell = null }: Props) {
   const [step, setStep] = useState(0);
   const [shownId, setShownId] = useState(result.id);
   const stepsRef = useRef<HTMLDivElement>(null);
@@ -150,7 +152,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight, 
           </div>
           {count && <span className={styles.pill}>{count}</span>}
         </div>
-        <Body result={result} lang={lang} onHighlight={onHighlight} highlight={highlight} onCell={onCell} />
+        <Body result={result} lang={lang} onHighlight={onHighlight} highlight={highlight} onCell={onCell} pickedCell={pickedCell} />
       </div>
       <footer className={styles.pf}>
         <span>

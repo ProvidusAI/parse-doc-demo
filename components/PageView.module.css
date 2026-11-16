@@ -25,15 +25,26 @@
   outline-width: 2px;
   z-index: 1;
 }
-/* a picked table cell — DocAI's amber cell box (border-amber-500/95, bg-amber-400/25, soft ring) */
+/* a table cell on the page — DocAI: border-violet-500/40, hover violet-600 + bg-violet-400/25; picked = amber */
 .cell {
   position: absolute;
   z-index: 2;
+  padding: 0;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 1px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  animation: fade 0.2s ease both;
+}
+.cell:hover {
+  border-color: rgb(124, 58, 237);
+  background: rgba(167, 139, 250, 0.25);
+}
+.cell[aria-pressed="true"] {
   border: 2px solid rgba(245, 158, 11, 0.95);
   background: rgba(251, 191, 36, 0.25);
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
-  pointer-events: none;
-  animation: fade 0.2s ease both;
+  z-index: 3;
 }
 /* DocAI-style corner label: "3.table" in the type colour */
 .tag {

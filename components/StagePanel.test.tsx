@@ -78,15 +78,41 @@ const withCells = (cellGrid: { rows: "detected" | "estimated"; cols: "detected" 
 
 test("table cells are clickable and ground the cell on the page, like DocAI", () => {
   const onCell = vi.fn();
-  render(<StagePanel result={withCells({ rows: "detected", cols: "detected" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} onCell={onCell} />);
+  // the picked cell is owned by the Inspector so the page and the grid stay in step
+  const r = withCells({ rows: "detected", cols: "detected" }); // stable, like the Inspector's loaded result
+  function Picked() {
+    const [picked, setPicked] = useState<string | null>(null);
+    return (
+      <StagePanel
+        result={r}
+        lang="en"
+        onLang={vi.fn()}
+        onView={vi.fn()}
+        onHighlight={vi.fn()}
+        pickedCell={picked}
+        onCell={(c) => {
+          onCell(c);
+          setPicked(c?.key ?? null);
+        }}
+      />
+    );
+  }
+  render(<Picked />);
   const pick = screen.getByRole("button", { name: "Product 1" });
   fireEvent.click(pick);
   expect(onCell).toHaveBeenLastCalledWith({ key: "seg-2#r1c0", box: box(0, 20) });
   expect(pick).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(pick); // clicking the picked cell again clears it
   expect(onCell).toHaveBeenLastCalledWith(null);
+  expect(pick).toHaveAttribute("aria-pressed", "false");
   expect(screen.getByRole("columnheader", { name: "Item" })).toBeInTheDocument();
   expect(screen.queryByText(/estimated/)).not.toBeInTheDocument(); // precise grid: no note
+});
+
+test("a cell picked on the page shows as picked in the grid", () => {
+  render(<StagePanel result={withCells({ rows: "detected", cols: "detected" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} pickedCell="seg-2#r1c1" />);
+  expect(screen.getByRole("button", { name: "10" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Product 1" })).toHaveAttribute("aria-pressed", "false");
 });
 
 test("estimated cell positions carry DocAI's accuracy note", () => {

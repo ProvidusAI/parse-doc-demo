@@ -13,6 +13,8 @@ export interface StageProps {
   highlight?: string | null;
   /** a picked table cell to ground on the page (DocAI's click-a-cell), or null */
   onCell?(cell: PageBox | null): void;
+  /** the picked cell's key (`<segment>#r<row>c<col>`), whether it was picked here or on the page */
+  pickedCell?: string | null;
 }
 
 /** DocAI output text: keeps its own direction inside an LTR or RTL panel. */
@@ -130,15 +132,12 @@ function CellGrid({ segment, cells, activeId, onPick, lang }: {
   );
 }
 
-export function ChunksStage({ result, lang, onHighlight, highlight = null, onCell }: StageProps) {
+export function ChunksStage({ result, lang, onHighlight, highlight = null, onCell, pickedCell = null }: StageProps) {
   const cards = useRef<Record<string, HTMLLIElement | null>>({});
-  const [picked, setPicked] = useState<string | null>(null);
 
   const pickCell = (s: Segment, c: GroundedCell) => {
     const id = cellId(s.id, c);
-    const next = picked === id ? null : id; // clicking the picked cell again clears it
-    setPicked(next);
-    onCell?.(next ? { key: id, box: c.box } : null);
+    onCell?.(pickedCell === id ? null : { key: id, box: c.box }); // clicking the picked cell again clears it
   };
 
   // a box hovered on the page brings its chunk into view; scroll only the panel body, never the page
@@ -199,7 +198,7 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
               {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
             </div>
             {s.cells ? (
-              <CellGrid segment={s} cells={s.cells} activeId={picked} onPick={(c) => pickCell(s, c)} lang={lang} />
+              <CellGrid segment={s} cells={s.cells} activeId={pickedCell} onPick={(c) => pickCell(s, c)} lang={lang} />
             ) : s.table ? (
               <TableGrid table={s.table} />
             ) : s.textless ? (

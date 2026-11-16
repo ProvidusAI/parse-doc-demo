@@ -152,12 +152,39 @@ test("magnifier shows a zoomed lens of the page under the pointer", () => {
   expect(toggle).toHaveAttribute("aria-pressed", "false");
 });
 
-test("a picked table cell is drawn as its own box on the page", () => {
-  const { container } = render(
-    <PageView result={result} boxes={[]} highlight={null} scanning={false} cell={{ key: "seg-2#r1c0", box: { page: 1, x0: 100, y0: 200, x1: 300, y1: 250 } }} />,
-  );
-  const drawn = container.querySelector<HTMLElement>("[data-cell]")!;
-  expect(drawn).toHaveStyle({ left: "10%", top: "20%", width: "20%", height: "5%" });
+test("the active table's cells are pickable on the page, like DocAI", () => {
+  const onPickCell = vi.fn();
+  const cells = [
+    { key: "seg-2#r1c0", box: { page: 1, x0: 100, y0: 200, x1: 300, y1: 250 }, text: "Product 1" },
+    { key: "seg-2#r1c1", box: { page: 1, x0: 300, y0: 200, x1: 500, y1: 250 }, text: "10" },
+  ];
+  render(<PageView result={result} boxes={[]} highlight={null} scanning={false} cells={cells} pickedCell="seg-2#r1c1" onPickCell={onPickCell} />);
+  const product = screen.getByRole("button", { name: "Table cell Product 1" });
+  expect(product).toHaveStyle({ left: "10%", top: "20%", width: "20%", height: "5%" });
+  expect(product).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByRole("button", { name: "Table cell 10" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(product);
+  expect(onPickCell).toHaveBeenCalledWith(cells[0]);
+});
+
+test("picking a cell on the page selects it in the chunk grid", async () => {
+  const cellsResult = {
+    ...result,
+    segments: result.segments.map((s) =>
+      s.id === "seg-2"
+        ? { ...s, cells: [{ row: 0, col: 0, text: "Product 1", header: false, rowSpan: 1, colSpan: 1, box: { page: 1, x0: 100, y0: 200, x1: 300, y1: 250 } }], cellGrid: { rows: "detected" as const, cols: "detected" as const } }
+        : s,
+    ),
+  };
+  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ ...cellsResult, id: "financial/receipts" }) })));
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true }))); // reduced motion: no intro
+  setup(0);
+  await screen.findByRole("region", { name: "DocAI pipeline" });
+  // hovering the table chunk in the panel makes its cells pickable on the page
+  fireEvent.mouseEnter(screen.getByRole("button", { name: "Product 1" }).closest("li")!);
+  fireEvent.click(screen.getByRole("button", { name: "Table cell Product 1" }));
+  expect(screen.getByRole("button", { name: "Product 1" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Table cell Product 1" })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("hovering the page reports the smallest box under the pointer", () => {

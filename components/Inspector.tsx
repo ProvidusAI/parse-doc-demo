@@ -5,7 +5,7 @@ import { t, type UiLang } from "@/lib/i18n";
 import { nextIndex } from "@/lib/showcase";
 import type { PageSummary, ShowcaseResult } from "@/lib/types";
 import styles from "./Inspector.module.css";
-import PageView, { type PageBox } from "./PageView";
+import PageView, { type PageBox, type PageCell } from "./PageView";
 import StagePanel from "./StagePanel";
 
 interface Props {
@@ -46,6 +46,17 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
 
   // match on the file we fetched, so a stale response for another page is never shown
   const current = loaded && loaded.url === summary.result ? loaded.result : null;
+
+  // DocAI's cell picking works from both sides: the active table (the picked cell's table, else the
+  // hovered one) shows its cells on the page, and a cell picked on either side is picked on both
+  const activeTableId = cell ? cell.key.split("#")[0] : highlight;
+  const activeTable = current?.segments.find((s) => s.id === activeTableId && s.cells?.length);
+  const pageCells: PageCell[] = (activeTable?.cells ?? []).map((c) => ({
+    key: `${activeTable!.id}#r${c.row}c${c.col}`,
+    box: c.box,
+    text: c.text,
+  }));
+  const pickCell = (c: PageBox | null) => setCell((cur) => (c && cur?.key !== c.key ? { key: c.key, box: c.box } : null));
   // the scan bar only exists once PageView mounts, so timers start from the load, not the open
   const loadedId = current ? summary.id : null;
   const anyLoaded = loaded !== null;
@@ -129,7 +140,12 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
         <div className={styles.pagecol}>
           {current ? (
             <>
-              <PageView result={current} boxes={boxes} highlight={highlight} scanning={scanning} onHover={setHighlight} cell={cell} />
+              <PageView result={current} boxes={boxes} highlight={highlight} scanning={scanning}
+                onHover={setHighlight}
+                cells={pageCells}
+                pickedCell={cell?.key ?? null}
+                onPickCell={pickCell}
+              />
               <p className={styles.meta}>
                 {current.source.fileName}
                 <small>
@@ -153,7 +169,8 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
                 }}
                 onHighlight={setHighlight}
                 highlight={highlight}
-                onCell={setCell}
+                onCell={(c) => setCell(c)}
+                pickedCell={cell?.key ?? null}
               />
             )}
           </div>

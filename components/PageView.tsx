@@ -21,15 +21,22 @@ interface Props {
   scanning: boolean;
   /** the box under the pointer (smallest one when boxes nest), or null; called only when it changes */
   onHover?(key: string | null): void;
-  /** a picked table cell, drawn on its own like DocAI's amber cell box */
-  cell?: PageBox | null;
+  /** cells of the active table: each one a button on the page (DocAI: hover outlines it, click grounds it) */
+  cells?: PageCell[];
+  /** key of the picked cell, drawn amber */
+  pickedCell?: string | null;
+  onPickCell?(cell: PageCell): void;
+}
+
+export interface PageCell extends PageBox {
+  text: string;
 }
 
 const ZOOM = 2.5;
 const LENS = 180; // px diameter
 
 /** The page image with DocAI's grounding boxes drawn over it (0–1000 coords → %). */
-export default function PageView({ result, boxes, highlight, scanning, onHover, cell = null }: Props) {
+export default function PageView({ result, boxes, highlight, scanning, onHover, cells = [], pickedCell = null, onPickCell }: Props) {
   const { image, width, height } = result.page;
   const [magnify, setMagnify] = useState(false);
   const [lens, setLens] = useState<React.CSSProperties | null>(null);
@@ -93,7 +100,25 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
             {b.tag && <span className={styles.tag}>{b.tag}</span>}
           </div>
         ))}
-      {cell && cell.box.page === 1 && <div key={cell.key} data-cell={cell.key} className={styles.cell} style={boxToPercent(cell.box)} />}
+      {/* DocAI's cell-level grounding (pdf-citation-panel): violet outline, darker on hover, amber when picked */}
+      {cells
+        .filter((c) => c.box.page === 1)
+        .map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            data-cell={c.key}
+            aria-label={`Table cell ${c.text || c.key}`}
+            aria-pressed={c.key === pickedCell}
+            title={c.text}
+            className={styles.cell}
+            style={boxToPercent(c.box)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPickCell?.(c);
+            }}
+          />
+        ))}
       <div className={styles.scan} aria-hidden="true" />
       {magnify && lens && <div data-lens className={styles.lens} style={{ ...lens, width: LENS, height: LENS }} aria-hidden="true" />}
       <button
