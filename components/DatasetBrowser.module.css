@@ -31,6 +31,7 @@
 /* one row however many categories: the strip scrolls sideways, search and view stay put */
 .tabs {
   position: relative; /* chip.offsetLeft is measured from the strip */
+  padding-inline-end: 40px; /* extra scroll room so the last chip can clear the right fade */
   flex: 1 1 0;
   min-width: 0;
   flex-wrap: nowrap;
