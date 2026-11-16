@@ -43,22 +43,28 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     if (phase === "ready" && !reduced) setScanning(true);
   }
 
-  // one intro timer from opening, however many pages are visited meanwhile
+  // match on the file we fetched, so a stale response for another page is never shown
+  const current = loaded && loaded.url === summary.result ? loaded.result : null;
+  // the scan bar only exists once PageView mounts, so timers start from the load, not the open
+  const loadedId = current ? summary.id : null;
+  const anyLoaded = loaded !== null;
+
+  // one intro timer from the first page that loads, however many pages are visited meanwhile
   useEffect(() => {
-    if (phase !== "intro") return;
+    if (phase !== "intro" || !anyLoaded) return;
     const id = setTimeout(() => {
       setPhase("ready");
       setScanning(false);
       setEntering(true);
     }, INTRO_MS);
     return () => clearTimeout(id);
-  }, [phase]);
+  }, [phase, anyLoaded]);
 
   useEffect(() => {
-    if (phase !== "ready" || !scanning) return;
+    if (phase !== "ready" || !scanning || !loadedId) return;
     const id = setTimeout(() => setScanning(false), INTRO_MS);
     return () => clearTimeout(id);
-  }, [phase, scanning, summary.id]);
+  }, [phase, scanning, loadedId]);
 
   useEffect(() => {
     let live = true;
@@ -93,9 +99,6 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
       document.body.style.overflow = overflow;
     };
   }, []);
-
-  // match on the file we fetched, so a stale response for another page is never shown
-  const current = loaded && loaded.url === summary.result ? loaded.result : null;
 
   return (
     <div className={styles.modal} role="dialog" aria-modal="true" aria-label={summary.subCategoryLabel}>

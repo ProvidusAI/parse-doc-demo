@@ -178,17 +178,18 @@ test("closing during the intro leaves no pending timer", async () => {
   expect(vi.getTimerCount()).toBe(0);
   advance(INTRO_MS * 2);
   expect(errors).not.toHaveBeenCalled();
+  errors.mockRestore();
 });
 
 test("arrow during the intro does not restart it", async () => {
   fakeClock();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
   await screen.findByText("Financial · Receipts · 1 of 4");
-  advance(INTRO_MS - 100);
+  advance(INTRO_MS / 2);
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
   await screen.findByText("Financial · Receipts · 2 of 4");
   expect(pipeline()).toBeNull();
-  advance(100);
+  advance(INTRO_MS / 2);
   expect(wrap()).toHaveAttribute("data-phase", "ready");
   expect(pipeline()).toBeInTheDocument();
 });
@@ -216,4 +217,43 @@ test("the panel slides in once, when the intro ends, not on arrows", async () =>
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
   await screen.findByText("Financial · Receipts · 2 of 4");
   expect(pipeline()!.parentElement).not.toHaveAttribute("data-enter");
+});
+
+// every result.json answers after a second
+const slowFetch = () =>
+  vi.stubGlobal("fetch", vi.fn((url: string) => {
+    const id = url.replace("/showcase/", "").replace("/result.json", "");
+    return new Promise((r) => setTimeout(() => r({ ok: true, json: async () => ({ ...result, id }) }), 1000));
+  }));
+
+test("a slow load still gets the full intro scan once the page is in", async () => {
+  fakeClock();
+  slowFetch();
+  setup(0);
+  advance(1000);
+  await screen.findByText("receipts.png");
+  expect(pageEl()).toHaveClass("scanning");
+  advance(INTRO_MS / 2);
+  expect(wrap()).toHaveAttribute("data-phase", "intro");
+  expect(pipeline()).toBeNull();
+  advance(INTRO_MS / 2);
+  expect(wrap()).toHaveAttribute("data-phase", "ready");
+  expect(pipeline()).toBeInTheDocument();
+});
+
+test("a slow load after an arrow still gets the full scan", async () => {
+  fakeClock();
+  slowFetch();
+  const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
+  advance(1000);
+  await screen.findByText("Financial · Receipts · 1 of 4");
+  advance(INTRO_MS);
+  rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
+  advance(1000);
+  await screen.findByText("Financial · Receipts · 2 of 4");
+  expect(pageEl()).toHaveClass("scanning");
+  advance(INTRO_MS / 2);
+  expect(pageEl()).toHaveClass("scanning");
+  advance(INTRO_MS / 2);
+  expect(pageEl()).not.toHaveClass("scanning");
 });
