@@ -53,7 +53,8 @@ class NormalizeTest(unittest.TestCase):
                                        "elapsedSeconds": 45.6})
         self.assertEqual(r["segments"][0], {"id": "p1_e0000", "type": "header", "label": "header",
                                             "text": "TAX INVOICE فاتورة ضريبية", "textless": False,
-                                            "box": {"page": 1, "x0": 300, "y0": 20, "x1": 700, "y1": 60}, "table": None})
+                                            "box": {"page": 1, "x0": 300, "y0": 20, "x1": 700, "y1": 60}, "table": None,
+                                            "cells": None, "cellGrid": None})
         self.assertTrue(r["segments"][3]["textless"])
         self.assertEqual(r["splitRules"], [{"id": "rule-1", "name": "Invoice boundary",
                                             "description": "Start a new record at each TAX INVOICE header."}])
@@ -133,6 +134,26 @@ class TableGridTests(unittest.TestCase):
         self.assertEqual(table_grid("<tr><td>x</td></tr>"), {"rows": [[_c("x")]]})
         # prose that merely mentions a tag is not a table
         self.assertIsNone(table_grid("see the td column"))
+
+    def test_segment_keeps_docai_cells_with_page_boxes(self):
+        cell = {"row": 0, "col": 1, "rowSpan": 1, "colSpan": 2, "text": "Qty", "isHeader": True,
+                "bbox": {"x1": 0.1, "y1": 0.2, "x2": 0.35, "y2": 0.25}, "pixel_bbox": [1, 2, 3, 4]}
+        s = {"id": "s", "type": "table", "markdown": "<table><tr><td>Qty</td></tr></table>",
+             "coordinates": {"pageNumber": 1, "xmin": 0, "ymin": 0, "xmax": 1000, "ymax": 1000},
+             "cells": [cell], "cellGrid": {"rows": "detected", "cols": "estimated"}}
+        seg = _segment(s)
+        self.assertEqual(seg["cells"], [{"row": 0, "col": 1, "rowSpan": 1, "colSpan": 2, "text": "Qty", "header": True,
+                                         "box": {"page": 1, "x0": 100, "y0": 200, "x1": 350, "y1": 250}}])
+        self.assertEqual(seg["cellGrid"], {"rows": "detected", "cols": "estimated"})
+
+    def test_cell_confidence_follows_docai_when_grid_is_missing(self):
+        base = {"id": "s", "type": "table", "markdown": "<table><tr><td>a</td></tr></table>", "coordinates": None,
+                "cells": [{"row": 0, "col": 0, "text": "a", "bbox": {"x1": 0, "y1": 0, "x2": 1, "y2": 1}}]}
+        self.assertEqual(_segment({**base, "cellsSource": "grid-estimate"})["cellGrid"], {"rows": "estimated", "cols": "estimated"})
+        self.assertEqual(_segment({**base, "cellsSource": "table-former"})["cellGrid"], {"rows": "detected", "cols": "detected"})
+        self.assertEqual(_segment(base)["cellGrid"], {"rows": "estimated", "cols": "estimated"})
+        no_cells = _segment({"id": "t", "type": "text", "markdown": "hi", "coordinates": None})
+        self.assertEqual((no_cells["cells"], no_cells["cellGrid"]), (None, None))
 
     def test_segment_carries_table_only_for_tables(self):
         md = "<table><tr><td>a</td></tr></table>"

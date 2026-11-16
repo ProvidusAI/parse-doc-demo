@@ -65,6 +65,38 @@ test("table chunks render as a grid", () => {
   expect(screen.getByRole("table")).toBeInTheDocument();
 });
 
+const box = (x0: number, y0: number) => ({ page: 1, x0, y0, x1: x0 + 100, y1: y0 + 20 });
+const cell = (row: number, col: number, text: string, header = false) => ({ row, col, text, header, rowSpan: 1, colSpan: 1, box: box(col * 100, row * 20) });
+const withCells = (cellGrid: { rows: "detected" | "estimated"; cols: "detected" | "estimated" }) => ({
+  ...result,
+  segments: result.segments.map((s) =>
+    s.id === "seg-2"
+      ? { ...s, cells: [cell(0, 0, "Item", true), cell(0, 1, "Qty", true), cell(1, 0, "Product 1"), cell(1, 1, "10")], cellGrid }
+      : s,
+  ),
+});
+
+test("table cells are clickable and ground the cell on the page, like DocAI", () => {
+  const onCell = vi.fn();
+  render(<StagePanel result={withCells({ rows: "detected", cols: "detected" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} onCell={onCell} />);
+  const pick = screen.getByRole("button", { name: "Product 1" });
+  fireEvent.click(pick);
+  expect(onCell).toHaveBeenLastCalledWith({ key: "seg-2#r1c0", box: box(0, 20) });
+  expect(pick).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(pick); // clicking the picked cell again clears it
+  expect(onCell).toHaveBeenLastCalledWith(null);
+  expect(screen.getByRole("columnheader", { name: "Item" })).toBeInTheDocument();
+  expect(screen.queryByText(/estimated/)).not.toBeInTheDocument(); // precise grid: no note
+});
+
+test("estimated cell positions carry DocAI's accuracy note", () => {
+  const { unmount } = render(<StagePanel result={withCells({ rows: "detected", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} />);
+  expect(screen.getByText("Column positions are estimated for this table — a highlighted cell may be off horizontally.")).toBeInTheDocument();
+  unmount();
+  render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} />);
+  expect(screen.getByText("Cell positions are estimated for this table — highlights are approximate.")).toBeInTheDocument();
+});
+
 test("page with no segments still shows the engine row", () => {
   setup({ ...result, segments: [] });
   expect(screen.getByText("OCR engine")).toBeInTheDocument();

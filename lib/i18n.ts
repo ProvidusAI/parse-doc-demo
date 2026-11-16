@@ -42,6 +42,8 @@ const en = {
   language: "Panel language",
   model: "Model",
   magnifier: "Magnifier",
+  cellNoteCols: "Column positions are estimated for this table — a highlighted cell may be off horizontally.",
+  cellNoteAll: "Cell positions are estimated for this table — highlights are approximate.",
 };
 
 export type UiKey = keyof typeof en;
@@ -88,6 +90,8 @@ const ar: Record<UiKey, string> = {
   language: "لغة اللوحة",
   model: "النموذج",
   magnifier: "المكبّر",
+  cellNoteCols: "مواضع الأعمدة في هذا الجدول تقديرية — قد تنحرف الخلية المظلّلة أفقيًا.",
+  cellNoteAll: "مواضع الخلايا في هذا الجدول تقديرية — التظليل تقريبي.",
 };
 
 const STRINGS: Record<UiLang, Record<UiKey, string>> = { en, ar };

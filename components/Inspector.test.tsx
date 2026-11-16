@@ -152,6 +152,14 @@ test("magnifier shows a zoomed lens of the page under the pointer", () => {
   expect(toggle).toHaveAttribute("aria-pressed", "false");
 });
 
+test("a picked table cell is drawn as its own box on the page", () => {
+  const { container } = render(
+    <PageView result={result} boxes={[]} highlight={null} scanning={false} cell={{ key: "seg-2#r1c0", box: { page: 1, x0: 100, y0: 200, x1: 300, y1: 250 } }} />,
+  );
+  const drawn = container.querySelector<HTMLElement>("[data-cell]")!;
+  expect(drawn).toHaveStyle({ left: "10%", top: "20%", width: "20%", height: "5%" });
+});
+
 test("hovering the page reports the smallest box under the pointer", () => {
   const onHover = vi.fn();
   const boxes = [

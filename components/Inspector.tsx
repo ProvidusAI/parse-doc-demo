@@ -25,6 +25,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   const [error, setError] = useState(false);
   const [boxes, setBoxes] = useState<PageBox[]>([]);
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [cell, setCell] = useState<PageBox | null>(null);
   const [reduced] = useState(reducedMotion);
   const [phase, setPhase] = useState<"intro" | "ready">(reduced ? "ready" : "intro");
   const [scanning, setScanning] = useState(!reduced);
@@ -70,6 +71,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     let live = true;
     setError(false);
     setHighlight(null);
+    setCell(null);
     fetch(summary.result)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((r: ShowcaseResult) => live && setLoaded({ url: summary.result, result: r }))
@@ -127,7 +129,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
         <div className={styles.pagecol}>
           {current ? (
             <>
-              <PageView result={current} boxes={boxes} highlight={highlight} scanning={scanning} onHover={setHighlight} />
+              <PageView result={current} boxes={boxes} highlight={highlight} scanning={scanning} onHover={setHighlight} cell={cell} />
               <p className={styles.meta}>
                 {current.source.fileName}
                 <small>
@@ -151,6 +153,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
                 }}
                 onHighlight={setHighlight}
                 highlight={highlight}
+                onCell={setCell}
               />
             )}
           </div>

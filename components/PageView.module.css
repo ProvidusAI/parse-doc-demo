@@ -25,6 +25,16 @@
   outline-width: 2px;
   z-index: 1;
 }
+/* a picked table cell — DocAI's amber cell box (border-amber-500/95, bg-amber-400/25, soft ring) */
+.cell {
+  position: absolute;
+  z-index: 2;
+  border: 2px solid rgba(245, 158, 11, 0.95);
+  background: rgba(251, 191, 36, 0.25);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
+  pointer-events: none;
+  animation: fade 0.2s ease both;
+}
 /* DocAI-style corner label: "3.table" in the type colour */
 .tag {
   position: absolute;

@@ -6,6 +6,15 @@ export type Lang = "ar-en" | "en";
 
 export interface TableCell { text: string; header: boolean; rowSpan: number; colSpan: number }
 
+/** One cell of DocAI's per-cell grounding grid, with its own box on the page. */
+export interface GroundedCell extends TableCell {
+  row: number;
+  col: number;
+  box: Box;
+}
+
+export type CellAxis = "detected" | "estimated";
+
 export interface Segment {
   id: string;
   type: string;
@@ -14,6 +23,10 @@ export interface Segment {
   textless: boolean;
   box: Box | null;
   table?: { rows: TableCell[][] } | null;
+  /** DocAI's clickable cell grid; absent when the table wasn't read as a grid */
+  cells?: GroundedCell[] | null;
+  /** how far to trust the cell boxes, per axis (DocAI's cellGrid) */
+  cellGrid?: { rows: CellAxis; cols: CellAxis } | null;
 }
 
 export interface SplitRecord {

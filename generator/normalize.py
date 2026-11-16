@@ -126,14 +126,43 @@ def _box(coords):
             "x1": _clamp(coords["xmax"]), "y1": _clamp(coords["ymax"])}
 
 
+def _cells(s):
+    """DocAI's per-cell grounding (segments API `cells`, fractional 0–1 boxes) as site cells with 0–1000 page boxes."""
+    if not s.get("cells"):
+        return None
+    page = int((s.get("coordinates") or {}).get("pageNumber", 1))
+    out = []
+    for c in s["cells"]:
+        b = c.get("bbox") or {}
+        if not all(k in b for k in ("x1", "y1", "x2", "y2")):
+            continue
+        out.append({"row": int(c["row"]), "col": int(c["col"]), "rowSpan": _span(c.get("rowSpan")),
+                    "colSpan": _span(c.get("colSpan")), "text": c.get("text") or "", "header": bool(c.get("isHeader")),
+                    "box": {"page": page, "x0": _clamp(b["x1"] * 1000), "y0": _clamp(b["y1"] * 1000),
+                            "x1": _clamp(b["x2"] * 1000), "y1": _clamp(b["y2"] * 1000)}})
+    return out or None
+
+
+def _cell_grid(s):
+    """How far to trust the cell boxes — DocAI's cellConfidence: cellGrid, else detected unless the source is an estimate."""
+    if not s.get("cells"):
+        return None
+    if s.get("cellGrid"):
+        return {"rows": s["cellGrid"]["rows"], "cols": s["cellGrid"]["cols"]}
+    axis = "detected" if s.get("cellsSource") and s["cellsSource"] != "grid-estimate" else "estimated"
+    return {"rows": axis, "cols": axis}
+
+
 def _segment(s):
     text = s.get("markdown") or ""
     table = table_grid(text)
     full = _table_html(text)
     if full is not None:
         text = table_text(full)
+    cells = _cells(s)
     return {"id": s["id"], "type": s.get("type") or "other", "label": s.get("title") or s.get("type") or "",
-            "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table}
+            "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table,
+            "cells": cells, "cellGrid": _cell_grid(s) if cells else None}
 
 
 def _field_paths(fields, prefix=""):

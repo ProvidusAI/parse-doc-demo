@@ -28,6 +28,8 @@ interface Props {
   onHighlight(key: string | null): void;
   /** the highlighted box/chunk, wherever the hover started (page or panel) */
   highlight?: string | null;
+  /** a picked table cell to draw on the page, or null */
+  onCell?(cell: PageBox | null): void;
 }
 
 const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
@@ -77,7 +79,7 @@ function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
   return { boxes: [] };
 }
 
-export default function StagePanel({ result, lang, onLang, onView, onHighlight, highlight = null }: Props) {
+export default function StagePanel({ result, lang, onLang, onView, onHighlight, highlight = null, onCell }: Props) {
   const [step, setStep] = useState(0);
   const [shownId, setShownId] = useState(result.id);
   const stepsRef = useRef<HTMLDivElement>(null);
@@ -93,6 +95,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight, 
   useEffect(() => {
     onView(viewFor(stage, result));
     onHighlight(null);
+    onCell?.(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, result]);
 
@@ -147,7 +150,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight, 
           </div>
           {count && <span className={styles.pill}>{count}</span>}
         </div>
-        <Body result={result} lang={lang} onHighlight={onHighlight} highlight={highlight} />
+        <Body result={result} lang={lang} onHighlight={onHighlight} highlight={highlight} onCell={onCell} />
       </div>
       <footer className={styles.pf}>
         <span>

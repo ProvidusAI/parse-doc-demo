@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
 import { segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
-import type { Segment, ShowcaseResult } from "@/lib/types";
+import type { GroundedCell, Segment, ShowcaseResult } from "@/lib/types";
+import type { PageBox } from "./PageView";
 import styles from "./StagePanel.module.css";
 
 export interface StageProps {
@@ -10,6 +11,8 @@ export interface StageProps {
   lang: UiLang;
   onHighlight(key: string | null): void;
   highlight?: string | null;
+  /** a picked table cell to ground on the page (DocAI's click-a-cell), or null */
+  onCell?(cell: PageBox | null): void;
 }
 
 /** DocAI output text: keeps its own direction inside an LTR or RTL panel. */
@@ -62,8 +65,81 @@ function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
   );
 }
 
-export function ChunksStage({ result, lang, onHighlight, highlight = null }: StageProps) {
+/** DocAI's per-cell id for a picked cell (docai-web cellAsSegment): `<segment>#r<row>c<col>`. */
+const cellId = (segmentId: string, c: GroundedCell) => `${segmentId}#r${c.row}c${c.col}`;
+
+/** DocAI's honest note on cell-box accuracy (docai-web cellAccuracyNote); null when both axes are measured. */
+function cellNote(s: Segment, lang: UiLang): string | null {
+  const g = s.cellGrid ?? { rows: "estimated", cols: "estimated" };
+  if (g.rows === "detected" && g.cols === "detected") return null;
+  return t(lang, g.rows === "detected" ? "cellNoteCols" : "cellNoteAll");
+}
+
+/**
+ * DocAI's CellGrid (docai-web doc-parse-panel): every cell of the grounding grid is a button;
+ * picking one grounds that cell on the page.
+ */
+function CellGrid({ segment, cells, activeId, onPick, lang }: {
+  segment: Segment;
+  cells: GroundedCell[];
+  activeId: string | null;
+  onPick(c: GroundedCell): void;
+  lang: UiLang;
+}) {
+  const rows: GroundedCell[][] = [];
+  for (const c of cells) {
+    rows[c.row] ??= [];
+    rows[c.row][c.col] = c;
+  }
+  const span = (n: number) => Math.min(Math.max(n || 1, 1), 1000);
+  const note = cellNote(segment, lang);
+  return (
+    <>
+      <div className={styles.tableWrap}>
+        <table className={styles.grid}>
+          <tbody>
+            {Array.from(rows, (row, r) => (
+              <tr key={r}>
+                {(row ?? []).map((c) => {
+                  if (!c) return null;
+                  const id = cellId(segment.id, c);
+                  const Cell = c.header ? "th" : "td";
+                  return (
+                    <Cell key={id} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)} className={styles.pickCell}>
+                      <button
+                        type="button"
+                        className={styles.pick}
+                        aria-pressed={activeId === id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPick(c);
+                        }}
+                      >
+                        <DocText text={c.text || " "} />
+                      </button>
+                    </Cell>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {note && <p className={styles.cellNote}>{note}</p>}
+    </>
+  );
+}
+
+export function ChunksStage({ result, lang, onHighlight, highlight = null, onCell }: StageProps) {
   const cards = useRef<Record<string, HTMLLIElement | null>>({});
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const pickCell = (s: Segment, c: GroundedCell) => {
+    const id = cellId(s.id, c);
+    const next = picked === id ? null : id; // clicking the picked cell again clears it
+    setPicked(next);
+    onCell?.(next ? { key: id, box: c.box } : null);
+  };
 
   // a box hovered on the page brings its chunk into view; scroll only the panel body, never the page
   useEffect(() => {
@@ -122,7 +198,9 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null }: Sta
               <Tag type={s.type} />
               {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
             </div>
-            {s.table ? (
+            {s.cells ? (
+              <CellGrid segment={s} cells={s.cells} activeId={picked} onPick={(c) => pickCell(s, c)} lang={lang} />
+            ) : s.table ? (
               <TableGrid table={s.table} />
             ) : s.textless ? (
               <DocText text={`[${s.label}]`} className={styles.muted} />

@@ -21,13 +21,15 @@ interface Props {
   scanning: boolean;
   /** the box under the pointer (smallest one when boxes nest), or null; called only when it changes */
   onHover?(key: string | null): void;
+  /** a picked table cell, drawn on its own like DocAI's amber cell box */
+  cell?: PageBox | null;
 }
 
 const ZOOM = 2.5;
 const LENS = 180; // px diameter
 
 /** The page image with DocAI's grounding boxes drawn over it (0–1000 coords → %). */
-export default function PageView({ result, boxes, highlight, scanning, onHover }: Props) {
+export default function PageView({ result, boxes, highlight, scanning, onHover, cell = null }: Props) {
   const { image, width, height } = result.page;
   const [magnify, setMagnify] = useState(false);
   const [lens, setLens] = useState<React.CSSProperties | null>(null);
@@ -91,6 +93,7 @@ export default function PageView({ result, boxes, highlight, scanning, onHover }
             {b.tag && <span className={styles.tag}>{b.tag}</span>}
           </div>
         ))}
+      {cell && cell.box.page === 1 && <div key={cell.key} data-cell={cell.key} className={styles.cell} style={boxToPercent(cell.box)} />}
       <div className={styles.scan} aria-hidden="true" />
       {magnify && lens && <div data-lens className={styles.lens} style={{ ...lens, width: LENS, height: LENS }} aria-hidden="true" />}
       <button
