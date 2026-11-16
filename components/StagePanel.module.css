@@ -422,8 +422,10 @@
   border: 1px solid var(--border);
 }
 .grid {
-  table-layout: fixed;
-  width: 100%;
+  /* natural column widths; the wrapper scrolls both ways instead of squeezing columns */
+  table-layout: auto;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 11px;
 }
@@ -432,6 +434,8 @@
   border: 1px solid var(--border);
   padding: 4px 8px;
   vertical-align: top;
+  min-width: 80px;
+  max-width: 260px;
   overflow-wrap: anywhere;
 }
 .grid th {
