@@ -70,23 +70,15 @@ function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
 /** DocAI's per-cell id for a picked cell (docai-web cellAsSegment): `<segment>#r<row>c<col>`. */
 const cellId = (segmentId: string, c: GroundedCell) => `${segmentId}#r${c.row}c${c.col}`;
 
-/** DocAI's honest note on cell-box accuracy (docai-web cellAccuracyNote); null when both axes are measured. */
-function cellNote(s: Segment, lang: UiLang): string | null {
-  const g = s.cellGrid ?? { rows: "estimated", cols: "estimated" };
-  if (g.rows === "detected" && g.cols === "detected") return null;
-  return t(lang, g.rows === "detected" ? "cellNoteCols" : "cellNoteAll");
-}
-
 /**
  * DocAI's CellGrid (docai-web doc-parse-panel): every cell of the grounding grid is a button;
  * picking one grounds that cell on the page.
  */
-function CellGrid({ segment, cells, activeId, onPick, lang }: {
+function CellGrid({ segment, cells, activeId, onPick }: {
   segment: Segment;
   cells: GroundedCell[];
   activeId: string | null;
   onPick(c: GroundedCell): void;
-  lang: UiLang;
 }) {
   const rows: GroundedCell[][] = [];
   for (const c of cells) {
@@ -94,9 +86,7 @@ function CellGrid({ segment, cells, activeId, onPick, lang }: {
     rows[c.row][c.col] = c;
   }
   const span = (n: number) => Math.min(Math.max(n || 1, 1), 1000);
-  const note = cellNote(segment, lang);
   return (
-    <>
       <div className={styles.tableWrap}>
         <table className={styles.grid}>
           <tbody>
@@ -127,8 +117,6 @@ function CellGrid({ segment, cells, activeId, onPick, lang }: {
           </tbody>
         </table>
       </div>
-      {note && <p className={styles.cellNote}>{note}</p>}
-    </>
   );
 }
 
@@ -198,7 +186,7 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
               {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
             </div>
             {s.cells ? (
-              <CellGrid segment={s} cells={s.cells} activeId={pickedCell} onPick={(c) => pickCell(s, c)} lang={lang} />
+              <CellGrid segment={s} cells={s.cells} activeId={pickedCell} onPick={(c) => pickCell(s, c)} />
             ) : s.table ? (
               <TableGrid table={s.table} />
             ) : s.textless ? (

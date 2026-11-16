@@ -1,8 +1,16 @@
+/* toolbar on top, then the page frame; both as wide as the page */
+.view {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
 /* the page's footprint stays fixed; zooming scales the page inside it and the viewport scrolls (DocAI's viewer) */
 .frame {
   position: relative;
   aspect-ratio: var(--ar);
-  width: min(calc((100vh - 190px) * var(--ratio)), var(--page-max, 100%));
+  /* 238px = nav, padding, page meta and the 44px toolbar above the page */
+  width: min(calc((100vh - 238px) * var(--ratio)), var(--page-max, 100%));
   background: #fff;
   border: 1px solid var(--border);
   box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.25);
@@ -113,12 +121,9 @@
   box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
-/* viewer controls, top-right over the page: − 100% + ⌖ | magnifier */
+/* viewer controls just above the page, aligned right: − 100% + ⌖ | magnifier */
 .tools {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 4;
+  align-self: flex-end;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -164,6 +169,7 @@
   color: #fff;
 }
 @media (max-width: 760px) {
+  .view,
   .frame {
     width: 100%;
   }

@@ -115,12 +115,9 @@ test("a cell picked on the page shows as picked in the grid", () => {
   expect(screen.getByRole("button", { name: "Product 1" })).toHaveAttribute("aria-pressed", "false");
 });
 
-test("estimated cell positions carry DocAI's accuracy note", () => {
-  const { unmount } = render(<StagePanel result={withCells({ rows: "detected", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} />);
-  expect(screen.getByText("Column positions are estimated for this table — a highlighted cell may be off horizontally.")).toBeInTheDocument();
-  unmount();
+test("no cell-accuracy note is shown, even for estimated grids", () => {
   render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} />);
-  expect(screen.getByText("Cell positions are estimated for this table — highlights are approximate.")).toBeInTheDocument();
+  expect(screen.queryByText(/estimated/i)).not.toBeInTheDocument();
 });
 
 test("page with no segments still shows the engine row", () => {

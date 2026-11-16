@@ -168,7 +168,35 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
   };
 
   return (
-    <div className={styles.frame} style={{ "--ar": `${width} / ${height}`, "--ratio": width / height } as React.CSSProperties}>
+    <div className={styles.view} style={{ "--ar": `${width} / ${height}`, "--ratio": width / height } as React.CSSProperties}>
+      {/* DocAI's viewer controls, in a bar above the page so they never cover it: zoom out · % · zoom in · locate | magnifier */}
+      <div className={styles.tools}>
+        <button type="button" aria-label="Zoom out" title="Zoom out" onClick={() => zoomBy(-ZOOM_STEP_PERCENT)} disabled={zoom <= MIN_ZOOM_PERCENT}>
+          {icon(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M8 11h6" /></>)}
+        </button>
+        <span className={styles.pct} aria-live="polite">{zoom}%</span>
+        <button type="button" aria-label="Zoom in" title="Zoom in" onClick={() => zoomBy(ZOOM_STEP_PERCENT)} disabled={zoom >= MAX_ZOOM_PERCENT}>
+          {icon(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M8 11h6M11 8v6" /></>)}
+        </button>
+        <button type="button" aria-label="Jump to highlight" title="Jump to highlight" onClick={locate} disabled={!target}>
+          {icon(<><path d="M2 12h3M19 12h3M12 2v3M12 19v3" /><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" /></>)}
+        </button>
+        <span className={styles.sep} aria-hidden="true" />
+        <button
+          type="button"
+          className={styles.mag}
+          aria-label={t("en", "magnifier")}
+          aria-pressed={magnify}
+          title={t("en", "magnifier")}
+          onClick={() => {
+            setMagnify((m) => !m);
+            setLens(null);
+          }}
+        >
+          {icon(<><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /></>)}
+        </button>
+      </div>
+    <div className={styles.frame}>
       <div
         ref={viewRef}
         className={`${styles.viewport} ${zoom > 100 ? styles.pannable : ""}`}
@@ -225,33 +253,7 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
       {magnify && lens && <div data-lens className={styles.lens} style={{ ...lens, width: LENS, height: LENS }} aria-hidden="true" />}
     </div>
       </div>
-      {/* DocAI's viewer controls: zoom out · % · zoom in · locate, plus the magnifier */}
-      <div className={styles.tools}>
-        <button type="button" aria-label="Zoom out" title="Zoom out" onClick={() => zoomBy(-ZOOM_STEP_PERCENT)} disabled={zoom <= MIN_ZOOM_PERCENT}>
-          {icon(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M8 11h6" /></>)}
-        </button>
-        <span className={styles.pct} aria-live="polite">{zoom}%</span>
-        <button type="button" aria-label="Zoom in" title="Zoom in" onClick={() => zoomBy(ZOOM_STEP_PERCENT)} disabled={zoom >= MAX_ZOOM_PERCENT}>
-          {icon(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M8 11h6M11 8v6" /></>)}
-        </button>
-        <button type="button" aria-label="Jump to highlight" title="Jump to highlight" onClick={locate} disabled={!target}>
-          {icon(<><path d="M2 12h3M19 12h3M12 2v3M12 19v3" /><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" /></>)}
-        </button>
-        <span className={styles.sep} aria-hidden="true" />
-        <button
-          type="button"
-          className={styles.mag}
-          aria-label={t("en", "magnifier")}
-          aria-pressed={magnify}
-          title={t("en", "magnifier")}
-          onClick={() => {
-            setMagnify((m) => !m);
-            setLens(null);
-          }}
-        >
-          {icon(<><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /></>)}
-        </button>
-      </div>
+    </div>
     </div>
   );
 }
