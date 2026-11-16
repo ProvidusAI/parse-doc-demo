@@ -130,6 +130,21 @@ class TableGridTests(unittest.TestCase):
         self.assertEqual(seg["text"], table_text(md))
         self.assertIsNone(_segment({"id": "t", "type": "text", "markdown": "hi", "coordinates": None})["table"])
 
+    def test_table_grid_reads_markdown_pipe_tables(self):
+        got = table_grid("| FROM: |  | TO: |\n| --- | --- | --- |\n| JFK |  | IST |")
+        self.assertEqual(got, {"rows": [[_c("FROM:", True), _c("", True), _c("TO:", True)],
+                                        [_c("JFK"), _c(""), _c("IST")]]})
+
+    def test_pipe_lines_without_separator_are_not_a_table(self):
+        self.assertIsNone(table_grid("| a | b |\n| c | d |"))
+        self.assertIsNone(table_grid("a | b"))
+
+    def test_segment_carries_markdown_table(self):
+        md = "| A | B |\n|:--|--:|\n| 1 | x \\| y |"
+        seg = _segment({"id": "s", "type": "table", "markdown": md, "coordinates": None})
+        self.assertEqual(seg["table"]["rows"][1][1]["text"], "x | y")
+        self.assertEqual(seg["text"], md)
+
 
 if __name__ == "__main__":
     unittest.main()

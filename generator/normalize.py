@@ -57,8 +57,37 @@ def _span(v) -> int:
         return 1
 
 
+_SEP_CELL = re.compile(r"^:?-+:?$")
+
+
+def _pipe_cells(line: str):
+    parts = re.split(r"(?<!\\)\|", line.strip())[1:]
+    if parts and not parts[-1].strip():
+        parts.pop()
+    return [p.replace("\\|", "|").strip() for p in parts]
+
+
+def _pipe_grid(markup: str):
+    """GFM pipe table: first run of `|` lines whose 2nd line is a separator row; None otherwise."""
+    lines = [l.strip() for l in markup.splitlines()]
+    start = next((i for i, l in enumerate(lines) if l.startswith("|")), None)
+    if start is None:
+        return None
+    block = []
+    for l in lines[start:]:
+        if not l.startswith("|"):
+            break
+        block.append(_pipe_cells(l))
+    if len(block) < 2 or not block[1] or not all(_SEP_CELL.match(c) for c in block[1]):
+        return None
+    cell = lambda t, h: {"text": t, "header": h, "rowSpan": 1, "colSpan": 1}
+    return {"rows": [[cell(t, i == 0) for t in r] for i, r in enumerate([block[0]] + block[2:])]}
+
+
 def table_grid(markup: str):
-    """Rows/cells of DocAI's table HTML with header flags and spans; None when there is no table."""
+    """Rows/cells of DocAI's table (HTML or GFM pipe) with header flags and spans; None when there is no table."""
+    if "<table" not in markup.lower():
+        return _pipe_grid(markup)
     p = _GridParser()
     p.feed(markup)
     p.close()
@@ -80,9 +109,8 @@ def _box(coords):
 
 def _segment(s):
     text = s.get("markdown") or ""
-    table = None
+    table = table_grid(text)
     if "<table" in text.lower():
-        table = table_grid(text)
         text = table_text(text)
     return {"id": s["id"], "type": s.get("type") or "other", "label": s.get("title") or s.get("type") or "",
             "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table}
