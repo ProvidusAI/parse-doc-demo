@@ -84,12 +84,31 @@ def _pipe_grid(markup: str):
     return {"rows": [[cell(t, i == 0) for t in r] for i, r in enumerate([block[0]] + block[2:])]}
 
 
+_TABLE_TAG = re.compile(r"</?(table|tr|td|th)\b[^>]*>", re.I)
+
+
+def _table_html(markup: str):
+    """The markup as a full HTML table, or None if it has no table tags.
+    DocAI sometimes cuts the start off (`A</td></tr><tr>…</table>`): put the missing opening tags back."""
+    if not _TABLE_TAG.search(markup):
+        return None
+    if "<table" in markup.lower():
+        return markup
+    first = _TABLE_TAG.search(markup).group(0).lower()
+    if first.startswith("</t") and first[2:4] in ("td", "th"):
+        return "<table><tr><td>" + markup  # begins inside a cell
+    if first.startswith("</tr"):
+        return "<table><tr>" + markup
+    return "<table>" + markup
+
+
 def table_grid(markup: str):
     """Rows/cells of DocAI's table (HTML or GFM pipe) with header flags and spans; None when there is no table."""
-    if "<table" not in markup.lower():
+    full = _table_html(markup)
+    if full is None:
         return _pipe_grid(markup)
     p = _GridParser()
-    p.feed(markup)
+    p.feed(full)
     p.close()
     p._close()
     rows = [r for r in p.rows if r]
@@ -110,8 +129,9 @@ def _box(coords):
 def _segment(s):
     text = s.get("markdown") or ""
     table = table_grid(text)
-    if "<table" in text.lower():
-        text = table_text(text)
+    full = _table_html(text)
+    if full is not None:
+        text = table_text(full)
     return {"id": s["id"], "type": s.get("type") or "other", "label": s.get("title") or s.get("type") or "",
             "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table}
 

@@ -123,6 +123,17 @@ class TableGridTests(unittest.TestCase):
         self.assertIsNone(table_grid("<table></table>"))
         self.assertEqual(table_grid('<table><tr><td colspan="x">a</td></tr></table>')["rows"][0][0]["colSpan"], 1)
 
+    def test_table_html_cut_off_at_the_start_is_repaired(self):
+        # DocAI sometimes drops the opening <table><tr><td> and starts mid-cell
+        md = "A</td></tr><tr><td>B</td><td>C</td></tr></table>"
+        self.assertEqual(table_grid(md), {"rows": [[_c("A")], [_c("B"), _c("C")]]})
+        seg = _segment({"id": "s", "type": "table", "markdown": md, "coordinates": None})
+        self.assertEqual(seg["text"], "A · B · C")
+        # rows without the <table> wrapper
+        self.assertEqual(table_grid("<tr><td>x</td></tr>"), {"rows": [[_c("x")]]})
+        # prose that merely mentions a tag is not a table
+        self.assertIsNone(table_grid("see the td column"))
+
     def test_segment_carries_table_only_for_tables(self):
         md = "<table><tr><td>a</td></tr></table>"
         seg = _segment({"id": "s", "type": "table", "markdown": md, "coordinates": None})
