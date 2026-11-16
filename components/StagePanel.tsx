@@ -52,6 +52,18 @@ function pill(stage: Stage, r: ShowcaseResult, lang: UiLang): string | null {
   }
 }
 
+/** Only the steps DocAI returned data for, in pipeline order. */
+function visibleStages(r: ShowcaseResult): Stage[] {
+  const has: Record<Stage, unknown> = {
+    chunks: true,
+    splitRules: r.splitRules,
+    splitResult: r.split,
+    extractRules: r.schema,
+    extracted: r.extraction,
+  };
+  return STAGES.filter((s) => has[s]);
+}
+
 function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
   if (stage === "chunks") {
     // coloured by element type, each box tagged "n.type" like DocAI
@@ -73,7 +85,8 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight }
     setStep(0);
   }
 
-  const stage = STAGES[step];
+  const stages = visibleStages(result);
+  const stage = stages[step] ?? stages[0];
 
   useEffect(() => {
     onView(viewFor(stage, result));
@@ -110,7 +123,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight }
           <span className={styles.tag}>{result.subCategoryLabel}</span>
         </div>
         <div className={styles.steps} ref={stepsRef}>
-          {STAGES.map((s, k) => (
+          {stages.map((s, k) => (
             <button
               key={s}
               type="button"
@@ -136,7 +149,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight }
       </div>
       <footer className={styles.pf}>
         <span>
-          <span>{t(lang, "stepOf", { n: step + 1 })}</span> · <b>{t(lang, `stage.${stage}`)}</b>
+          <span>{t(lang, "stepOf", { n: step + 1, total: stages.length })}</span> · <b>{t(lang, `stage.${stage}`)}</b>
         </span>
         {model && <span dir="ltr">{model.replace(/^lmstudio\//, "")}</span>}
       </footer>

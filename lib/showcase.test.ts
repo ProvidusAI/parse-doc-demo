@@ -59,7 +59,7 @@ describe("i18n", () => {
     expect(t("ar", "stage.chunks")).not.toBe(t("en", "stage.chunks"));
   });
   test("fills variables", () => {
-    expect(t("en", "stepOf", { n: 3 })).toBe("Step 3 of 5");
+    expect(t("en", "stepOf", { n: 3, total: 4 })).toBe("Step 3 of 4");
   });
   test("five stages", () => {
     expect(STAGES).toHaveLength(5);

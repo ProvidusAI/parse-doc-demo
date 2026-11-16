@@ -84,12 +84,35 @@ test("chunk text uses dir auto", () => {
   expect(text).toHaveClass("ar");
 });
 
-test("renders null stages", () => {
+const stepButtons = () => screen.getAllByRole("button").filter((b) => b.querySelector("i"));
+
+test("shows only the steps DocAI returned", () => {
   setup({ ...result, split: null, extraction: null, splitRules: null, schema: null });
-  for (const name of [/Split rules/, /Split result/, /Extract rules/, /Extracted schema/]) {
-    step(name);
-    expect(screen.getByText("Not returned by DocAI")).toBeInTheDocument();
-  }
+  expect(screen.getByRole("button", { name: /Parsed chunks/ })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Split rules|Split result|Extract rules|Extracted schema/ })).not.toBeInTheDocument();
+  expect(stepButtons()).toHaveLength(1);
+  expect(screen.getByText("Step 1 of 1")).toBeInTheDocument();
+});
+
+test("a missing extraction drops only that step", () => {
+  setup({ ...result, extraction: null });
+  expect(stepButtons()).toHaveLength(4);
+  expect(screen.queryByRole("button", { name: /Extracted schema/ })).not.toBeInTheDocument();
+  expect(screen.getByText("Step 1 of 4")).toBeInTheDocument();
+});
+
+test("a full result shows all five steps", () => {
+  setup();
+  expect(stepButtons()).toHaveLength(5);
+  expect(stepButtons().map((b) => b.querySelector("i")!.textContent)).toEqual(["1", "2", "3", "4", "5"]);
+  expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
+});
+
+test("step numbers count only the visible steps", () => {
+  setup({ ...result, splitRules: null, split: null });
+  expect(stepButtons().map((b) => b.textContent)).toEqual(["1Parsed chunks", "2Extract rules", "3Extracted schema"]);
+  step(/Extracted schema/);
+  expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
 });
 
 test("no invented confidence", () => {
