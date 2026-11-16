@@ -26,6 +26,8 @@ interface Props {
   onLang(lang: UiLang): void;
   onView(view: PageViewState): void;
   onHighlight(key: string | null): void;
+  /** the highlighted box/chunk, wherever the hover started (page or panel) */
+  highlight?: string | null;
 }
 
 const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
@@ -75,7 +77,7 @@ function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
   return { boxes: [] };
 }
 
-export default function StagePanel({ result, lang, onLang, onView, onHighlight }: Props) {
+export default function StagePanel({ result, lang, onLang, onView, onHighlight, highlight = null }: Props) {
   const [step, setStep] = useState(0);
   const [shownId, setShownId] = useState(result.id);
   const stepsRef = useRef<HTMLDivElement>(null);
@@ -137,7 +139,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight }
           ))}
         </div>
       </header>
-      <div className={styles.pb} key={`${result.id}-${stage}-${lang}`}>
+      <div className={styles.pb} key={`${result.id}-${stage}-${lang}`} data-scroll>
         <div className={styles.ttl}>
           <div>
             <h3>{t(lang, `title.${stage}`)}</h3>
@@ -145,7 +147,7 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight }
           </div>
           {count && <span className={styles.pill}>{count}</span>}
         </div>
-        <Body result={result} lang={lang} onHighlight={onHighlight} />
+        <Body result={result} lang={lang} onHighlight={onHighlight} highlight={highlight} />
       </div>
       <footer className={styles.pf}>
         <span>

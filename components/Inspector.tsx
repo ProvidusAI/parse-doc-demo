@@ -127,7 +127,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
         <div className={styles.pagecol}>
           {current ? (
             <>
-              <PageView result={current} boxes={boxes} highlight={highlight} scanning={scanning} />
+              <PageView result={current} boxes={boxes} highlight={highlight} scanning={scanning} onHover={setHighlight} />
               <p className={styles.meta}>
                 {current.source.fileName}
                 <small>
@@ -150,6 +150,7 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
                   setBoxes(v.boxes);
                 }}
                 onHighlight={setHighlight}
+                highlight={highlight}
               />
             )}
           </div>

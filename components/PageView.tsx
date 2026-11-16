@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { segmentHex } from "@/lib/segments";
 import { boxToPercent } from "@/lib/showcase";
@@ -19,22 +19,43 @@ interface Props {
   boxes: PageBox[];
   highlight: string | null;
   scanning: boolean;
+  /** the box under the pointer (smallest one when boxes nest), or null; called only when it changes */
+  onHover?(key: string | null): void;
 }
 
 const ZOOM = 2.5;
 const LENS = 180; // px diameter
 
 /** The page image with DocAI's grounding boxes drawn over it (0–1000 coords → %). */
-export default function PageView({ result, boxes, highlight, scanning }: Props) {
+export default function PageView({ result, boxes, highlight, scanning, onHover }: Props) {
   const { image, width, height } = result.page;
   const [magnify, setMagnify] = useState(false);
   const [lens, setLens] = useState<React.CSSProperties | null>(null);
+  const hovered = useRef<string | null>(null);
+
+  const hover = (key: string | null) => {
+    if (key === hovered.current) return;
+    hovered.current = key;
+    onHover?.(key);
+  };
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!magnify) return;
     const r = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;
+    if (onHover && r.width > 0 && r.height > 0) {
+      const px = (x / r.width) * 1000;
+      const py = (y / r.height) * 1000;
+      let best: PageBox | null = null;
+      for (const b of boxes) {
+        const { page, x0, y0, x1, y1 } = b.box;
+        if (page !== 1 || px < x0 || px > x1 || py < y0 || py > y1) continue;
+        const area = (x1 - x0) * (y1 - y0);
+        if (!best || area < (best.box.x1 - best.box.x0) * (best.box.y1 - best.box.y0)) best = b;
+      }
+      hover(best?.key ?? null);
+    }
+    if (!magnify) return;
     const half = LENS / 2;
     setLens({
       left: x - half,
@@ -50,7 +71,10 @@ export default function PageView({ result, boxes, highlight, scanning }: Props) 
       className={`${styles.page} ${scanning ? styles.scanning : ""} ${magnify ? styles.magnify : ""}`}
       style={{ "--ar": `${width} / ${height}`, "--ratio": width / height } as React.CSSProperties}
       onPointerMove={onMove}
-      onPointerLeave={() => setLens(null)}
+      onPointerLeave={() => {
+        setLens(null);
+        hover(null);
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image} alt={`${result.subCategoryLabel} page`} />

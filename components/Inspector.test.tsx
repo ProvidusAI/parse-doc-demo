@@ -152,6 +152,30 @@ test("magnifier shows a zoomed lens of the page under the pointer", () => {
   expect(toggle).toHaveAttribute("aria-pressed", "false");
 });
 
+test("hovering the page reports the smallest box under the pointer", () => {
+  const onHover = vi.fn();
+  const boxes = [
+    { key: "big", box: { page: 1, x0: 0, y0: 0, x1: 1000, y1: 500 } },
+    { key: "small", box: { page: 1, x0: 100, y0: 100, x1: 300, y1: 200 } },
+  ];
+  render(<PageView result={result} boxes={boxes} highlight={null} scanning={false} onHover={onHover} />);
+  const page = screen.getByRole("img").parentElement!;
+  // 1000×1000 px page, so client px == 0–1000 box coords
+  page.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 1000, right: 1000, bottom: 1000, x: 0, y: 0, toJSON() {} });
+  fireEvent.pointerMove(page, { clientX: 150, clientY: 150 });
+  expect(onHover).toHaveBeenLastCalledWith("small");
+  fireEvent.pointerMove(page, { clientX: 600, clientY: 400 });
+  expect(onHover).toHaveBeenLastCalledWith("big");
+  fireEvent.pointerMove(page, { clientX: 600, clientY: 800 });
+  expect(onHover).toHaveBeenLastCalledWith(null);
+  const calls = onHover.mock.calls.length;
+  fireEvent.pointerMove(page, { clientX: 610, clientY: 810 });
+  expect(onHover.mock.calls.length).toBe(calls); // only reports changes
+  fireEvent.pointerMove(page, { clientX: 150, clientY: 150 });
+  fireEvent.pointerLeave(page);
+  expect(onHover).toHaveBeenLastCalledWith(null);
+});
+
 test("intro shows the page alone, then the panel on Parsed chunks", async () => {
   fakeClock();
   setup(0);

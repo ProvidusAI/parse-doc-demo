@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
 import { segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
@@ -9,6 +9,7 @@ export interface StageProps {
   result: ShowcaseResult;
   lang: UiLang;
   onHighlight(key: string | null): void;
+  highlight?: string | null;
 }
 
 /** DocAI output text: keeps its own direction inside an LTR or RTL panel. */
@@ -61,7 +62,19 @@ function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
   );
 }
 
-export function ChunksStage({ result, lang, onHighlight }: StageProps) {
+export function ChunksStage({ result, lang, onHighlight, highlight = null }: StageProps) {
+  const cards = useRef<Record<string, HTMLLIElement | null>>({});
+
+  // a box hovered on the page brings its chunk into view; scroll only the panel body, never the page
+  useEffect(() => {
+    const el = highlight ? cards.current[highlight] : null;
+    const box = el?.closest<HTMLElement>("[data-scroll]");
+    if (!el || !box) return;
+    const top = el.offsetTop;
+    const visible = top >= box.scrollTop && top + el.offsetHeight <= box.scrollTop + box.clientHeight;
+    if (!visible) box.scrollTo?.({ top: Math.max(0, top - 12), behavior: "smooth" });
+  }, [highlight]);
+
   const counts = result.segments.reduce<Record<string, number>>((m, s) => ({ ...m, [s.type]: (m[s.type] ?? 0) + 1 }), {});
   const u = result.upload;
   const run: [Parameters<typeof t>[1], string | null][] = [
@@ -91,7 +104,11 @@ export function ChunksStage({ result, lang, onHighlight }: StageProps) {
         {result.segments.map((s, i) => (
           <li
             key={s.id}
-            className={`${styles.row} ${styles.hover}`}
+            ref={(el) => {
+              cards.current[s.id] = el;
+            }}
+            className={`${styles.chunk} ${styles.hover}`}
+            data-hi={s.id === highlight || undefined}
             style={stagger(i, 40)}
             tabIndex={0}
             onMouseEnter={() => onHighlight(s.id)}
@@ -99,8 +116,12 @@ export function ChunksStage({ result, lang, onHighlight }: StageProps) {
             onFocus={() => onHighlight(s.id)}
             onBlur={() => onHighlight(null)}
           >
-            <span className={styles.k}>#{i + 1}</span>
-            <Tag type={s.type} />
+            {/* DocAI-style card: number, type and page on one line, the content full width below */}
+            <div className={styles.chead} data-chunk-head>
+              <span className={styles.k}>#{i + 1}</span>
+              <Tag type={s.type} />
+              {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
+            </div>
             {s.table ? (
               <TableGrid table={s.table} />
             ) : s.textless ? (
@@ -108,7 +129,6 @@ export function ChunksStage({ result, lang, onHighlight }: StageProps) {
             ) : (
               <DocText text={s.text} className={styles.tx} />
             )}
-            {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
           </li>
         ))}
       </ul>

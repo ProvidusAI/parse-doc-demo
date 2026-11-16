@@ -5,11 +5,37 @@ import type { ShowcaseResult } from "@/lib/types";
 import StagePanel from "./StagePanel";
 import { result } from "./test-fixtures";
 
-type Props = { r: ShowcaseResult; onView: () => void; onHighlight: () => void };
-function Harness({ r, onView, onHighlight }: Props) {
+type Props = { r: ShowcaseResult; onView: () => void; onHighlight: () => void; highlight?: string | null };
+function Harness({ r, onView, onHighlight, highlight = null }: Props) {
   const [lang, setLang] = useState<UiLang>("en");
-  return <StagePanel result={r} lang={lang} onLang={setLang} onView={onView} onHighlight={onHighlight} />;
+  return (
+    <StagePanel result={r} lang={lang} onLang={setLang} onView={onView} onHighlight={onHighlight} highlight={highlight} />
+  );
 }
+
+test("chunk card: number, type and page on top, content full width below", () => {
+  setup();
+  const card = screen.getByText("TAX INVOICE فاتورة ضريبية").closest("li")!;
+  const head = card.querySelector("[data-chunk-head]")!;
+  expect(head).toHaveTextContent("#1");
+  expect(head).toHaveTextContent("HEADER");
+  expect(head).toHaveTextContent("P.1");
+  expect(head).not.toHaveTextContent("TAX INVOICE");
+});
+
+test("a chunk highlighted from the page is marked and scrolled into the panel", () => {
+  const scrollTo = vi.fn();
+  Element.prototype.scrollTo = scrollTo as unknown as typeof Element.prototype.scrollTo;
+  const { rerender, onView, onHighlight } = setup();
+  scrollTo.mockClear();
+  const card = screen.getByRole("table").closest("li")!;
+  // jsdom has no layout: put the card below the panel's visible area
+  Object.defineProperty(card, "offsetTop", { configurable: true, value: 900 });
+  Object.defineProperty(card, "offsetHeight", { configurable: true, value: 60 });
+  rerender(<Harness r={result} onView={onView} onHighlight={onHighlight} highlight="seg-2" />);
+  expect(card).toHaveAttribute("data-hi");
+  expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
+});
 
 function setup(r = result) {
   const onView = vi.fn();
