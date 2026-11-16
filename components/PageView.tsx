@@ -50,6 +50,19 @@ const icon = (d: React.ReactNode) => (
   </svg>
 );
 
+/** Scroll `box` (only it, never the window) just enough to bring `el` into view, with a small margin. */
+export function reveal(box: HTMLElement | null | undefined, el: Element | null | undefined, pad = 12) {
+  if (!box || !el) return;
+  const b = box.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  // nearest edge, but the start edge wins when the element is bigger than the box
+  const by = (lo: number, hi: number, blo: number, bhi: number) =>
+    lo < blo ? lo - blo - pad : hi > bhi ? Math.min(hi - bhi + pad, lo - blo - pad) : 0;
+  const dy = by(r.top, r.bottom, b.top, b.bottom);
+  const dx = by(r.left, r.right, b.left, b.right);
+  if (dx || dy) box.scrollTo?.({ top: box.scrollTop + dy, left: box.scrollLeft + dx, behavior: "smooth" });
+}
+
 /** The page image with DocAI's grounding boxes drawn over it (0–1000 coords → %). */
 export default function PageView({ result, boxes, highlight, scanning, onHover, cells = [], pickedCell = null, onPickCell }: Props) {
   const { image, width, height } = result.page;
@@ -84,6 +97,11 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
     el.scrollTop = (el.scrollTop + a.y) * ratio - a.y;
     anchor.current = null;
   }, [zoom]);
+
+  // a cell picked in the panel comes into view on the page (zoomed in, or a page taller than its frame)
+  useEffect(() => {
+    if (pickedCell) reveal(viewRef.current, viewRef.current?.querySelector(`[data-cell="${CSS.escape(pickedCell)}"]`));
+  }, [pickedCell]);
 
   // Ctrl/⌘ + wheel zooms (a native listener, so preventDefault stops the browser's own zoom)
   useEffect(() => {

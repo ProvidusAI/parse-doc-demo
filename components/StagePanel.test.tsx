@@ -131,6 +131,27 @@ test("both axes estimated: cells are shown but not pickable", () => {
   expect(screen.queryByRole("button", { name: "Product 1" })).not.toBeInTheDocument();
 });
 
+const rect = (el: Element, r: { top: number; bottom: number; left: number; right: number }) => {
+  el.getBoundingClientRect = () => ({ ...r, x: r.left, y: r.top, width: r.right - r.left, height: r.bottom - r.top, toJSON() {} });
+};
+
+test("a cell picked on the page scrolls into view in the table and the panel", () => {
+  const r = withCells({ rows: "detected", cols: "detected" });
+  const props = { result: r, lang: "en" as const, onLang: vi.fn(), onView: vi.fn(), onHighlight: vi.fn() };
+  const { rerender } = render(<StagePanel {...props} pickedCell={null} />);
+  const btn = screen.getByRole("button", { name: "10" });
+  const wrap = btn.closest("table")!.parentElement!;
+  const panel = btn.closest<HTMLElement>("[data-scroll]")!;
+  wrap.scrollTo = vi.fn();
+  panel.scrollTo = vi.fn();
+  rect(wrap, { top: 100, bottom: 324, left: 0, right: 300 });
+  rect(btn, { top: 400, bottom: 420, left: 350, right: 450 }); // below and right of the table's scroll box
+  rect(panel, { top: 0, bottom: 800, left: 0, right: 600 }); // the table itself is already in view
+  rerender(<StagePanel {...props} pickedCell="seg-2#r1c1" />);
+  expect(wrap.scrollTo).toHaveBeenCalledWith({ top: 108, left: 162, behavior: "smooth" });
+  expect(panel.scrollTo).not.toHaveBeenCalled();
+});
+
 test("no cell-accuracy note is shown, even for estimated grids", () => {
   render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} />);
   expect(screen.queryByText(/estimated/i)).not.toBeInTheDocument();

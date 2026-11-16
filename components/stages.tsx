@@ -3,7 +3,7 @@ import { t, type UiLang } from "@/lib/i18n";
 import { pickKey, pickUnits, type PickUnit, segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
 import type { GroundedCell, Segment, ShowcaseResult } from "@/lib/types";
-import type { PageBox } from "./PageView";
+import { type PageBox, reveal } from "./PageView";
 import styles from "./StagePanel.module.css";
 
 export interface StageProps {
@@ -108,6 +108,7 @@ function CellGrid({ segment, cells, activeId, onPick }: {
                       <button
                         type="button"
                         className={styles.pick}
+                        data-pick={id}
                         aria-pressed={activeId === id}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -142,6 +143,14 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
     const visible = top >= box.scrollTop && top + el.offsetHeight <= box.scrollTop + box.clientHeight;
     if (!visible) box.scrollTo?.({ top: Math.max(0, top - 12), behavior: "smooth" });
   }, [highlight]);
+
+  // a cell picked on the page comes into view here: inside the table's own scroll box, then the panel
+  useEffect(() => {
+    const cell = pickedCell ? document.querySelector(`[data-pick="${CSS.escape(pickedCell)}"]`) : null;
+    const table = cell?.closest("table")?.parentElement;
+    reveal(table, cell);
+    reveal(table?.closest<HTMLElement>("[data-scroll]"), table);
+  }, [pickedCell]);
 
   const counts = result.segments.reduce<Record<string, number>>((m, s) => ({ ...m, [s.type]: (m[s.type] ?? 0) + 1 }), {});
   const u = result.upload;

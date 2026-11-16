@@ -267,6 +267,22 @@ test("the active table's cells are pickable on the page, like DocAI", () => {
   expect(onPickCell).toHaveBeenCalledWith(cells[0]);
 });
 
+test("a cell picked in the panel scrolls the page to it", () => {
+  const cells = [{ key: "seg-2#r1c0", box: { page: 1, x0: 100, y0: 900, x1: 300, y1: 950 }, text: "Product 1" }];
+  const props = { result, boxes: [], highlight: null, scanning: false, cells };
+  const { rerender } = render(<PageView {...props} pickedCell={null} />);
+  const btn = screen.getByRole("button", { name: "Table cell Product 1" });
+  const viewport = btn.parentElement!.parentElement!;
+  viewport.scrollTo = vi.fn();
+  const r = (el: Element, top: number, bottom: number) => {
+    el.getBoundingClientRect = () => ({ top, bottom, left: 0, right: 500, x: 0, y: top, width: 500, height: bottom - top, toJSON() {} });
+  };
+  r(viewport, 0, 600);
+  r(btn, 900, 950); // below the visible part of a tall page
+  rerender(<PageView {...props} pickedCell="seg-2#r1c0" />);
+  expect(viewport.scrollTo).toHaveBeenCalledWith({ top: 362, left: 0, behavior: "smooth" });
+});
+
 test("a row band on the page is labelled as a row", () => {
   const cells = [{ key: "seg-2#r1", box: { page: 1, x0: 100, y0: 200, x1: 500, y1: 250 }, text: "Product 1 · 10", kind: "row" as const }];
   render(<PageView result={result} boxes={[]} highlight={null} scanning={false} cells={cells} pickedCell="seg-2#r1" />);
