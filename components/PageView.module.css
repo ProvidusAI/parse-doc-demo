@@ -1,10 +1,33 @@
-.page {
+/* the page's footprint stays fixed; zooming scales the page inside it and the viewport scrolls (DocAI's viewer) */
+.frame {
   position: relative;
   aspect-ratio: var(--ar);
   width: min(calc((100vh - 190px) * var(--ratio)), var(--page-max, 100%));
   background: #fff;
   border: 1px solid var(--border);
   box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.viewport {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pannable {
+  cursor: grab;
+}
+.pannable:active {
+  cursor: grabbing;
+}
+.page {
+  position: relative;
+  aspect-ratio: var(--ar);
+  width: calc(100% * var(--zoom, 1));
+  margin: 0 auto; /* zoomed out below 100%: the page sits centred in its frame */
+  background: #fff;
   overflow: hidden;
 }
 .page img {
@@ -90,31 +113,58 @@
   box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
-.mag {
+/* viewer controls, top-right over the page: − 100% + ⌖ | magnifier */
+.tools {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 4;
-  width: 34px;
-  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.35);
+}
+.tools button {
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.92);
-  color: #000;
+  border: 0;
+  background: transparent;
+  color: var(--t2);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
-.mag:hover {
-  border-color: #000;
+.tools button:hover:not(:disabled) {
+  background: var(--muted);
+  color: #000;
 }
-.mag[aria-pressed="true"] {
+.tools button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.pct {
+  min-width: 42px;
+  text-align: center;
+  font: 12px var(--mono);
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+.sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--border);
+}
+.tools .mag[aria-pressed="true"] {
   background: #000;
   color: #fff;
-  border-color: #000;
 }
 @media (max-width: 760px) {
-  .page {
+  .frame {
     width: 100%;
   }
 }

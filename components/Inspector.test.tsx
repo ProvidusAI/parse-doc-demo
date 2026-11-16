@@ -152,6 +152,48 @@ test("magnifier shows a zoomed lens of the page under the pointer", () => {
   expect(toggle).toHaveAttribute("aria-pressed", "false");
 });
 
+test("page zoom steps 10% between 40% and 350%, like DocAI", () => {
+  render(<PageView result={result} boxes={[]} highlight={null} scanning={false} />);
+  const page = screen.getByRole("img").parentElement!;
+  const zoomIn = screen.getByRole("button", { name: "Zoom in" });
+  const zoomOut = screen.getByRole("button", { name: "Zoom out" });
+  expect(screen.getByText("100%")).toBeInTheDocument();
+  fireEvent.click(zoomIn);
+  expect(screen.getByText("110%")).toBeInTheDocument();
+  expect(page.style.getPropertyValue("--zoom")).toBe("1.1");
+  fireEvent.click(zoomOut);
+  fireEvent.click(zoomOut);
+  expect(screen.getByText("90%")).toBeInTheDocument();
+  for (let i = 0; i < 10; i++) fireEvent.click(zoomOut);
+  expect(screen.getByText("40%")).toBeInTheDocument();
+  for (let i = 0; i < 40; i++) fireEvent.click(zoomIn);
+  expect(screen.getByText("350%")).toBeInTheDocument();
+});
+
+test("Ctrl/⌘ + scroll zooms the page; a plain scroll does not", () => {
+  render(<PageView result={result} boxes={[]} highlight={null} scanning={false} />);
+  const viewport = screen.getByRole("img").parentElement!.parentElement!;
+  fireEvent.wheel(viewport, { deltaY: -100, ctrlKey: true });
+  expect(screen.getByText("110%")).toBeInTheDocument();
+  fireEvent.wheel(viewport, { deltaY: 100, metaKey: true });
+  expect(screen.getByText("100%")).toBeInTheDocument();
+  fireEvent.wheel(viewport, { deltaY: -100 });
+  expect(screen.getByText("100%")).toBeInTheDocument();
+});
+
+test("locate jumps to the highlighted region", () => {
+  const boxes = [{ key: "seg-1", box: { page: 1, x0: 300, y0: 20, x1: 700, y1: 60 } }];
+  const { rerender } = render(<PageView result={result} boxes={boxes} highlight={null} scanning={false} />);
+  const locate = screen.getByRole("button", { name: "Jump to highlight" });
+  expect(locate).toBeDisabled();
+  const viewport = screen.getByRole("img").parentElement!.parentElement!;
+  const scrollTo = vi.fn();
+  viewport.scrollTo = scrollTo as unknown as typeof viewport.scrollTo;
+  rerender(<PageView result={result} boxes={boxes} highlight="seg-1" scanning={false} />);
+  fireEvent.click(locate);
+  expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
+});
+
 test("the active table's cells are pickable on the page, like DocAI", () => {
   const onPickCell = vi.fn();
   const cells = [
