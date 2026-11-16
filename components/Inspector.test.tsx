@@ -181,17 +181,20 @@ test("Ctrl/⌘ + scroll zooms the page; a plain scroll does not", () => {
   expect(screen.getByText("100%")).toBeInTheDocument();
 });
 
-test("locate jumps to the highlighted region", () => {
-  const boxes = [{ key: "seg-1", box: { page: 1, x0: 300, y0: 20, x1: 700, y1: 60 } }];
-  const { rerender } = render(<PageView result={result} boxes={boxes} highlight={null} scanning={false} />);
-  const locate = screen.getByRole("button", { name: "Jump to highlight" });
-  expect(locate).toBeDisabled();
+test("the target button resets the page to 100%", () => {
+  render(<PageView result={result} boxes={[]} highlight={null} scanning={false} />);
+  const reset = screen.getByRole("button", { name: "Reset zoom" });
+  expect(reset).toBeDisabled(); // already at 100%
+  fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+  fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+  expect(screen.getByText("120%")).toBeInTheDocument();
   const viewport = screen.getByRole("img").parentElement!.parentElement!;
-  const scrollTo = vi.fn();
-  viewport.scrollTo = scrollTo as unknown as typeof viewport.scrollTo;
-  rerender(<PageView result={result} boxes={boxes} highlight="seg-1" scanning={false} />);
-  fireEvent.click(locate);
-  expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
+  viewport.scrollLeft = 80;
+  viewport.scrollTop = 120;
+  fireEvent.click(reset);
+  expect(screen.getByText("100%")).toBeInTheDocument();
+  expect([viewport.scrollLeft, viewport.scrollTop]).toEqual([0, 0]);
+  expect(reset).toBeDisabled();
 });
 
 test("the active table's cells are pickable on the page, like DocAI", () => {

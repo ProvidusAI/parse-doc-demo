@@ -45,7 +45,7 @@ export default function Showcase({ manifest: real }: { manifest: Manifest }) {
   const openIndex = tabPages.findIndex((p) => p.id === openId);
 
   return (
-    <div className={styles.root} data-on-data={progress > 0.85 || undefined}>
+    <div className={styles.root} data-on-data={progress > 0.85 || undefined} data-inspecting={openIndex >= 0 || undefined}>
       <Nav />
       <PageWall thumbs={manifest.wall} blur={progress * 4} />
       <Hero categories={manifest.categories.length} pages={pages} progress={progress} onExplore={explore} />

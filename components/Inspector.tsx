@@ -146,7 +146,8 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
                 pickedCell={cell?.key ?? null}
                 onPickCell={pickCell}
               />
-              <p className={styles.meta}>
+              {/* not shown (the page gets the room), but screen readers still hear which page this is */}
+              <p className="sr-only">
                 {current.source.fileName}
                 <small>
                   {current.categoryLabel} · {current.subCategoryLabel} · {index + 1} of {n}

@@ -239,6 +239,10 @@
 :global([data-on-data]) .hint {
   opacity: 1;
 }
+/* the grid's hint never shows through an open page */
+:global([data-on-data][data-inspecting]) .hint {
+  opacity: 0;
+}
 @media (max-width: 760px) {
   .bar {
     flex-wrap: nowrap;

@@ -41,6 +41,16 @@ test("Try DocAI opens the Providus platform in a new tab", () => {
   expect(link).toHaveAttribute("target", "_blank");
 });
 
+test("an open page marks the root so the grid's hint hides behind it", () => {
+  vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+  const { container } = render(<Showcase manifest={manifest} />);
+  const root = container.firstElementChild!;
+  expect(root).not.toHaveAttribute("data-inspecting");
+  fireEvent.click(screen.getAllByRole("button", { name: /Receipts/ })[0]);
+  expect(root).toHaveAttribute("data-inspecting");
+  vi.unstubAllGlobals();
+});
+
 test("All is the default tab", () => {
   render(<Showcase manifest={manifest} />);
   expect(screen.getAllByRole("tab")[0]).toHaveAttribute("aria-selected", "true");

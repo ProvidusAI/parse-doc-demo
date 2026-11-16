@@ -1,7 +1,10 @@
 .modal {
-  --pad-x: 96px;
+  /* just clear of the ‹ › buttons (28px + 44px) */
+  --pad-x: 80px;
+  /* the panel's minimum; it grows into any width the page leaves free, up to --panel-max */
   --panel-w: 460px;
-  --gap: 28px;
+  --panel-max: 1000px;
+  --gap: 20px;
   /* widest the page may be so page + gap + panel always fit, centred */
   --page-max: calc(100vw - 2 * var(--pad-x) - var(--panel-w) - var(--gap));
   position: fixed;
@@ -10,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 72px var(--pad-x) 32px;
+  padding: 68px var(--pad-x) 16px;
 }
 .veil {
   position: absolute;
@@ -24,7 +27,7 @@
 .wrap {
   position: relative;
   display: grid;
-  grid-template-columns: auto var(--panel-w);
+  grid-template-columns: auto minmax(var(--panel-w), var(--panel-max));
   justify-content: center;
   gap: var(--gap);
   width: 100%;
@@ -53,19 +56,6 @@
 .panelcol > * {
   flex: 1;
   min-width: 0;
-}
-.meta {
-  overflow-wrap: anywhere;
-  text-align: right;
-  font: 14px var(--mono);
-  color: var(--t2);
-  margin-top: 12px;
-}
-.meta small {
-  display: block;
-  color: var(--t3);
-  font-size: 12px;
-  margin-top: 2px;
 }
 .loading {
   color: var(--t3);
@@ -107,9 +97,9 @@
 }
 @media (max-width: 1100px) {
   .modal {
-    --pad-x: 72px;
+    --pad-x: 64px;
     --panel-w: 380px;
-    padding: 72px var(--pad-x) 24px;
+    padding: 68px var(--pad-x) 16px;
   }
   .left {
     left: 14px;

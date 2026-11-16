@@ -122,16 +122,15 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
     drag.current = null;
   };
 
-  // DocAI's "locate": bring the picked cell, or else the highlighted region, into the middle of the frame
-  const target = cells.find((c) => c.key === pickedCell) ?? boxes.find((b) => b.key === highlight) ?? null;
-  const locate = () => {
+  // the target button puts the page back to normal: 100%, from the top-left
+  const reset = () => {
+    anchor.current = null;
+    setZoom(DEFAULT_ZOOM_PERCENT);
     const el = viewRef.current;
-    const page = el?.firstElementChild as HTMLElement | null;
-    if (!el || !page || !target) return;
-    const { x0, y0, x1, y1 } = target.box;
-    const cx = (((x0 + x1) / 2) / 1000) * page.offsetWidth + page.offsetLeft;
-    const cy = (((y0 + y1) / 2) / 1000) * page.offsetHeight + page.offsetTop;
-    el.scrollTo?.({ left: cx - el.clientWidth / 2, top: cy - el.clientHeight / 2, behavior: "smooth" });
+    if (el) {
+      el.scrollLeft = 0;
+      el.scrollTop = 0;
+    }
   };
 
   const hover = (key: string | null) => {
@@ -178,7 +177,7 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
         <button type="button" aria-label="Zoom in" title="Zoom in" onClick={() => zoomBy(ZOOM_STEP_PERCENT)} disabled={zoom >= MAX_ZOOM_PERCENT}>
           {icon(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M8 11h6M11 8v6" /></>)}
         </button>
-        <button type="button" aria-label="Jump to highlight" title="Jump to highlight" onClick={locate} disabled={!target}>
+        <button type="button" aria-label="Reset zoom" title="Reset zoom (100%)" onClick={reset} disabled={zoom === DEFAULT_ZOOM_PERCENT}>
           {icon(<><path d="M2 12h3M19 12h3M12 2v3M12 19v3" /><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" /></>)}
         </button>
         <span className={styles.sep} aria-hidden="true" />
