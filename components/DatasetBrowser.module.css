@@ -30,6 +30,7 @@
 }
 /* one row however many categories: the strip scrolls sideways, search and view stay put */
 .tabs {
+  position: relative; /* chip.offsetLeft is measured from the strip */
   flex: 1 1 0;
   min-width: 0;
   flex-wrap: nowrap;

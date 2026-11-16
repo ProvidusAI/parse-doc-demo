@@ -115,3 +115,23 @@ test("dropdown shows the active category", () => {
   setup("government");
   expect(screen.getByRole("combobox", { name: "All categories" })).toHaveValue("government");
 });
+
+test("active chip is scrolled clear of the strip edges and the right fade", () => {
+  const { rerender } = render(
+    <DatasetBrowser manifest={manifest} active="financial" onActive={vi.fn()} onOpen={vi.fn()} />,
+  );
+  const strip = screen.getByRole("tablist");
+  const def = (el: Element, v: Record<string, number>) =>
+    Object.entries(v).forEach(([k, value]) => Object.defineProperty(el, k, { value, writable: true, configurable: true }));
+  def(strip, { clientWidth: 300, scrollLeft: 100 });
+  def(screen.getByRole("tab", { name: /Financial/ }), { offsetLeft: 20, offsetWidth: 80 });
+  def(screen.getByRole("tab", { name: /Government/ }), { offsetLeft: 380, offsetWidth: 90 });
+  const show = (key: string) =>
+    rerender(<DatasetBrowser manifest={manifest} active={key} onActive={vi.fn()} onOpen={vi.fn()} />);
+  show("all");
+  def(screen.getByRole("tab", { name: /All/ }), { offsetLeft: 0, offsetWidth: 50 });
+  show("government"); // right edge 470 > 100+300-40: scroll so it ends 40px before the edge
+  expect(strip.scrollLeft).toBe(470 - 300 + 40);
+  show("financial"); // left 20 < 210: scroll to its left edge
+  expect(strip.scrollLeft).toBe(20);
+});

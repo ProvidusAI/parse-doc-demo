@@ -41,9 +41,10 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
     const el = tabsRef.current;
     const chip = el?.querySelector<HTMLElement>('[aria-selected="true"]');
     if (!el || !chip || !el.clientWidth) return; // no layout (jsdom)
+    // offsetLeft is strip-relative (.tabs is positioned); the right 40px fade out, so keep chips clear of it
+    const right = chip.offsetLeft + chip.offsetWidth;
     if (chip.offsetLeft < el.scrollLeft) el.scrollLeft = chip.offsetLeft;
-    else if (chip.offsetLeft + chip.offsetWidth > el.scrollLeft + el.clientWidth)
-      el.scrollLeft = chip.offsetLeft + chip.offsetWidth - el.clientWidth;
+    else if (right > el.scrollLeft + el.clientWidth - 40) el.scrollLeft = right - el.clientWidth + 40;
   }, [active]);
   const onZoom = useCallback((w: number) => setTileW(w), []);
 
