@@ -6,6 +6,7 @@
     python -m generator.generate --review          # write generator/out/review.html
     python -m generator.generate --manifest        # write public/showcase/manifest.json (approved only)
     python -m generator.generate --import-parsed   # pages already parsed elsewhere ("parsed" entries)
+    python -m generator.generate --refresh-segments  # re-fetch segments of DocAI-run pages (no re-parse)
 """
 import argparse
 import html
@@ -18,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from generator.docai_client import DocAI, DocAIError
-from generator.normalize import OCR_MODELS, build_result
+from generator.normalize import OCR_MODELS, _segment, build_result
 from generator.pages import CARD_WIDTH, cut_page, make_thumb, page_jpeg, render_wall_thumb
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -107,6 +108,22 @@ def import_entry(entry, parsed: Path, images: Path, showcase: Path, force=False)
                           segments=segments, page_image=page, rules=None, split=None, schema=None, extraction=None,
                           ocr_engine=entry.get("ocrEngine"))
     return _write(showcase / entry_id(entry), page, result)
+
+
+def refresh_entry(entry, client, showcase: Path, files: dict) -> bool:
+    """Re-fetch one DocAI-run page's segments by its uploaded filename; rewrite only `segments`."""
+    f = showcase / entry_id(entry) / "result.json"
+    if entry.get("parsed") or not f.exists():
+        return False
+    result = json.loads(f.read_text(encoding="utf-8"))
+    file_id = files.get(result["upload"]["fileName"])
+    if not file_id:
+        return False
+    result["segments"] = [_segment(s) for s in client.segments(file_id)]
+    tmp = f.with_name("result.json.tmp")
+    tmp.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(f)
+    return True
 
 
 def _write(out: Path, page: bytes, result: dict) -> Path:
@@ -200,6 +217,7 @@ def main(argv=None):
     ap.add_argument("--review", action="store_true")
     ap.add_argument("--manifest", action="store_true")
     ap.add_argument("--import-parsed", action="store_true")
+    ap.add_argument("--refresh-segments", action="store_true")
     a = ap.parse_args(argv)
     samples = json.loads((ROOT / "samples.json").read_text(encoding="utf-8"))
     if a.wall:
@@ -215,6 +233,13 @@ def main(argv=None):
             if e.get("parsed") and e["status"] != "rejected" and (not a.only or entry_id(e) == a.only):
                 done = import_entry(e, PARSED, PARSED_IMAGES, SHOWCASE, force=a.force)
                 print(f"  {entry_id(e)}: {'ok' if done else 'skipped'}")
+    if a.refresh_segments:
+        client = DocAI(os.environ.get("DOCAI_BASE_URL", "http://localhost:8787"), api_key())
+        files = {f["filename"]: f["id"] for f in client.list_files()}
+        for e in samples:
+            if e["status"] == "approved" and not e.get("parsed"):
+                ok = refresh_entry(e, client, SHOWCASE, files)
+                print(f"  {entry_id(e)}: {'refreshed' if ok else 'NOT FOUND in DocAI'}")
     if a.review:
         write_review(samples, SHOWCASE, WORK / "review.html")
         print(f"wrote {WORK / 'review.html'}")

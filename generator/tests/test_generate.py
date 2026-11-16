@@ -241,5 +241,38 @@ class ClientTest(unittest.TestCase):
                 c.parse("f", {})
 
 
+class RefreshSegmentsTest(unittest.TestCase):
+    setUp = GenerateTest.setUp
+    run_entry = GenerateTest.run_entry
+
+    def result_path(self, e):
+        return self.showcase / generate.entry_id(e) / "result.json"
+
+    def test_refresh_replaces_segments_and_keeps_the_rest(self):
+        e = entry()
+        self.run_entry(e, FakeClient())
+        f = self.result_path(e)
+        r = json.loads(f.read_text(encoding="utf-8"))
+        r["segments"], r["extraction"] = [], "sentinel"
+        f.write_text(json.dumps(r), encoding="utf-8")
+        client = FakeClient()
+        self.assertTrue(generate.refresh_entry(e, client, self.showcase, {r["upload"]["fileName"]: "fid"}))
+        after = json.loads(f.read_text(encoding="utf-8"))
+        self.assertEqual(len(after["segments"]), len(load("segments.json")))
+        self.assertEqual(after["extraction"], "sentinel")
+        self.assertEqual(client.calls, ["segments"])
+
+    def test_refresh_skips_unknown_file_and_imported(self):
+        e = entry()
+        self.run_entry(e, FakeClient())
+        f = self.result_path(e)
+        before = f.read_bytes()
+        self.assertFalse(generate.refresh_entry(e, FakeClient(), self.showcase, {"other.png": "fid"}))
+        self.assertEqual(f.read_bytes(), before)
+        name = json.loads(before)["upload"]["fileName"]
+        self.assertFalse(generate.refresh_entry({**e, "parsed": "x"}, FakeClient(), self.showcase, {name: "fid"}))
+        self.assertFalse(generate.refresh_entry(entry("bills"), FakeClient(), self.showcase, {name: "fid"}))
+
+
 if __name__ == "__main__":
     unittest.main()

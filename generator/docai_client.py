@@ -78,6 +78,9 @@ class DocAI:
             raise DocAIError(f"parse {job['status']}: {job.get('error')}")
         return job
 
+    def list_files(self) -> list:
+        return self._ok("GET", "/v1/files")[1]["files"]
+
     def segments(self, file_id: str) -> list:
         return self._ok("GET", f"/v1/files/{file_id}/segments")[1]
 
