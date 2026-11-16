@@ -222,6 +222,7 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
             key={b.key}
             data-box={b.key}
             data-hi={b.key === highlight || undefined}
+            data-cell-picked={pickedCell?.startsWith(`${b.key}#`) || undefined}
             className={styles.box}
             style={{ ...boxToPercent(b.box), ...(b.type && { "--c": segmentHex(b.type) }) } as React.CSSProperties}
           >

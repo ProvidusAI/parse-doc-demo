@@ -56,6 +56,12 @@
   outline-width: 2px;
   z-index: 1;
 }
+/* a cell of this table is picked: keep the table's border, drop its fill, so only the cell is shaded */
+.box[data-cell-picked],
+.box[data-cell-picked][data-hi] {
+  background: transparent;
+  outline-width: 2px;
+}
 /* a table cell on the page — DocAI: border-violet-500/40, hover violet-600 + bg-violet-400/25; picked = amber */
 .cell {
   position: absolute;

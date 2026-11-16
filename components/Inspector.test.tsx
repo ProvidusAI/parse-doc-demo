@@ -197,6 +197,20 @@ test("the target button resets the page to 100%", () => {
   expect(reset).toBeDisabled();
 });
 
+test("with a cell picked, its table keeps only its border so the cell's shade stands out", () => {
+  const boxes = [
+    { key: "seg-2", box: { page: 1, x0: 40, y0: 200, x1: 960, y1: 600 }, type: "table" },
+    { key: "seg-1", box: { page: 1, x0: 300, y0: 20, x1: 700, y1: 60 }, type: "header" },
+  ];
+  const cells = [{ key: "seg-2#r1c0", box: { page: 1, x0: 100, y0: 200, x1: 300, y1: 250 }, text: "Product 1" }];
+  const { container, rerender } = render(<PageView result={result} boxes={boxes} highlight="seg-2" scanning={false} cells={cells} />);
+  const table = () => container.querySelector('[data-box="seg-2"]')!;
+  expect(table()).not.toHaveAttribute("data-cell-picked");
+  rerender(<PageView result={result} boxes={boxes} highlight="seg-2" scanning={false} cells={cells} pickedCell="seg-2#r1c0" />);
+  expect(table()).toHaveAttribute("data-cell-picked");
+  expect(container.querySelector('[data-box="seg-1"]')).not.toHaveAttribute("data-cell-picked");
+});
+
 test("the active table's cells are pickable on the page, like DocAI", () => {
   const onPickCell = vi.fn();
   const cells = [
