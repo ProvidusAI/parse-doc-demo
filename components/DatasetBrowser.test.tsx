@@ -100,3 +100,18 @@ test("card stagger is capped for long lists", () => {
   const delays = cards.map((c) => parseInt(c.style.animationDelay || "0", 10));
   expect(Math.max(...delays)).toBeLessThanOrEqual(840);
 });
+
+test("dropdown lists every category with counts and switches tab", () => {
+  const { onActive } = setup();
+  const select = screen.getByRole("combobox", { name: "All categories" });
+  const total = manifest.categories.reduce((n, c) => n + c.pages.length, 0);
+  expect(select.querySelectorAll("option")).toHaveLength(manifest.categories.length + 1);
+  expect(select.querySelector("option")).toHaveTextContent(`All (${total})`);
+  fireEvent.change(select, { target: { value: manifest.categories[1].key } });
+  expect(onActive).toHaveBeenCalledWith(manifest.categories[1].key);
+});
+
+test("dropdown shows the active category", () => {
+  setup("government");
+  expect(screen.getByRole("combobox", { name: "All categories" })).toHaveValue("government");
+});

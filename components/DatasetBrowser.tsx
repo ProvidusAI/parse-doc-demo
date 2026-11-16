@@ -35,6 +35,16 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
+
+  // bring the active chip fully into view (not scrollIntoView: that would scroll the page too)
+  useEffect(() => {
+    const el = tabsRef.current;
+    const chip = el?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!el || !chip || !el.clientWidth) return; // no layout (jsdom)
+    if (chip.offsetLeft < el.scrollLeft) el.scrollLeft = chip.offsetLeft;
+    else if (chip.offsetLeft + chip.offsetWidth > el.scrollLeft + el.clientWidth)
+      el.scrollLeft = chip.offsetLeft + chip.offsetWidth - el.clientWidth;
+  }, [active]);
   const onZoom = useCallback((w: number) => setTileW(w), []);
 
   // the mosaic fills the screen under the toolbar, whose height changes when its tabs wrap
@@ -88,6 +98,19 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
             </button>
           ))}
         </div>
+        <select
+          className={styles.pick}
+          aria-label="All categories"
+          value={selected}
+          onChange={(e) => onActive(e.target.value)}
+        >
+          <option value={ALL}>All ({total})</option>
+          {manifest.categories.map((c) => (
+            <option key={c.key} value={c.key}>
+              {c.label} ({c.pages.length})
+            </option>
+          ))}
+        </select>
         <span className={styles.sp} />
         <label className={styles.search}>
           <span aria-hidden="true">⌕</span>
