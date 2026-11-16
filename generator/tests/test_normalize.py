@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from generator.normalize import build_result, table_text
+from generator.normalize import _segment, build_result, table_grid, table_text
 
 FIX = Path(__file__).parent / "fixtures"
 ENTRY = {
@@ -53,7 +53,7 @@ class NormalizeTest(unittest.TestCase):
                                        "elapsedSeconds": 45.6})
         self.assertEqual(r["segments"][0], {"id": "p1_e0000", "type": "header", "label": "header",
                                             "text": "TAX INVOICE فاتورة ضريبية", "textless": False,
-                                            "box": {"page": 1, "x0": 300, "y0": 20, "x1": 700, "y1": 60}})
+                                            "box": {"page": 1, "x0": 300, "y0": 20, "x1": 700, "y1": 60}, "table": None})
         self.assertTrue(r["segments"][3]["textless"])
         self.assertEqual(r["splitRules"], [{"id": "rule-1", "name": "Invoice boundary",
                                             "description": "Start a new record at each TAX INVOICE header."}])
@@ -104,6 +104,31 @@ class NormalizeTest(unittest.TestCase):
     def test_table_text_strips_html(self):
         self.assertEqual(table_text("<table><tr><td>Item</td><td>Qty</td></tr><tr><td>A &amp; B</td></tr></table>"),
                          "Item · Qty · A & B")
+
+
+def _c(text, header=False, rs=1, cs=1):
+    return {"text": text, "header": header, "rowSpan": rs, "colSpan": cs}
+
+
+class TableGridTests(unittest.TestCase):
+    def test_table_grid_keeps_rows_headers_and_spans(self):
+        got = table_grid('<table><tr><th>Item</th><th colspan="2">Qty</th></tr>'
+                         '<tr><td rowspan="2">A &amp; B</td><td>1<br>2</td><td><b>x</b></td></tr></table>')
+        self.assertEqual(got, {"rows": [[_c("Item", True), _c("Qty", True, 1, 2)],
+                                        [_c("A & B", False, 2, 1), _c("1 2"), _c("x")]]})
+
+    def test_table_grid_tolerates_bad_markup(self):
+        self.assertEqual(table_grid("<table><tr><td>a<td>b"), {"rows": [[_c("a"), _c("b")]]})
+        self.assertIsNone(table_grid("no table here"))
+        self.assertIsNone(table_grid("<table></table>"))
+        self.assertEqual(table_grid('<table><tr><td colspan="x">a</td></tr></table>')["rows"][0][0]["colSpan"], 1)
+
+    def test_segment_carries_table_only_for_tables(self):
+        md = "<table><tr><td>a</td></tr></table>"
+        seg = _segment({"id": "s", "type": "table", "markdown": md, "coordinates": None})
+        self.assertEqual(seg["table"]["rows"][0][0]["text"], "a")
+        self.assertEqual(seg["text"], table_text(md))
+        self.assertIsNone(_segment({"id": "t", "type": "text", "markdown": "hi", "coordinates": None})["table"])
 
 
 if __name__ == "__main__":

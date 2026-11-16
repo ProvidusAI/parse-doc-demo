@@ -4,6 +4,8 @@
 export type Box = { page: number; x0: number; y0: number; x1: number; y1: number };
 export type Lang = "ar-en" | "en";
 
+export interface TableCell { text: string; header: boolean; rowSpan: number; colSpan: number }
+
 export interface Segment {
   id: string;
   type: string;
@@ -11,6 +13,7 @@ export interface Segment {
   text: string;
   textless: boolean;
   box: Box | null;
+  table?: { rows: TableCell[][] } | null;
 }
 
 export interface SplitRecord {

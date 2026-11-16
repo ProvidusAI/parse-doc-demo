@@ -2,6 +2,7 @@
 import html
 import io
 import re
+from html.parser import HTMLParser
 
 from PIL import Image
 
@@ -13,6 +14,57 @@ def table_text(markup: str) -> str:
     cells = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", markup, flags=re.S | re.I)
     cells = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in cells]
     return " · ".join(c for c in cells if c)
+
+
+class _GridParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.rows, self.cell = [], None
+
+    def _close(self):
+        if self.cell is not None:
+            self.cell["text"] = " ".join(self.cell["text"].split())
+            self.rows[-1].append(self.cell)
+            self.cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self._close()
+            self.rows.append([])
+        elif tag in ("td", "th"):
+            self._close()
+            if not self.rows:
+                self.rows.append([])
+            a = dict(attrs)
+            self.cell = {"text": "", "header": tag == "th", "rowSpan": _span(a.get("rowspan")),
+                         "colSpan": _span(a.get("colspan"))}
+        elif tag == "br" and self.cell is not None:
+            self.cell["text"] += " "
+
+    def handle_endtag(self, tag):
+        if tag in ("td", "th", "tr", "table"):
+            self._close()
+
+    def handle_data(self, data):
+        if self.cell is not None:
+            self.cell["text"] += data
+
+
+def _span(v) -> int:
+    try:
+        return max(1, int(v))
+    except (TypeError, ValueError):
+        return 1
+
+
+def table_grid(markup: str):
+    """Rows/cells of DocAI's table HTML with header flags and spans; None when there is no table."""
+    p = _GridParser()
+    p.feed(markup)
+    p.close()
+    p._close()
+    rows = [r for r in p.rows if r]
+    return {"rows": rows} if rows else None
 
 
 def _clamp(v) -> int:
@@ -28,10 +80,12 @@ def _box(coords):
 
 def _segment(s):
     text = s.get("markdown") or ""
+    table = None
     if "<table" in text.lower():
+        table = table_grid(text)
         text = table_text(text)
     return {"id": s["id"], "type": s.get("type") or "other", "label": s.get("title") or s.get("type") or "",
-            "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates"))}
+            "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table}
 
 
 def _field_paths(fields, prefix=""):
