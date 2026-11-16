@@ -115,6 +115,22 @@ test("a cell picked on the page shows as picked in the grid", () => {
   expect(screen.getByRole("button", { name: "Product 1" })).toHaveAttribute("aria-pressed", "false");
 });
 
+test("columns estimated: picking a cell picks its whole row, like DocAI's cellGrid rule", () => {
+  const onCell = vi.fn();
+  render(<StagePanel result={withCells({ rows: "detected", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} onCell={onCell} pickedCell="seg-2#r1" />);
+  expect(screen.getByRole("button", { name: "Product 1" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "10" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Qty" })).toHaveAttribute("aria-pressed", "false");
+  fireEvent.click(screen.getByRole("button", { name: "Qty" }));
+  expect(onCell).toHaveBeenLastCalledWith({ key: "seg-2#r0", box: { page: 1, x0: 0, y0: 0, x1: 200, y1: 20 } });
+});
+
+test("both axes estimated: cells are shown but not pickable", () => {
+  render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} onCell={vi.fn()} />);
+  expect(screen.getByRole("cell", { name: "Product 1" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Product 1" })).not.toBeInTheDocument();
+});
+
 test("no cell-accuracy note is shown, even for estimated grids", () => {
   render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} />);
   expect(screen.queryByText(/estimated/i)).not.toBeInTheDocument();

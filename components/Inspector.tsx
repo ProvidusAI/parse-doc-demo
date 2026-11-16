@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
+import { pickUnits } from "@/lib/segments";
 import { nextIndex } from "@/lib/showcase";
 import type { PageSummary, ShowcaseResult } from "@/lib/types";
 import styles from "./Inspector.module.css";
@@ -101,11 +102,8 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   // hovered one) shows its cells on the page, and a cell picked on either side is picked on both
   const activeTableId = cell ? cell.key.split("#")[0] : highlight;
   const activeTable = current?.segments.find((s) => s.id === activeTableId && s.cells?.length);
-  const pageCells: PageCell[] = (activeTable?.cells ?? []).map((c) => ({
-    key: `${activeTable!.id}#r${c.row}c${c.col}`,
-    box: c.box,
-    text: c.text,
-  }));
+  // only what DocAI measured: cells, or row/column bands when one axis is a guess (none when both are)
+  const pageCells: PageCell[] = activeTable ? pickUnits(activeTable.id, activeTable.cells!, activeTable.cellGrid) : [];
   const pickCell = (c: PageBox | null) => setCell((cur) => (c && cur?.key !== c.key ? { key: c.key, box: c.box } : null));
   // the scan bar only exists once PageView mounts, so timers start from the load, not the open
   const loadedId = current ? summary.id : null;

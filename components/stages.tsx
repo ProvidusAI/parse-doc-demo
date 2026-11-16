@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
-import { segmentHex } from "@/lib/segments";
+import { pickKey, pickUnits, type PickUnit, segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
 import type { GroundedCell, Segment, ShowcaseResult } from "@/lib/types";
 import type { PageBox } from "./PageView";
@@ -67,19 +67,18 @@ function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
   );
 }
 
-/** DocAI's per-cell id for a picked cell (docai-web cellAsSegment): `<segment>#r<row>c<col>`. */
-const cellId = (segmentId: string, c: GroundedCell) => `${segmentId}#r${c.row}c${c.col}`;
-
 /**
  * DocAI's CellGrid (docai-web doc-parse-panel): every cell of the grounding grid is a button;
- * picking one grounds that cell on the page.
+ * picking one grounds it on the page — the cell, or its row/column band when the other axis
+ * was only estimated (pickKey). With both axes estimated the cells are plain text.
  */
 function CellGrid({ segment, cells, activeId, onPick }: {
   segment: Segment;
   cells: GroundedCell[];
   activeId: string | null;
-  onPick(c: GroundedCell): void;
+  onPick(unit: PickUnit): void;
 }) {
+  const units = new Map(pickUnits(segment.id, cells, segment.cellGrid).map((u) => [u.key, u]));
   const rows: GroundedCell[][] = [];
   for (const c of cells) {
     rows[c.row] ??= [];
@@ -94,17 +93,25 @@ function CellGrid({ segment, cells, activeId, onPick }: {
               <tr key={r}>
                 {(row ?? []).map((c) => {
                   if (!c) return null;
-                  const id = cellId(segment.id, c);
+                  const id = pickKey(segment.id, c, segment.cellGrid);
+                  const unit = id ? units.get(id) : undefined;
                   const Cell = c.header ? "th" : "td";
+                  if (!unit) {
+                    return (
+                      <Cell key={`r${c.row}c${c.col}`} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)}>
+                        <DocText text={c.text || " "} />
+                      </Cell>
+                    );
+                  }
                   return (
-                    <Cell key={id} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)} className={styles.pickCell}>
+                    <Cell key={`r${c.row}c${c.col}`} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)} className={styles.pickCell}>
                       <button
                         type="button"
                         className={styles.pick}
                         aria-pressed={activeId === id}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onPick(c);
+                          onPick(unit);
                         }}
                       >
                         <DocText text={c.text || " "} />
@@ -123,10 +130,8 @@ function CellGrid({ segment, cells, activeId, onPick }: {
 export function ChunksStage({ result, lang, onHighlight, highlight = null, onCell, pickedCell = null }: StageProps) {
   const cards = useRef<Record<string, HTMLLIElement | null>>({});
 
-  const pickCell = (s: Segment, c: GroundedCell) => {
-    const id = cellId(s.id, c);
-    onCell?.(pickedCell === id ? null : { key: id, box: c.box }); // clicking the picked cell again clears it
-  };
+  // clicking the picked cell (or band) again clears it
+  const pickCell = (u: PickUnit) => onCell?.(pickedCell === u.key ? null : { key: u.key, box: u.box });
 
   // a box hovered on the page brings its chunk into view; scroll only the panel body, never the page
   useEffect(() => {
@@ -186,7 +191,7 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
               {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
             </div>
             {s.cells ? (
-              <CellGrid segment={s} cells={s.cells} activeId={pickedCell} onPick={(c) => pickCell(s, c)} />
+              <CellGrid segment={s} cells={s.cells} activeId={pickedCell} onPick={pickCell} />
             ) : s.table ? (
               <TableGrid table={s.table} />
             ) : s.textless ? (

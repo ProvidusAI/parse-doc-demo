@@ -30,6 +30,8 @@ interface Props {
 
 export interface PageCell extends PageBox {
   text: string;
+  /** a single cell, or a whole row/column band when DocAI only estimated the other axis */
+  kind?: "cell" | "row" | "column";
 }
 
 const ZOOM = 2.5;
@@ -237,7 +239,7 @@ export default function PageView({ result, boxes, highlight, scanning, onHover, 
             key={c.key}
             type="button"
             data-cell={c.key}
-            aria-label={`Table cell ${c.text || c.key}`}
+            aria-label={`Table ${c.kind ?? "cell"} ${c.text || c.key}`}
             aria-pressed={c.key === pickedCell}
             title={c.text}
             className={styles.cell}

@@ -267,6 +267,12 @@ test("the active table's cells are pickable on the page, like DocAI", () => {
   expect(onPickCell).toHaveBeenCalledWith(cells[0]);
 });
 
+test("a row band on the page is labelled as a row", () => {
+  const cells = [{ key: "seg-2#r1", box: { page: 1, x0: 100, y0: 200, x1: 500, y1: 250 }, text: "Product 1 · 10", kind: "row" as const }];
+  render(<PageView result={result} boxes={[]} highlight={null} scanning={false} cells={cells} pickedCell="seg-2#r1" />);
+  expect(screen.getByRole("button", { name: "Table row Product 1 · 10" })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("picking a cell on the page selects it in the chunk grid", async () => {
   const cellsResult = {
     ...result,
