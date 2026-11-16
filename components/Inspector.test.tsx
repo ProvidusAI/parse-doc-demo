@@ -23,6 +23,11 @@ const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 const pipeline = () => screen.queryByRole("region", { name: "DocAI pipeline" });
 const pageEl = () => screen.getByRole("img").parentElement!;
 const wrap = () => screen.getByRole("dialog").querySelector("[data-phase]")!;
+// wait for the page, then flush its effects so load-started timers begin before the clock moves
+const shown = async (text: string) => {
+  await screen.findByText(text);
+  await act(async () => {});
+};
 
 function setup(index = 0) {
   const onIndex = vi.fn();
@@ -150,7 +155,7 @@ test("magnifier shows a zoomed lens of the page under the pointer", () => {
 test("intro shows the page alone, then the panel on Parsed chunks", async () => {
   fakeClock();
   setup(0);
-  await screen.findByText("receipts.png");
+  await shown("receipts.png");
   expect(wrap()).toHaveAttribute("data-phase", "intro");
   expect(pipeline()).toBeNull();
   expect(pageEl()).toHaveClass("scanning");
@@ -163,7 +168,7 @@ test("intro shows the page alone, then the panel on Parsed chunks", async () => 
 test("reduced motion skips the intro", async () => {
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
   setup(0);
-  await screen.findByText("receipts.png");
+  await shown("receipts.png");
   expect(wrap()).toHaveAttribute("data-phase", "ready");
   expect(pipeline()).toBeInTheDocument();
   expect(pageEl()).not.toHaveClass("scanning");
@@ -173,7 +178,7 @@ test("closing during the intro leaves no pending timer", async () => {
   fakeClock();
   const errors = vi.spyOn(console, "error");
   const { unmount } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("receipts.png");
+  await shown("receipts.png");
   unmount();
   expect(vi.getTimerCount()).toBe(0);
   advance(INTRO_MS * 2);
@@ -184,10 +189,10 @@ test("closing during the intro leaves no pending timer", async () => {
 test("arrow during the intro does not restart it", async () => {
   fakeClock();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 1 of 4");
+  await shown("Financial · Receipts · 1 of 4");
   advance(INTRO_MS / 2);
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 2 of 4");
+  await shown("Financial · Receipts · 2 of 4");
   expect(pipeline()).toBeNull();
   advance(INTRO_MS / 2);
   expect(wrap()).toHaveAttribute("data-phase", "ready");
@@ -197,10 +202,10 @@ test("arrow during the intro does not restart it", async () => {
 test("arrow after the intro replays only the scan", async () => {
   fakeClock();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 1 of 4");
+  await shown("Financial · Receipts · 1 of 4");
   advance(INTRO_MS);
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 2 of 4");
+  await shown("Financial · Receipts · 2 of 4");
   expect(wrap()).toHaveAttribute("data-phase", "ready");
   expect(pipeline()).toBeInTheDocument();
   expect(pageEl()).toHaveClass("scanning");
@@ -211,11 +216,11 @@ test("arrow after the intro replays only the scan", async () => {
 test("the panel slides in once, when the intro ends, not on arrows", async () => {
   fakeClock();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 1 of 4");
+  await shown("Financial · Receipts · 1 of 4");
   advance(INTRO_MS);
   expect(pipeline()!.parentElement).toHaveAttribute("data-enter");
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 2 of 4");
+  await shown("Financial · Receipts · 2 of 4");
   expect(pipeline()!.parentElement).not.toHaveAttribute("data-enter");
 });
 
@@ -231,7 +236,7 @@ test("a slow load still gets the full intro scan once the page is in", async () 
   slowFetch();
   setup(0);
   advance(1000);
-  await screen.findByText("receipts.png");
+  await shown("receipts.png");
   expect(pageEl()).toHaveClass("scanning");
   advance(INTRO_MS / 2);
   expect(wrap()).toHaveAttribute("data-phase", "intro");
@@ -246,11 +251,11 @@ test("a slow load after an arrow still gets the full scan", async () => {
   slowFetch();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
   advance(1000);
-  await screen.findByText("Financial · Receipts · 1 of 4");
+  await shown("Financial · Receipts · 1 of 4");
   advance(INTRO_MS);
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);
   advance(1000);
-  await screen.findByText("Financial · Receipts · 2 of 4");
+  await shown("Financial · Receipts · 2 of 4");
   expect(pageEl()).toHaveClass("scanning");
   advance(INTRO_MS / 2);
   expect(pageEl()).toHaveClass("scanning");
