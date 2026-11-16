@@ -43,9 +43,11 @@ describe("cell picking follows DocAI's cellGrid rule", () => {
     expect(pickKey("t", cells[3], grid)).toBe("t#c1");
   });
 
-  test("both estimated: nothing is drawn or picked", () => {
+  test("both estimated: still one unit per cell, so every table stays clickable", () => {
     const grid = { rows: "estimated", cols: "estimated" } as const;
-    expect(pickUnits("t", cells, grid)).toEqual([]);
-    expect(pickKey("t", cells[0], grid)).toBeNull();
+    expect(pickUnits("t", cells, grid).map((u) => [u.key, u.kind])).toEqual([
+      ["t#r0c0", "cell"], ["t#r0c1", "cell"], ["t#r1c0", "cell"], ["t#r1c1", "cell"],
+    ]);
+    expect(pickKey("t", cells[0], grid)).toBe("t#r0c0");
   });
 });

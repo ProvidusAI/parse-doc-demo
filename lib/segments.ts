@@ -36,25 +36,26 @@ export interface PickUnit {
 }
 
 type Grid = Segment["cellGrid"];
-// DocAI's parsing docs: draw a single cell only when its columns were detected, else the row band;
-// rows follow the same rule. When both axes are a uniform split, there is nothing honest to draw.
-const pickKind = (g: Grid): PickUnit["kind"] | null =>
-  g?.cols === "estimated" ? (g.rows === "estimated" ? null : "row") : g?.rows === "estimated" ? "column" : "cell";
+// DocAI's parsing docs: when only one axis is a guess, pick the band along the measured axis (row or
+// column). When both are guesses there is no better band, so the (approximate) cell itself is picked.
+const pickKind = (g: Grid): PickUnit["kind"] => {
+  const rows = g?.rows === "estimated";
+  const cols = g?.cols === "estimated";
+  return cols && !rows ? "row" : rows && !cols ? "column" : "cell";
+};
 
-/** The pick key a cell belongs to (`<seg>#r1c0`, `<seg>#r1` or `<seg>#c0`), or null when nothing is pickable. */
-export function pickKey(segmentId: string, c: GroundedCell, grid: Grid): string | null {
+/** The pick key a cell belongs to: `<seg>#r1c0`, `<seg>#r1` or `<seg>#c0`. */
+export function pickKey(segmentId: string, c: GroundedCell, grid: Grid): string {
   const kind = pickKind(grid);
-  if (!kind) return null;
   return `${segmentId}#${kind === "cell" ? `r${c.row}c${c.col}` : kind === "row" ? `r${c.row}` : `c${c.col}`}`;
 }
 
 /** The table's pickable units, in reading order; a band's box spans all its cells. */
 export function pickUnits(segmentId: string, cells: GroundedCell[], grid: Grid): PickUnit[] {
   const kind = pickKind(grid);
-  if (!kind) return [];
   const units = new Map<string, PickUnit & { texts: string[] }>();
   for (const c of cells) {
-    const key = pickKey(segmentId, c, grid)!;
+    const key = pickKey(segmentId, c, grid);
     const u = units.get(key);
     if (!u) {
       units.set(key, { key, box: { ...c.box }, text: "", kind, texts: [c.text] });

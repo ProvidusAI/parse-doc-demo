@@ -125,10 +125,11 @@ test("columns estimated: picking a cell picks its whole row, like DocAI's cellGr
   expect(onCell).toHaveBeenLastCalledWith({ key: "seg-2#r0", box: { page: 1, x0: 0, y0: 0, x1: 200, y1: 20 } });
 });
 
-test("both axes estimated: cells are shown but not pickable", () => {
-  render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} onCell={vi.fn()} />);
-  expect(screen.getByRole("cell", { name: "Product 1" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Product 1" })).not.toBeInTheDocument();
+test("both axes estimated: each cell is still pickable on its own", () => {
+  const onCell = vi.fn();
+  render(<StagePanel result={withCells({ rows: "estimated", cols: "estimated" })} lang="en" onLang={vi.fn()} onView={vi.fn()} onHighlight={vi.fn()} onCell={onCell} />);
+  fireEvent.click(screen.getByRole("button", { name: "Product 1" }));
+  expect(onCell).toHaveBeenLastCalledWith(expect.objectContaining({ key: "seg-2#r1c0" }));
 });
 
 const rect = (el: Element, r: { top: number; bottom: number; left: number; right: number }) => {

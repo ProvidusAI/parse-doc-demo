@@ -69,8 +69,8 @@ function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
 
 /**
  * DocAI's CellGrid (docai-web doc-parse-panel): every cell of the grounding grid is a button;
- * picking one grounds it on the page — the cell, or its row/column band when the other axis
- * was only estimated (pickKey). With both axes estimated the cells are plain text.
+ * picking one grounds it on the page — the cell, or its row/column band when only the other axis
+ * was estimated (pickKey).
  */
 function CellGrid({ segment, cells, activeId, onPick }: {
   segment: Segment;
@@ -94,15 +94,8 @@ function CellGrid({ segment, cells, activeId, onPick }: {
                 {(row ?? []).map((c) => {
                   if (!c) return null;
                   const id = pickKey(segment.id, c, segment.cellGrid);
-                  const unit = id ? units.get(id) : undefined;
+                  const unit = units.get(id)!;
                   const Cell = c.header ? "th" : "td";
-                  if (!unit) {
-                    return (
-                      <Cell key={`r${c.row}c${c.col}`} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)}>
-                        <DocText text={c.text || " "} />
-                      </Cell>
-                    );
-                  }
                   return (
                     <Cell key={`r${c.row}c${c.col}`} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)} className={styles.pickCell}>
                       <button
