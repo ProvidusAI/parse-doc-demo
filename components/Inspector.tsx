@@ -20,6 +20,21 @@ export const INTRO_MS = 1500;
 
 const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
+// page | panel split, in % of the width given to the page; equal to start, remembered like DocAI's autoSaveId
+const SPLIT_KEY = "providusbench.inspector.split";
+const SPLIT_MIN = 25;
+const SPLIT_MAX = 70;
+const SPLIT_STEP = 2;
+const clampSplit = (v: number) => Math.round(Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, v)));
+const savedSplit = () => {
+  try {
+    const v = Number(localStorage.getItem(SPLIT_KEY));
+    return v ? clampSplit(v) : 50;
+  } catch {
+    return 50;
+  }
+};
+
 export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   const [loaded, setLoaded] = useState<{ url: string; result: ShowcaseResult } | null>(null);
   const [error, setError] = useState(false);
@@ -32,7 +47,42 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   // panel slides in only as the intro ends; on later pages it just appears
   const [entering, setEntering] = useState(false);
   const [lang, setLang] = useState<UiLang>("en");
+  const [split, setSplit] = useState(savedSplit);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const resizing = useRef<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SPLIT_KEY, String(split));
+    } catch {
+      // storage blocked: the split just isn't remembered
+    }
+  }, [split]);
+
+  // the divider follows the pointer across the whole pair (pointer capture keeps it during fast drags)
+  const splitAt = (clientX: number) => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (r && r.width > 0) setSplit(clampSplit(((clientX - r.left) / r.width) * 100));
+  };
+  const onDividerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    resizing.current = e.pointerId;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  };
+  const onDividerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (resizing.current === e.pointerId) splitAt(e.clientX);
+  };
+  const onDividerUp = () => {
+    resizing.current = null;
+  };
+  const onDividerKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const next = { ArrowLeft: split - SPLIT_STEP, ArrowRight: split + SPLIT_STEP, Home: SPLIT_MIN, End: SPLIT_MAX }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    e.stopPropagation(); // ← / → here resize; they must not also change the page
+    setSplit(clampSplit(next));
+  };
   const summary = pages[index];
   const n = pages.length;
   const [scannedId, setScannedId] = useState(summary.id);
@@ -136,7 +186,13 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
         ›
       </button>
 
-      <div className={styles.wrap} key={summary.id} data-phase={phase}>
+      <div
+        className={styles.wrap}
+        key={summary.id}
+        ref={wrapRef}
+        data-phase={phase}
+        style={{ "--split": split } as React.CSSProperties}
+      >
         <div className={styles.pagecol}>
           {current ? (
             <>
@@ -158,6 +214,35 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
             <div className={styles.loading}>{error ? "Could not load this page." : ""}</div>
           )}
         </div>
+        {phase === "ready" && (
+          // DocAI's resize handle (ui/resizable): a thin bar with a grip; drag it or use ← → when focused
+          <div
+            className={styles.divider}
+            role="separator"
+            aria-label="Resize page and panel"
+            aria-orientation="vertical"
+            aria-valuemin={SPLIT_MIN}
+            aria-valuemax={SPLIT_MAX}
+            aria-valuenow={split}
+            tabIndex={0}
+            onPointerDown={onDividerDown}
+            onPointerMove={onDividerMove}
+            onPointerUp={onDividerUp}
+            onPointerCancel={onDividerUp}
+            onKeyDown={onDividerKey}
+          >
+            <span className={styles.grip} aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <circle cx="9" cy="6" r="1.6" />
+                <circle cx="15" cy="6" r="1.6" />
+                <circle cx="9" cy="12" r="1.6" />
+                <circle cx="15" cy="12" r="1.6" />
+                <circle cx="9" cy="18" r="1.6" />
+                <circle cx="15" cy="18" r="1.6" />
+              </svg>
+            </span>
+          </div>
+        )}
         {phase === "ready" && (
           <div className={styles.panelcol} data-enter={entering || undefined}>
             {current && (

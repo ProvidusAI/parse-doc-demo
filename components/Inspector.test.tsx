@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Inspector, { INTRO_MS } from "./Inspector";
 import PageView from "./PageView";
 import { manifest, result } from "./test-fixtures";
@@ -22,7 +22,7 @@ const fakeClock = () => vi.useFakeTimers({ shouldAdvanceTime: true });
 const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 const pipeline = () => screen.queryByRole("region", { name: "DocAI pipeline" });
 const pageEl = () => screen.getByRole("img").parentElement!;
-const wrap = () => screen.getByRole("dialog").querySelector("[data-phase]")!;
+const wrap = () => screen.getByRole("dialog").querySelector<HTMLElement>("[data-phase]")!;
 // wait for the page, then flush its effects so load-started timers begin before the clock moves
 const shown = async (text: string) => {
   await screen.findByText(text);
@@ -209,6 +209,47 @@ test("with a cell picked, its table keeps only its border so the cell's shade st
   rerender(<PageView result={result} boxes={boxes} highlight="seg-2" scanning={false} cells={cells} pickedCell="seg-2#r1c0" />);
   expect(table()).toHaveAttribute("data-cell-picked");
   expect(container.querySelector('[data-box="seg-1"]')).not.toHaveAttribute("data-cell-picked");
+});
+
+describe("divider between the page and the panel, like DocAI", () => {
+  beforeEach(() => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true }))); // reduced motion: no intro
+    localStorage.clear();
+  });
+  const divider = () => screen.getByRole("separator", { name: "Resize page and panel" });
+  const split = () => wrap().style.getPropertyValue("--split");
+
+  test("starts as an equal split", async () => {
+    setup(0);
+    await screen.findByRole("region", { name: "DocAI pipeline" });
+    expect(divider()).toHaveAttribute("aria-valuenow", "50");
+    expect(split()).toBe("50");
+  });
+
+  test("arrow keys move it, within limits", async () => {
+    setup(0);
+    await screen.findByRole("region", { name: "DocAI pipeline" });
+    fireEvent.keyDown(divider(), { key: "ArrowLeft" });
+    expect(split()).toBe("48");
+    for (let i = 0; i < 30; i++) fireEvent.keyDown(divider(), { key: "ArrowLeft" });
+    expect(split()).toBe("25");
+    for (let i = 0; i < 40; i++) fireEvent.keyDown(divider(), { key: "ArrowRight" });
+    expect(split()).toBe("70");
+  });
+
+  test("dragging sets the split and it is remembered", async () => {
+    setup(0);
+    await screen.findByRole("region", { name: "DocAI pipeline" });
+    wrap().getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 800, right: 1000, bottom: 800, x: 0, y: 0, toJSON() {} });
+    fireEvent.pointerDown(divider(), { clientX: 500, pointerId: 1 });
+    fireEvent.pointerMove(divider(), { clientX: 600, pointerId: 1 });
+    fireEvent.pointerUp(divider(), { pointerId: 1 });
+    expect(split()).toBe("60");
+    cleanup();
+    setup(0);
+    await screen.findByRole("region", { name: "DocAI pipeline" });
+    expect(split()).toBe("60");
+  });
 });
 
 test("the active table's cells are pickable on the page, like DocAI", () => {
