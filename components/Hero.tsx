@@ -65,7 +65,7 @@ export default function Hero({ categories, pages, progress, onExplore }: Props) 
         <ol className={styles.pipe} id="pipeline" aria-label="Pipeline">
           <li className="lbl">Pipeline</li>
           {STAGES.map((s, i) => (
-            <li key={s} style={{ animationDelay: `${0.2 + i * 0.1}s` }} className={i === 1 ? styles.on : undefined}>
+            <li key={s} style={{ animationDelay: `${0.2 + i * 0.1}s` }} className={i === 0 ? styles.on : undefined}>
               <i>{i + 1}</i>
               {t("en", `stage.${s}`)}
             </li>
