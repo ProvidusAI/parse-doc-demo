@@ -47,7 +47,7 @@ export const result: ShowcaseResult = {
   },
   segments: [
     { id: "seg-1", type: "header", label: "header", text: "TAX INVOICE فاتورة ضريبية", textless: false, box: { page: 1, x0: 300, y0: 20, x1: 700, y1: 60 } },
-    { id: "seg-2", type: "table", label: "table", text: "Item · Qty · Product 1 · 10", textless: false, box: { page: 1, x0: 40, y0: 200, x1: 960, y1: 600 } },
+    { id: "seg-2", type: "table", label: "table", text: "Item · Qty · Product 1 · 10", textless: false, table: { rows: [[{ text: "Item", header: true, rowSpan: 1, colSpan: 1 }, { text: "Qty", header: true, rowSpan: 1, colSpan: 1 }], [{ text: "Product 1", header: false, rowSpan: 1, colSpan: 1 }, { text: "10", header: false, rowSpan: 1, colSpan: 1 }]] }, box: { page: 1, x0: 40, y0: 200, x1: 960, y1: 600 } },
     { id: "seg-3", type: "logo", label: "logo", text: "", textless: true, box: { page: 1, x0: 20, y0: 10, x1: 120, y1: 70 } },
   ],
   splitRules: [{ id: "rule-1", name: "Invoice boundary", description: "Start a new record at each TAX INVOICE header." }],

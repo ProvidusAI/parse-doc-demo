@@ -2,7 +2,7 @@ import { useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
 import { segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
-import type { ShowcaseResult } from "@/lib/types";
+import type { Segment, ShowcaseResult } from "@/lib/types";
 import styles from "./StagePanel.module.css";
 
 export interface StageProps {
@@ -37,7 +37,31 @@ const ENGINE_NAME: Record<string, string> = { glm: "GLM-OCR", "paddle-vl": "Padd
 
 const stagger = (i: number, ms = 60) => ({ animationDelay: `${i * ms}ms` });
 
-export function OcrStage({ result, lang }: StageProps) {
+function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
+  const span = (n: number) => Math.min(Math.max(n || 1, 1), 1000);
+  return (
+    <div className={styles.tableWrap}>
+      <table className={styles.grid}>
+        <tbody>
+          {table.rows.map((row, r) => (
+            <tr key={r}>
+              {row.map((c, k) => {
+                const Cell = c.header ? "th" : "td";
+                return (
+                  <Cell key={k} rowSpan={span(c.rowSpan)} colSpan={span(c.colSpan)}>
+                    <DocText text={c.text} />
+                  </Cell>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function ChunksStage({ result, lang, onHighlight }: StageProps) {
   const counts = result.segments.reduce<Record<string, number>>((m, s) => ({ ...m, [s.type]: (m[s.type] ?? 0) + 1 }), {});
   const u = result.upload;
   const run: [Parameters<typeof t>[1], string | null][] = [
@@ -62,41 +86,33 @@ export function OcrStage({ result, lang }: StageProps) {
           </span>
         ))}
       </div>
+      {result.segments.length === 0 && <Missing lang={lang} />}
       <ul className={styles.rows}>
         {result.segments.map((s, i) => (
-          <li key={s.id} className={styles.row} style={stagger(i, 40)}>
+          <li
+            key={s.id}
+            className={`${styles.row} ${styles.hover}`}
+            style={stagger(i, 40)}
+            tabIndex={0}
+            onMouseEnter={() => onHighlight(s.id)}
+            onMouseLeave={() => onHighlight(null)}
+            onFocus={() => onHighlight(s.id)}
+            onBlur={() => onHighlight(null)}
+          >
+            <span className={styles.k}>#{i + 1}</span>
             <Tag type={s.type} />
-            {s.textless ? <DocText text={`[${s.label}]`} className={styles.muted} /> : <DocText text={s.text} className={styles.tx} />}
+            {s.table ? (
+              <TableGrid table={s.table} />
+            ) : s.textless ? (
+              <DocText text={`[${s.label}]`} className={styles.muted} />
+            ) : (
+              <DocText text={s.text} className={styles.tx} />
+            )}
+            {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
           </li>
         ))}
       </ul>
-      {result.segments.length === 0 && <Missing lang={lang} />}
     </>
-  );
-}
-
-export function ChunksStage({ result, lang, onHighlight }: StageProps) {
-  if (result.segments.length === 0) return <Missing lang={lang} />;
-  return (
-    <ul className={styles.rows}>
-      {result.segments.map((s, i) => (
-        <li
-          key={s.id}
-          className={`${styles.row} ${styles.hover}`}
-          style={stagger(i, 40)}
-          tabIndex={0}
-          onMouseEnter={() => onHighlight(s.id)}
-          onMouseLeave={() => onHighlight(null)}
-          onFocus={() => onHighlight(s.id)}
-          onBlur={() => onHighlight(null)}
-        >
-          <span className={styles.k}>#{i + 1}</span>
-          <Tag type={s.type} />
-          {s.textless ? <DocText text={`[${s.label}]`} className={styles.muted} /> : <DocText text={s.text} className={styles.tx} />}
-          {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
-        </li>
-      ))}
-    </ul>
   );
 }
 

@@ -110,7 +110,6 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
               onLang={setLang}
               onView={(v) => {
                 setBoxes(v.boxes);
-                setScanning(v.scanning);
               }}
               onHighlight={setHighlight}
             />

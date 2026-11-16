@@ -10,7 +10,6 @@ import {
   ChunksStage,
   ExtractedStage,
   ExtractRulesStage,
-  OcrStage,
   SplitResultStage,
   SplitRulesStage,
   type StageProps,
@@ -18,7 +17,6 @@ import {
 
 export interface PageViewState {
   boxes: PageBox[];
-  scanning: boolean;
 }
 
 interface Props {
@@ -31,7 +29,6 @@ interface Props {
 }
 
 const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
-  ocr: OcrStage,
   chunks: ChunksStage,
   splitRules: SplitRulesStage,
   splitResult: SplitResultStage,
@@ -42,8 +39,6 @@ const BODY: Record<Stage, (p: StageProps) => React.ReactNode> = {
 /** Header pill: a count of what DocAI returned for this step (never an invented metric). */
 function pill(stage: Stage, r: ShowcaseResult, lang: UiLang): string | null {
   switch (stage) {
-    case "ocr":
-      return t(lang, "regions", { n: r.segments.length });
     case "chunks":
       return t(lang, "chunks", { n: r.segments.length });
     case "splitRules":
@@ -58,19 +53,14 @@ function pill(stage: Stage, r: ShowcaseResult, lang: UiLang): string | null {
 }
 
 function viewFor(stage: Stage, r: ShowcaseResult): PageViewState {
-  if (stage === "ocr" || stage === "chunks") {
-    return {
-      scanning: stage === "ocr",
-      // coloured by element type; the chunks step also tags each box "n.type" like DocAI
-      boxes: r.segments.flatMap((s, i) =>
-        s.box ? [{ key: s.id, box: s.box, type: s.type, tag: stage === "chunks" ? segmentTag(i + 1, s.type) : undefined }] : [],
-      ),
-    };
+  if (stage === "chunks") {
+    // coloured by element type, each box tagged "n.type" like DocAI
+    return { boxes: r.segments.flatMap((s, i) => (s.box ? [{ key: s.id, box: s.box, type: s.type, tag: segmentTag(i + 1, s.type) }] : [])) };
   }
   if (stage === "extracted") {
-    return { scanning: false, boxes: (r.extraction?.values ?? []).flatMap((v) => (v.box ? [{ key: v.path, box: v.box }] : [])) };
+    return { boxes: (r.extraction?.values ?? []).flatMap((v) => (v.box ? [{ key: v.path, box: v.box }] : [])) };
   }
-  return { scanning: false, boxes: [] };
+  return { boxes: [] };
 }
 
 export default function StagePanel({ result, lang, onLang, onView, onHighlight }: Props) {

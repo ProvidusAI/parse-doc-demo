@@ -21,13 +21,28 @@ function setup(r = result) {
 const step = (name: RegExp | string) => fireEvent.click(screen.getByRole("button", { name }));
 const heading = () => screen.getByRole("heading", { level: 3 });
 
-test("starts on parsing & ocr with the engine DocAI used", () => {
+test("starts on parsed chunks with the engine DocAI used", () => {
   setup();
-  expect(heading()).toHaveTextContent("Layout parsing & OCR");
-  expect(screen.queryByRole("button", { name: /Upload/ })).not.toBeInTheDocument();
+  expect(heading()).toHaveTextContent("Parsed chunks & grounding");
+  expect(screen.queryByRole("button", { name: /Parsing & OCR/ })).not.toBeInTheDocument();
   expect(screen.getByText("OCR engine").closest("li")).toHaveTextContent("GLM-OCR");
   expect(screen.getByText("OCR model").closest("li")).toHaveTextContent("docai-arabic-ocr-e4c");
-  expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
+  expect(screen.getAllByText("TABLE")).toHaveLength(2); // count chip + the chunk row tag
+  expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
+});
+
+test("table chunks render as a grid", () => {
+  setup();
+  expect(screen.getByRole("columnheader", { name: "Item" })).toBeInTheDocument();
+  const cell = screen.getByRole("cell", { name: "Product 1" });
+  expect(within(cell).getByText("Product 1")).toHaveAttribute("dir", "auto");
+  expect(screen.getByRole("table")).toBeInTheDocument();
+});
+
+test("page with no segments still shows the engine row", () => {
+  setup({ ...result, segments: [] });
+  expect(screen.getByText("OCR engine")).toBeInTheDocument();
+  expect(screen.getByText("Not returned by DocAI")).toBeInTheDocument();
 });
 
 test("clicking a step switches body", () => {
@@ -35,18 +50,17 @@ test("clicking a step switches body", () => {
   step(/Split result/);
   expect(heading()).toHaveTextContent("Split result");
   expect(screen.getByText("Tax invoice")).toBeInTheDocument();
-  expect(screen.getByText("Step 4 of 6")).toBeInTheDocument();
+  expect(screen.getByText("Step 3 of 5")).toBeInTheDocument();
 });
 
-test("ocr step scans and draws every region", () => {
+test("view state is boxes only, tagged by chunk", () => {
   const { onView } = setup();
-  expect(onView).toHaveBeenLastCalledWith({ scanning: true, boxes: expect.any(Array) });
+  expect(onView).toHaveBeenLastCalledWith({ boxes: expect.any(Array) });
   expect(onView.mock.lastCall![0].boxes).toHaveLength(3);
 });
 
 test("chunks step labels every box with its number and type", () => {
   const { onView } = setup();
-  step(/Parsed chunks/);
   const boxes = onView.mock.lastCall![0].boxes;
   expect(boxes.map((b: { tag: string }) => b.tag)).toEqual(["1.header", "2.table", "3.logo"]);
   expect(boxes[1]).toMatchObject({ key: "seg-2", type: "table" });
@@ -108,14 +122,14 @@ test("arabic toggle flips direction", () => {
   const root = container.firstElementChild!;
   expect(root).toHaveAttribute("dir", "rtl");
   expect(root).toHaveAttribute("lang", "ar");
-  expect(screen.getByText("الخطوة 1 من 6")).toBeInTheDocument();
+  expect(screen.getByText("الخطوة 1 من 5")).toBeInTheDocument();
 });
 
 test("resets to first step for a new page", () => {
   const { rerender, onView, onHighlight } = setup();
   step(/Split rules/);
   rerender(<Harness r={{ ...result, id: "financial/invoices" }} onView={onView} onHighlight={onHighlight} />);
-  expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
+  expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
 });
 
 test("missing parse time is not invented", () => {

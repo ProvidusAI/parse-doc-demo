@@ -1,14 +1,11 @@
 export type UiLang = "en" | "ar";
 
 const en = {
-  "stage.ocr": "Parsing & OCR",
   "stage.chunks": "Parsed chunks",
   "stage.splitRules": "Split rules",
   "stage.splitResult": "Split result",
   "stage.extractRules": "Extract rules",
   "stage.extracted": "Extracted schema",
-  "title.ocr": "Layout parsing & OCR",
-  "sub.ocr": "Regions and text DocAI detected on the page",
   "title.chunks": "Parsed chunks & grounding",
   "sub.chunks": "Hover a chunk to see where it sits on the page",
   "title.splitRules": "Split rules",
@@ -20,7 +17,7 @@ const en = {
   "title.extracted": "Extracted record",
   "sub.extracted": "Structured values with grounded citations",
   category: "Category",
-  stepOf: "Step {n} of 6",
+  stepOf: "Step {n} of 5",
   notReturned: "Not returned by DocAI",
   noMatch: "No pages match",
   hint: "Click a page to see what DocAI produced · ← → to move between types",
@@ -29,7 +26,6 @@ const en = {
   "upload.engine": "OCR engine",
   "upload.ocrModel": "OCR model",
   "upload.elapsed": "Parse time",
-  regions: "{n} regions",
   chunks: "{n} chunks",
   rules: "{n} rules",
   records: "{n} records",
@@ -51,14 +47,11 @@ const en = {
 export type UiKey = keyof typeof en;
 
 const ar: Record<UiKey, string> = {
-  "stage.ocr": "التحليل والتعرّف الضوئي",
   "stage.chunks": "المقاطع المستخرجة",
   "stage.splitRules": "قواعد التقسيم",
   "stage.splitResult": "نتيجة التقسيم",
   "stage.extractRules": "قواعد الاستخراج",
   "stage.extracted": "المخطط المستخرج",
-  "title.ocr": "تحليل التخطيط والتعرّف الضوئي",
-  "sub.ocr": "المناطق والنصوص التي اكتشفها DocAI في الصفحة",
   "title.chunks": "المقاطع وربطها بالصفحة",
   "sub.chunks": "مرّر المؤشر فوق مقطع لترى موضعه في الصفحة",
   "title.splitRules": "قواعد التقسيم",
@@ -70,7 +63,7 @@ const ar: Record<UiKey, string> = {
   "title.extracted": "السجل المستخرج",
   "sub.extracted": "قيم منظّمة مع إحالات إلى موضعها في الصفحة",
   category: "الفئة",
-  stepOf: "الخطوة {n} من 6",
+  stepOf: "الخطوة {n} من 5",
   notReturned: "لم يُرجعه DocAI",
   noMatch: "لا توجد صفحات مطابقة",
   hint: "انقر على صفحة لترى ما أنتجه DocAI · استخدم ← → للتنقّل بين الأنواع",
@@ -79,7 +72,6 @@ const ar: Record<UiKey, string> = {
   "upload.engine": "محرّك التعرّف الضوئي",
   "upload.ocrModel": "نموذج التعرّف الضوئي",
   "upload.elapsed": "مدة التحليل",
-  regions: "{n} مناطق",
   chunks: "{n} مقاطع",
   rules: "{n} قواعد",
   records: "{n} سجلات",
@@ -104,5 +96,5 @@ export function t(lang: UiLang, key: UiKey, vars: Record<string, string | number
   return STRINGS[lang][key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
 }
 
-export const STAGES = ["ocr", "chunks", "splitRules", "splitResult", "extractRules", "extracted"] as const;
+export const STAGES = ["chunks", "splitRules", "splitResult", "extractRules", "extracted"] as const;
 export type Stage = (typeof STAGES)[number];

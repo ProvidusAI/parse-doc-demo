@@ -55,14 +55,14 @@ test("hasArabic", () => {
 
 describe("i18n", () => {
   test("arabic differs from english", () => {
-    expect(t("ar", "stage.ocr")).not.toBe("");
-    expect(t("ar", "stage.ocr")).not.toBe(t("en", "stage.ocr"));
+    expect(t("ar", "stage.chunks")).not.toBe("");
+    expect(t("ar", "stage.chunks")).not.toBe(t("en", "stage.chunks"));
   });
   test("fills variables", () => {
-    expect(t("en", "stepOf", { n: 3 })).toBe("Step 3 of 6");
+    expect(t("en", "stepOf", { n: 3 })).toBe("Step 3 of 5");
   });
-  test("six stages", () => {
-    expect(STAGES).toHaveLength(6);
+  test("five stages", () => {
+    expect(STAGES).toHaveLength(5);
   });
 });
 
