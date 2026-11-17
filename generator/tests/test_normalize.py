@@ -245,6 +245,14 @@ class MirrorRtlCellsTests(unittest.TestCase):
                         "cells": [cell(0, 0.10, 0.13, "فترة الاستهلاك (يوم)"), cell(1, 0.13, 0.30, "28")]})
         self.assertEqual([c["text"] for c in seg["cells"]], ["28", "فترة الاستهلاك (يوم)"])
 
+    def test_docai_direction_verdict_is_left_alone(self):
+        # newer DocAI decides the direction itself (cellsDirection); flipping again would undo it
+        cell = lambda col, x1, x2, t: {"row": 0, "col": col, "text": t, "bbox": {"x1": x1, "y1": 0.1, "x2": x2, "y2": 0.2}}
+        seg = _segment({"id": "t", "type": "table", "markdown": "", "coordinates": None, "cellsSource": "print",
+                        "cellsDirection": {"mirrored": False, "evidence": "print"},
+                        "cells": [cell(0, 0.10, 0.13, "فترة الاستهلاك (يوم)"), cell(1, 0.13, 0.30, "28")]})
+        self.assertEqual([c["text"] for c in seg["cells"]], ["فترة الاستهلاك (يوم)", "28"])
+
     def test_rows_with_spans_are_not_touched(self):
         cells = _row(0, [24, 132], ["فترة الاستهلاك (يوم)", "28"])
         cells[0]["colSpan"] = 2

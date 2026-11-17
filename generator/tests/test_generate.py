@@ -276,3 +276,83 @@ class RefreshSegmentsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def review_page(pid="030_invoices_081_p1", src="financial/invoices/081.jpg", orig=1, lang="photo: vat"):
+    return {"id": pid, "doc": pid.rsplit("_p", 1)[0], "cat": "financial/invoices", "kind": "photo", "lang": lang,
+            "n": 1, "of": 1, "orig": orig, "src": src, "img": f"img/{pid}.jpg"}
+
+
+RAW_TABLE = {"id": "p1_e0001", "type": "table", "label": "table", "bbox": {"x1": 0.1, "y1": 0.2, "x2": 0.9, "y2": 0.4},
+             "content": "<table><tr><td>Qty</td><td>Price</td></tr></table>",
+             "cells": [{"row": 0, "col": 0, "rowSpan": 1, "colSpan": 1, "text": "Qty", "isHeader": True,
+                        "bbox": {"x1": 0.1, "y1": 0.2, "x2": 0.5, "y2": 0.4}},
+                       {"row": 0, "col": 1, "rowSpan": 1, "colSpan": 1, "text": "Price", "isHeader": True,
+                        "bbox": {"x1": 0.5, "y1": 0.2, "x2": 0.9, "y2": 0.4}}],
+             "cellsSource": "table-former", "cellGrid": {"rows": "detected", "cols": "detected"}}
+RAW_LOGO = {"id": "p1_e0000", "type": "logo", "label": "logo", "bbox": {"x1": 0, "y1": 0, "x2": 0.2, "y2": 0.1},
+            "content": ""}
+
+
+class ImportReviewTest(unittest.TestCase):
+    """The reviewed E4c set: per-page images + DocAI elements (0–1 boxes), kept local under showcase/e4c."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.review, self.corpus, self.showcase = self.root / "review", self.root / "corpus", self.root / "showcase"
+        (self.review / "img").mkdir(parents=True)
+        (self.review / "data" / "json").mkdir(parents=True)
+        Image.new("RGB", (100, 200), "white").save(self.review / "img" / "030_invoices_081_p1.jpg", quality=50)
+        (self.corpus / "financial" / "invoices").mkdir(parents=True)
+        (self.corpus / "financial" / "invoices" / "081.jpg").write_bytes(b"x" * 1234)
+        raw = {"030_invoices_081_p1": [RAW_LOGO, RAW_TABLE]}
+        (self.review / "data" / "json" / "030_invoices_081.js").write_text(
+            'window.RAW["030_invoices_081"]=' + json.dumps(raw) + ";", encoding="utf-8")
+        (self.review / "data" / "pages.js").write_text(
+            'window.META={"engine": "e4c-final"};window.PAGES=' + json.dumps([review_page()]) + ";", encoding="utf-8")
+
+    def test_review_segment_reads_like_the_segments_api(self):
+        s = generate._segment(generate.review_segment(RAW_TABLE))
+        self.assertEqual(s["box"], {"page": 1, "x0": 100, "y0": 200, "x1": 900, "y1": 400})
+        self.assertEqual([c["text"] for c in s["cells"]], ["Qty", "Price"])
+        self.assertEqual(s["cells"][1]["box"], {"page": 1, "x0": 500, "y0": 200, "x1": 900, "y1": 400})
+        self.assertEqual(s["cellGrid"], {"rows": "detected", "cols": "detected"})
+        logo = generate._segment(generate.review_segment(RAW_LOGO))
+        self.assertTrue(logo["textless"])
+        self.assertEqual(logo["label"], "logo")
+
+    def test_entries_skip_pages_already_on_the_site(self):
+        on_site = {**entry(sub="invoices", status="approved"), "sourcePath": "financial/invoices/081.jpg"}
+        pages = [review_page(), review_page("030_invoices_082_p1", "financial/invoices/082.jpg", lang="en")]
+        es = generate.review_entries(pages, [on_site], engine="e4c-final")
+        self.assertEqual([e["id"] for e in es], ["e4c/030_invoices_082_p1"])
+        e = es[0]
+        self.assertEqual((e["category"], e["subCategory"], e["subCategoryLabel"]), ("financial", "invoices", "Invoices"))
+        self.assertEqual((e["lang"], e["page"], e["ocrModel"]), ("en", 1, "e4c-final"))
+
+    def test_unknown_labels_are_readable_and_other_has_a_subcategory(self):
+        p = {**review_page(), "cat": "other"}
+        e = generate.review_entries([p, {**review_page("x_p1"), "cat": "government/official_notices"}], [], engine="e")
+        self.assertEqual((e[0]["category"], e[0]["subCategory"]), ("other", "other"))
+        self.assertEqual((e[1]["categoryLabel"], e[1]["subCategoryLabel"]), ("Government", "Official notices"))
+
+    def test_import_review_writes_local_pages_and_manifest(self):
+        written = generate.import_review(self.review, self.corpus, self.showcase, samples=[])
+        self.assertEqual(written, 1)
+        out = self.showcase / "e4c" / "030_invoices_081_p1"
+        r = json.loads((out / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual(r["id"], "e4c/030_invoices_081_p1")
+        self.assertEqual(r["page"]["image"], "/showcase/e4c/030_invoices_081_p1/page.jpg")
+        self.assertEqual((r["category"], r["subCategory"]), ("financial", "invoices"))
+        self.assertEqual([s["type"] for s in r["segments"]], ["logo", "table"])
+        self.assertEqual((r["upload"]["ocrModel"], r["upload"]["ocrEngine"], r["upload"]["elapsedSeconds"]),
+                         ("e4c-final", None, None))  # only what the review set records: never invented
+        self.assertEqual((r["upload"]["fileName"], r["upload"]["bytes"]), ("081.jpg", 1234))
+        # the reviewer's page image is kept byte for byte
+        self.assertEqual((out / "page.jpg").read_bytes(),
+                         (self.review / "img" / "030_invoices_081_p1.jpg").read_bytes())
+        m = json.loads((self.showcase / "manifest.local.json").read_text(encoding="utf-8"))
+        page = m["categories"][0]["pages"][0]
+        self.assertEqual((m["categories"][0]["key"], page["id"], page["thumb"]),
+                         ("financial", "e4c/030_invoices_081_p1", "/showcase/e4c/030_invoices_081_p1/thumb.jpg"))
+        self.assertEqual(generate.import_review(self.review, self.corpus, self.showcase, samples=[]), 0)  # done

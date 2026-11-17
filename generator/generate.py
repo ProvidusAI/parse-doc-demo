@@ -7,6 +7,7 @@
     python -m generator.generate --manifest        # write public/showcase/manifest.json (approved only)
     python -m generator.generate --import-parsed   # pages already parsed elsewhere ("parsed" entries)
     python -m generator.generate --refresh-segments  # re-fetch segments of DocAI-run pages (no re-parse)
+    python -m generator.generate --import-review   # the reviewed E4c set, kept local (git-ignored)
 """
 import argparse
 import html
@@ -29,6 +30,10 @@ WORK = ROOT / "generator" / "out"
 # pages a teammate already parsed with DocAI: <industry>/<name>.segments.json + the original images
 PARSED = Path(os.environ.get("PARSED_DIR", ROOT.parent / "Industry-documents-E4c-parsed"))
 PARSED_IMAGES = Path(os.environ.get("PARSED_IMAGES_DIR", ROOT.parent.parent / "Indusry documents"))
+# the reviewed E4c set: data/pages.js + data/json/<doc>.js (DocAI elements) + img/<page>.jpg
+REVIEW = Path(os.environ.get("REVIEW_DIR", Path.home() / "Downloads" / "E4c-daniyal-review" / "E4c-daniyal-review"))
+# its pages stay out of git for now (deployment decides where they live): showcase/e4c + manifest.local.json
+LOCAL = "e4c"
 
 # DocAI picks the engine family from DOCAI_OCR_ENGINE; a model from the other family degrades silently.
 EXPECTED_ENGINE = {"ar-en": "glm", "en": "paddle-vl"}
@@ -41,7 +46,7 @@ ENGINE_HINT = {
 
 
 def entry_id(e) -> str:
-    return f"{e['category']}/{e['subCategory']}"
+    return e.get("id") or f"{e['category']}/{e['subCategory']}"
 
 
 def is_done(entry, showcase: Path) -> bool:
@@ -108,6 +113,67 @@ def import_entry(entry, parsed: Path, images: Path, showcase: Path, force=False)
                           segments=segments, page_image=page, rules=None, split=None, schema=None, extraction=None,
                           ocr_engine=entry.get("ocrEngine"))
     return _write(showcase / entry_id(entry), page, result)
+
+
+def _js_json(path: Path, marker: str):
+    """The JSON a review-set script assigns after `marker` (e.g. `window.PAGES=[...];`)."""
+    return json.loads(path.read_text(encoding="utf-8").split(marker, 1)[1].strip().rstrip(";"))
+
+
+def review_segment(raw):
+    """A review-set element (0–1 bbox, `content`) in the segments-API shape `_segment` reads.
+    Each review page is its own image, so every box is on page 1."""
+    b, content = raw["bbox"], raw.get("content") or ""
+    return {**raw, "title": raw.get("label"), "markdown": content, "textless": not content.strip(),
+            "coordinates": {"pageNumber": 1, "xmin": b["x1"] * 1000, "ymin": b["y1"] * 1000,
+                            "xmax": b["x2"] * 1000, "ymax": b["y2"] * 1000}}
+
+
+def _label(key: str) -> str:
+    return key.replace("_", " ").capitalize()
+
+
+def review_entries(pages, samples, engine):
+    """One entry per review page, labelled like the site's own pages; pages already on the site are skipped."""
+    cats = {e["category"]: e["categoryLabel"] for e in samples}
+    subs = {e["subCategory"]: e["subCategoryLabel"] for e in samples}
+    shown = {(e["sourcePath"], e["page"]) for e in samples if e["status"] == "approved"}
+    out = []
+    for p in pages:
+        if (p["src"], p["orig"]) in shown:
+            continue
+        cat, _, sub = p["cat"].partition("/")
+        sub = sub or cat
+        out.append({"id": f"{LOCAL}/{p['id']}", "category": cat, "categoryLabel": cats.get(cat, _label(cat)),
+                    "subCategory": sub, "subCategoryLabel": subs.get(sub, _label(sub)),
+                    "sourcePath": p["src"], "page": p["orig"], "lang": "en" if p["lang"] in ("en", "photo: english") else "ar-en",
+                    "status": "approved", "review": p["id"], "doc": p["doc"], "ocrModel": engine})
+    return out
+
+
+def import_review(review: Path, corpus: Path, showcase: Path, samples, force=False) -> int:
+    """Import the review set's pages (image kept byte for byte) and write manifest.local.json. Returns pages written."""
+    meta, pages = (review / "data" / "pages.js").read_text(encoding="utf-8").split(";window.PAGES=", 1)
+    engine = json.loads(meta.split("window.META=", 1)[1])["engine"]
+    entries = review_entries(json.loads(pages.strip().rstrip(";")), samples, engine)
+    raw, written = {}, 0
+    for e in entries:
+        if is_done(e, showcase) and not force:
+            continue
+        if e["doc"] not in raw:
+            raw[e["doc"]] = _js_json(review / "data" / "json" / f"{e['doc']}.js", "=")
+        page = (review / "img" / f"{e['review']}.jpg").read_bytes()
+        src = corpus / e["sourcePath"]
+        file_meta = {"fileName": src.name, "mimeType": mimetypes.guess_type(src.name)[0] or "application/octet-stream",
+                     "bytes": src.stat().st_size if src.exists() else None}
+        result = build_result(e, file_meta=file_meta, job=None, page_image=page, rules=None, split=None, schema=None,
+                              extraction=None, ocr_engine=None,
+                              segments=[review_segment(s) for s in raw[e["doc"]].get(e["review"], [])])
+        _write(showcase / entry_id(e), page, result)
+        written += 1
+    (showcase / "manifest.local.json").write_text(
+        json.dumps(build_manifest(entries, showcase), ensure_ascii=False, indent=1), encoding="utf-8")
+    return written
 
 
 def refresh_entry(entry, client, showcase: Path, files: dict) -> bool:
@@ -218,6 +284,7 @@ def main(argv=None):
     ap.add_argument("--manifest", action="store_true")
     ap.add_argument("--import-parsed", action="store_true")
     ap.add_argument("--refresh-segments", action="store_true")
+    ap.add_argument("--import-review", action="store_true")
     a = ap.parse_args(argv)
     samples = json.loads((ROOT / "samples.json").read_text(encoding="utf-8"))
     if a.wall:
@@ -233,6 +300,9 @@ def main(argv=None):
             if e.get("parsed") and e["status"] != "rejected" and (not a.only or entry_id(e) == a.only):
                 done = import_entry(e, PARSED, PARSED_IMAGES, SHOWCASE, force=a.force)
                 print(f"  {entry_id(e)}: {'ok' if done else 'skipped'}")
+    if a.import_review:
+        n = import_review(REVIEW, CORPUS, SHOWCASE, samples, force=a.force)
+        print(f"imported {n} review page(s); wrote {SHOWCASE / 'manifest.local.json'}")
     if a.refresh_segments:
         client = DocAI(os.environ.get("DOCAI_BASE_URL", "http://localhost:8787"), api_key())
         files = {f["filename"]: f["id"] for f in client.list_files()}

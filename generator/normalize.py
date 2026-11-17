@@ -208,7 +208,8 @@ def _segment(s):
     grid = _cell_grid(s) if cells else None
     return {"id": s["id"], "type": s.get("type") or "other", "label": s.get("title") or s.get("type") or "",
             "text": text, "textless": bool(s.get("textless")), "box": _box(s.get("coordinates")), "table": table,
-            "cells": mirror_rtl_cells(cells, grid) if cells else None, "cellGrid": grid}
+            # newer DocAI sets cellsDirection once it has fixed the direction itself: only older parses need the mirror
+            "cells": cells and (cells if s.get("cellsDirection") else mirror_rtl_cells(cells, grid)), "cellGrid": grid}
 
 
 def _field_paths(fields, prefix=""):
@@ -252,7 +253,7 @@ def _extraction(extraction, schema, boxes):
 
 
 def build_result(entry, *, file_meta, job, segments, page_image, rules, split, schema, extraction, ocr_engine):
-    rid = f"{entry['category']}/{entry['subCategory']}"
+    rid = entry.get("id") or f"{entry['category']}/{entry['subCategory']}"
     width, height = Image.open(io.BytesIO(page_image)).size
     result = (job or {}).get("result") or {}
     usage = result.get("usage") or {}

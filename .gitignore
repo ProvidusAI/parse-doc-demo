@@ -12,3 +12,7 @@ __pycache__/
 next-env.d.ts
 *.tsbuildinfo
 generator/*.log
+
+# reviewed E4c pages: imported locally, not committed until deployment decides where they live
+public/showcase/e4c/
+public/showcase/manifest.local.json
