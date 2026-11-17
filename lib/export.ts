@@ -60,7 +60,14 @@ function layout(name: string, place: (put: (r: number, c: number, cell: Source) 
  * source that marks header cells), else its table rows. */
 export function tableSheet(segment: Segment, n: number): Sheet | null {
   const name = `Table ${n}`;
-  if (segment.cells?.length) return layout(name, (put) => segment.cells!.forEach((c) => put(c.row, c.col, c)));
+  const cells = segment.cells;
+  if (cells?.length) {
+    // the grid counts columns left to right across the page, and a right-to-left sheet shows column A on
+    // the right: mirror Arabic grids so the sheet reads like the page
+    const mirror = cells.some((c) => hasArabic(c.text));
+    const width = Math.max(...cells.map((c) => c.col + span(c.colSpan)));
+    return layout(name, (put) => cells.forEach((c) => put(c.row, mirror ? width - c.col - span(c.colSpan) : c.col, c)));
+  }
   const rows = segment.table?.rows;
   if (rows?.length) {
     const height = rows.length;
@@ -136,8 +143,8 @@ export const recordRows = (values: ExtractedValue[]): (string | number)[][] => [
 
 export const sheetRows = (sheet: Sheet): (string | number)[][] => sheet.rows.map((r) => r.map((c) => c?.value ?? ""));
 
-// Excel runs text starting with these as a formula when it opens a CSV
-const FORMULA_START = /^[=+@]/;
+// Excel runs text starting with these as a formula when it opens a CSV (numbers never get here as text)
+const FORMULA_START = /^[=+\-@\t\r]/;
 const csvCell = (v: string | number) => {
   if (typeof v === "number") return String(v);
   const safe = FORMULA_START.test(v) ? `'${v}` : v;

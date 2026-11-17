@@ -57,6 +57,17 @@ describe("tableSheet", () => {
     expect(s.freezeHeader).toBe(true);
   });
 
+  test("an Arabic cell grid is mirrored, so the right-to-left sheet reads like the page", () => {
+    // DocAI's grid counts columns left to right across the page; a right-to-left sheet shows column A on
+    // the right, so column A must hold the page's rightmost column
+    const box = { page: 1, x0: 0, y0: 0, x1: 1, y1: 1 };
+    const g = (row: number, col: number, text: string, colSpan = 1): GroundedCell => ({ row, col, text, header: false, rowSpan: 1, colSpan, box });
+    const s = tableSheet(seg(null, [g(0, 0, "10"), g(0, 1, "x"), g(0, 2, "المبلغ"), g(1, 0, "كلي", 2), g(1, 2, "y")]), 1)!;
+    expect(s.rtl).toBe(true);
+    expect(values(s)).toEqual([["المبلغ", "x", 10], ["y", "كلي", null]]);
+    expect(s.merges).toEqual([{ top: 1, left: 1, bottom: 1, right: 2 }]);
+  });
+
   test("Arabic anywhere makes the sheet right-to-left", () => {
     expect(tableSheet(seg([[tc("المبلغ"), tc("10")]]), 1)!.rtl).toBe(true);
   });
@@ -124,6 +135,10 @@ describe("CSV and file names", () => {
     expect(toCsv([["a,b", 'x"y'], ["=SUM(A1)", 10], ["+1 call", "@me"], ["line\nbreak", -2]])).toBe(
       '﻿"a,b","x""y"\r\n\'=SUM(A1),10\r\n\'+1 call,\'@me\r\n"line\nbreak",-2\r\n',
     );
+  });
+
+  test("text starting with '-' (or a tab) is made safe too; negative numbers stay numbers", () => {
+    expect(toCsv([["-د", "-2+3", -2, "\tx"]])).toBe("﻿'-د,'-2+3,-2,'\tx\r\n");
   });
 
   test("sheetRows turns covered slots into empty cells", () => {
