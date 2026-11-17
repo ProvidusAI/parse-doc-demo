@@ -81,7 +81,7 @@ test("a slow response for a page you already left is ignored", async () => {
 test("panel language survives moving to the next page", async () => {
   fakeClock();
   const { rerender } = render(<Inspector pages={pages} index={0} onIndex={vi.fn()} onClose={vi.fn()} />);
-  await screen.findByText("Financial · Receipts · 1 of 4");
+  await shown("Financial · Receipts · 1 of 4");
   advance(INTRO_MS);
   fireEvent.click(screen.getByRole("button", { name: "العربية" }));
   rerender(<Inspector pages={pages} index={1} onIndex={vi.fn()} onClose={vi.fn()} />);

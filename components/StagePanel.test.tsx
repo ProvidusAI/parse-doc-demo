@@ -278,10 +278,15 @@ test("resets to first step for a new page", () => {
   expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
 });
 
-test("missing parse time is not invented", () => {
+test("no parse time recorded: no parse time card (never invented)", () => {
   setup({ ...result, upload: { ...result.upload, elapsedSeconds: null } });
-  const cell = screen.getByText("Parse time").closest("li")!;
-  expect(cell).toHaveTextContent("Not returned by DocAI");
+  expect(screen.queryByText("Parse time")).not.toBeInTheDocument();
+  expect(screen.getByText("OCR engine")).toBeInTheDocument();
+});
+
+test("a recorded parse time is shown", () => {
+  setup();
+  expect(screen.getByText("Parse time").closest("li")).toHaveTextContent("45.6 s");
 });
 
 test("chunk without a box shows no page number", () => {

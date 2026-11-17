@@ -34,6 +34,8 @@ PARSED_IMAGES = Path(os.environ.get("PARSED_IMAGES_DIR", ROOT.parent.parent / "I
 REVIEW = Path(os.environ.get("REVIEW_DIR", Path.home() / "Downloads" / "E4c-daniyal-review" / "E4c-daniyal-review"))
 # its pages stay out of git for now (deployment decides where they live): showcase/e4c + manifest.local.json
 LOCAL = "e4c"
+# the review set's model, as on the other DocAI GLM pages (the set itself only says "e4c-final")
+REVIEW_MODEL = OCR_MODELS["ar-en"]
 
 # DocAI picks the engine family from DOCAI_OCR_ENGINE; a model from the other family degrades silently.
 EXPECTED_ENGINE = {"ar-en": "glm", "en": "paddle-vl"}
@@ -133,7 +135,7 @@ def _label(key: str) -> str:
     return key.replace("_", " ").capitalize()
 
 
-def review_entries(pages, samples, engine):
+def review_entries(pages, samples):
     """One entry per review page, labelled like the site's own pages; pages already on the site are skipped."""
     cats = {e["category"]: e["categoryLabel"] for e in samples}
     subs = {e["subCategory"]: e["subCategoryLabel"] for e in samples}
@@ -147,15 +149,13 @@ def review_entries(pages, samples, engine):
         out.append({"id": f"{LOCAL}/{p['id']}", "category": cat, "categoryLabel": cats.get(cat, _label(cat)),
                     "subCategory": sub, "subCategoryLabel": subs.get(sub, _label(sub)),
                     "sourcePath": p["src"], "page": p["orig"], "lang": "en" if p["lang"] in ("en", "photo: english") else "ar-en",
-                    "status": "approved", "review": p["id"], "doc": p["doc"], "ocrModel": engine})
+                    "status": "approved", "review": p["id"], "doc": p["doc"], "ocrModel": REVIEW_MODEL})
     return out
 
 
 def import_review(review: Path, corpus: Path, showcase: Path, samples, force=False) -> int:
     """Import the review set's pages (image kept byte for byte) and write manifest.local.json. Returns pages written."""
-    meta, pages = (review / "data" / "pages.js").read_text(encoding="utf-8").split(";window.PAGES=", 1)
-    engine = json.loads(meta.split("window.META=", 1)[1])["engine"]
-    entries = review_entries(json.loads(pages.strip().rstrip(";")), samples, engine)
+    entries = review_entries(_js_json(review / "data" / "pages.js", "window.PAGES="), samples)
     raw, written = {}, 0
     for e in entries:
         if is_done(e, showcase) and not force:
@@ -166,8 +166,9 @@ def import_review(review: Path, corpus: Path, showcase: Path, samples, force=Fal
         src = corpus / e["sourcePath"]
         file_meta = {"fileName": src.name, "mimeType": mimetypes.guess_type(src.name)[0] or "application/octet-stream",
                      "bytes": src.stat().st_size if src.exists() else None}
+        # the review set was parsed by DocAI's GLM engine (confirmed by the user; the set itself doesn't record it)
         result = build_result(e, file_meta=file_meta, job=None, page_image=page, rules=None, split=None, schema=None,
-                              extraction=None, ocr_engine=None,
+                              extraction=None, ocr_engine="glm",
                               segments=[review_segment(s) for s in raw[e["doc"]].get(e["review"], [])])
         _write(showcase / entry_id(e), page, result)
         written += 1

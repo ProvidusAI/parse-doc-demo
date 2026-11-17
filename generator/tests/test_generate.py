@@ -324,15 +324,15 @@ class ImportReviewTest(unittest.TestCase):
     def test_entries_skip_pages_already_on_the_site(self):
         on_site = {**entry(sub="invoices", status="approved"), "sourcePath": "financial/invoices/081.jpg"}
         pages = [review_page(), review_page("030_invoices_082_p1", "financial/invoices/082.jpg", lang="en")]
-        es = generate.review_entries(pages, [on_site], engine="e4c-final")
+        es = generate.review_entries(pages, [on_site])
         self.assertEqual([e["id"] for e in es], ["e4c/030_invoices_082_p1"])
         e = es[0]
         self.assertEqual((e["category"], e["subCategory"], e["subCategoryLabel"]), ("financial", "invoices", "Invoices"))
-        self.assertEqual((e["lang"], e["page"], e["ocrModel"]), ("en", 1, "e4c-final"))
+        self.assertEqual((e["lang"], e["page"], e["ocrModel"]), ("en", 1, "docai-arabic-ocr-e4c"))
 
     def test_unknown_labels_are_readable_and_other_has_a_subcategory(self):
         p = {**review_page(), "cat": "other"}
-        e = generate.review_entries([p, {**review_page("x_p1"), "cat": "government/official_notices"}], [], engine="e")
+        e = generate.review_entries([p, {**review_page("x_p1"), "cat": "government/official_notices"}], [])
         self.assertEqual((e[0]["category"], e[0]["subCategory"]), ("other", "other"))
         self.assertEqual((e[1]["categoryLabel"], e[1]["subCategoryLabel"]), ("Government", "Official notices"))
 
@@ -345,8 +345,9 @@ class ImportReviewTest(unittest.TestCase):
         self.assertEqual(r["page"]["image"], "/showcase/e4c/030_invoices_081_p1/page.jpg")
         self.assertEqual((r["category"], r["subCategory"]), ("financial", "invoices"))
         self.assertEqual([s["type"] for s in r["segments"]], ["logo", "table"])
+        # the review set is DocAI's GLM engine (user, 2026-11-17); parse time was not recorded
         self.assertEqual((r["upload"]["ocrModel"], r["upload"]["ocrEngine"], r["upload"]["elapsedSeconds"]),
-                         ("e4c-final", None, None))  # only what the review set records: never invented
+                         ("docai-arabic-ocr-e4c", "glm", None))
         self.assertEqual((r["upload"]["fileName"], r["upload"]["bytes"]), ("081.jpg", 1234))
         # the reviewer's page image is kept byte for byte
         self.assertEqual((out / "page.jpg").read_bytes(),

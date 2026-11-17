@@ -152,8 +152,9 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
   const run: [Parameters<typeof t>[1], string | null][] = [
     ["upload.engine", u.ocrEngine && (ENGINE_NAME[u.ocrEngine] ?? u.ocrEngine)],
     ["upload.ocrModel", u.ocrModel],
-    ["upload.elapsed", u.elapsedSeconds == null ? null : `${u.elapsedSeconds.toFixed(1)} s`],
   ];
+  // no parse time recorded (pages parsed outside this site): no card rather than an empty one
+  if (u.elapsedSeconds != null) run.push(["upload.elapsed", `${u.elapsedSeconds.toFixed(1)} s`]);
   return (
     <>
       <ul className={`${styles.fields} ${styles.run}`}>
