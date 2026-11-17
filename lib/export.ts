@@ -22,9 +22,10 @@ export interface Sheet {
   freezeHeader: boolean;
 }
 
-// a leading zero would be lost as a number, so "007" stays text
-const PLAIN_NUMBER = /^-?(0|[1-9]\d*)(\.\d+)?$/;
-export const cellValue = (text: string): string | number => (PLAIN_NUMBER.test(text) ? Number(text) : text);
+// a number only when it reads back identically: "007", "1150.00" and "-0" would change, so they stay text
+const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/;
+export const cellValue = (text: string): string | number =>
+  PLAIN_NUMBER.test(text) && String(Number(text)) === text ? Number(text) : text;
 
 const span = (n: number) => Math.min(Math.max(n || 1, 1), 1000);
 
@@ -55,9 +56,11 @@ function layout(name: string, place: (put: (r: number, c: number, cell: Source) 
   return { name, rows, merges, rtl, freezeHeader: top.length > 0 && top.every((c) => c!.header) };
 }
 
-/** A table chunk as a sheet: DocAI's table rows, or its cell grid when that is all there is. */
+/** A table chunk as a sheet: DocAI's cell grid when it has one (what the panel shows, and the only
+ * source that marks header cells), else its table rows. */
 export function tableSheet(segment: Segment, n: number): Sheet | null {
   const name = `Table ${n}`;
+  if (segment.cells?.length) return layout(name, (put) => segment.cells!.forEach((c) => put(c.row, c.col, c)));
   const rows = segment.table?.rows;
   if (rows?.length) {
     const height = rows.length;
@@ -77,7 +80,6 @@ export function tableSheet(segment: Segment, n: number): Sheet | null {
       });
     });
   }
-  if (segment.cells?.length) return layout(name, (put) => segment.cells!.forEach((c) => put(c.row, c.col, c)));
   return null;
 }
 

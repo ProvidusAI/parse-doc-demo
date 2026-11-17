@@ -42,6 +42,8 @@ const en = {
   language: "Panel language",
   model: "Model",
   magnifier: "Magnifier",
+  "export.excel": "Download as Excel",
+  "export.csv": "Download as CSV",
 };
 
 export type UiKey = keyof typeof en;
@@ -88,6 +90,8 @@ const ar: Record<UiKey, string> = {
   language: "لغة اللوحة",
   model: "النموذج",
   magnifier: "المكبّر",
+  "export.excel": "تنزيل بصيغة Excel",
+  "export.csv": "تنزيل بصيغة CSV",
 };
 
 const STRINGS: Record<UiLang, Record<UiKey, string>> = { en, ar };

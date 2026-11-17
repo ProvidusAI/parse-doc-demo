@@ -2,8 +2,12 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import type { UiLang } from "@/lib/i18n";
 import type { ShowcaseResult } from "@/lib/types";
+import { tableSheet } from "@/lib/export";
+import { workbookBlob } from "@/lib/xlsx";
 import StagePanel from "./StagePanel";
 import { result } from "./test-fixtures";
+
+vi.mock("@/lib/xlsx", () => ({ workbookBlob: vi.fn(async () => new Blob(["xlsx"])) }));
 
 type Props = { r: ShowcaseResult; onView: () => void; onHighlight: () => void; highlight?: string | null };
 function Harness({ r, onView, onHighlight, highlight = null }: Props) {
@@ -310,4 +314,72 @@ test("choosing a step scrolls only the stepper, never the panel", () => {
   step(/Extracted schema/);
   expect(intoView).not.toHaveBeenCalled();
   expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth" }));
+});
+
+describe("Excel and CSV downloads", () => {
+  let saved: { name: string; blob: Blob }[];
+  beforeEach(() => {
+    saved = [];
+    let last: Blob;
+    URL.createObjectURL = vi.fn((b: Blob) => ((last = b), "blob:x"));
+    URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      saved.push({ name: this.download, blob: last });
+    });
+    vi.mocked(workbookBlob).mockClear();
+  });
+  const card = (text: string) => screen.getByText(text).closest("li")!;
+  // Blob.text() drops a leading BOM, so decode the bytes as they are
+  const raw = async (b: Blob) => new TextDecoder("utf-8", { ignoreBOM: true }).decode(await b.arrayBuffer());
+
+  test("a table card offers Excel and CSV; other cards do not", () => {
+    setup();
+    const table = screen.getByRole("table").closest("li")!;
+    expect(within(table).getByRole("button", { name: "Download as Excel" })).toHaveTextContent("Excel");
+    expect(within(table).getByRole("button", { name: "Download as CSV" })).toHaveTextContent("CSV");
+    expect(within(card("TAX INVOICE فاتورة ضريبية")).queryByRole("button", { name: /Download/ })).not.toBeInTheDocument();
+  });
+
+  test("a table with no rows and no cells offers nothing", () => {
+    setup({ ...result, segments: [{ ...result.segments[1], table: { rows: [] }, cells: null }] });
+    expect(screen.queryByRole("button", { name: /Download/ })).not.toBeInTheDocument();
+  });
+
+  test("CSV: the table as DocAI read it, named after the source file", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Download as CSV" }));
+    expect(saved.map((s) => s.name)).toEqual(["receipts-table-2.csv"]);
+    expect(await raw(saved[0].blob)).toBe("\uFEFFItem,Qty\r\nProduct 1,10\r\n");
+  });
+
+  test("Excel: ExcelJS builds the sheet once, even on a double click", async () => {
+    setup();
+    const excel = screen.getByRole("button", { name: "Download as Excel" });
+    fireEvent.click(excel);
+    fireEvent.click(excel);
+    await vi.waitFor(() => expect(saved.map((s) => s.name)).toEqual(["receipts-table-2.xlsx"]));
+    expect(workbookBlob).toHaveBeenCalledTimes(1);
+    expect(workbookBlob).toHaveBeenCalledWith([tableSheet(result.segments[1], 2)]);
+  });
+
+  test("the extracted record downloads as Excel sheets or a flat CSV", async () => {
+    setup();
+    step(/Extracted schema/);
+    fireEvent.click(screen.getByRole("button", { name: "Download as CSV" }));
+    expect(saved[0].name).toBe("receipts-records.csv");
+    expect(await raw(saved[0].blob)).toBe(
+      "\uFEFFField,Value,Confidence (%)\r\ntotal_amount,1150.00,97\r\nsupplier_name,شركة تجريبية,\r\n",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Download as Excel" }));
+    await vi.waitFor(() => expect(saved.map((s) => s.name)).toContain("receipts-records.xlsx"));
+    expect(vi.mocked(workbookBlob).mock.calls[0][0].map((s) => s.name)).toEqual(["Fields"]);
+  });
+
+  test("Arabic panel: Arabic labels, same Excel / CSV text", () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "العربية" }));
+    const table = screen.getByRole("table").closest("li")!;
+    expect(within(table).getByRole("button", { name: "تنزيل بصيغة Excel" })).toHaveTextContent("Excel");
+    expect(within(table).getByRole("button", { name: "تنزيل بصيغة CSV" })).toHaveTextContent("CSV");
+  });
 });

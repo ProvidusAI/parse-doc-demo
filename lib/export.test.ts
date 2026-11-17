@@ -10,7 +10,7 @@ const values = (s: ReturnType<typeof tableSheet>) => s!.rows.map((r) => r.map((c
 
 describe("cellValue: plain numbers become numbers, everything else stays as read", () => {
   test.each([["10", 10], ["-3.5", -3.5], ["0", 0], ["0.75", 0.75]])("%s → number", (t, n) => expect(cellValue(t)).toBe(n));
-  test.each(["1,285.20", "SAR 230.00", "2021-10-30", "١٠", "007", "", "10%", " 10"])("%s stays text", (t) =>
+  test.each(["1,285.20", "SAR 230.00", "2021-10-30", "١٠", "007", "", "10%", " 10", "1150.00", "2.50", "-0"])("%s stays text", (t) =>
     expect(cellValue(t)).toBe(t));
 });
 
@@ -47,6 +47,14 @@ describe("tableSheet", () => {
     const s = tableSheet(seg(null, [g(0, 0, "Head", 2), g(1, 0, "1"), g(1, 1, "x")]), 2)!;
     expect(values(s)).toEqual([["Head", null], [1, "x"]]);
     expect(s.merges).toEqual([{ top: 0, left: 0, bottom: 0, right: 1 }]);
+  });
+
+  test("with both, DocAI's cell grid wins: it is what the panel shows and it marks the headers", () => {
+    const box = { page: 1, x0: 0, y0: 0, x1: 1, y1: 1 };
+    const g = (row: number, col: number, text: string): GroundedCell => ({ row, col, text, header: row === 0, rowSpan: 1, colSpan: 1, box });
+    const s = tableSheet(seg([[tc("Qty"), tc("Price")], [tc("1"), tc("2")]], [g(0, 0, "Qty"), g(0, 1, "Price"), g(1, 0, "1"), g(1, 1, "2")]), 1)!;
+    expect(s.rows[0].map((c) => c!.header)).toEqual([true, true]);
+    expect(s.freezeHeader).toBe(true);
   });
 
   test("Arabic anywhere makes the sheet right-to-left", () => {

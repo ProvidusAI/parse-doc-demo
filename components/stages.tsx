@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { recordRows, recordSheets, sheetRows, tableSheet, toCsv } from "@/lib/export";
 import { t, type UiLang } from "@/lib/i18n";
 import { pickKey, pickUnits, type PickUnit, segmentHex } from "@/lib/segments";
 import { hasArabic } from "@/lib/showcase";
 import type { GroundedCell, Segment, ShowcaseResult } from "@/lib/types";
+import ExportButtons from "./ExportButtons";
 import { type PageBox, reveal } from "./PageView";
 import styles from "./StagePanel.module.css";
 
@@ -171,7 +173,9 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
       </div>
       {result.segments.length === 0 && <Missing lang={lang} />}
       <ul className={styles.rows}>
-        {result.segments.map((s, i) => (
+        {result.segments.map((s, i) => {
+          const sheet = tableSheet(s, i + 1);
+          return (
           <li
             key={s.id}
             ref={(el) => {
@@ -190,6 +194,10 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
             <div className={styles.chead} data-chunk-head>
               <span className={styles.k}>#{i + 1}</span>
               <Tag type={s.type} />
+              {sheet && (
+                <ExportButtons lang={lang} fileName={result.source.fileName} part={`table-${i + 1}`}
+                  sheets={() => [sheet]} csv={() => toCsv(sheetRows(sheet))} />
+              )}
               {s.box && <span className={styles.pg}>P.{s.box.page}</span>}
             </div>
             {s.cells ? (
@@ -202,7 +210,8 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
               <DocText text={s.text} className={styles.tx} />
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </>
   );
@@ -274,15 +283,20 @@ export function ExtractRulesStage({ result, lang }: StageProps) {
 export function ExtractedStage({ result, lang, onHighlight }: StageProps) {
   const [view, setView] = useState<"fields" | "json">("fields");
   if (!result.extraction) return <Missing lang={lang} />;
+  const { values } = result.extraction;
   return (
     <>
-      <div className={styles.seg} role="group">
-        <button type="button" aria-pressed={view === "fields"} onClick={() => setView("fields")}>
-          {t(lang, "viewFields")}
-        </button>
-        <button type="button" aria-pressed={view === "json"} onClick={() => setView("json")}>
-          {t(lang, "viewJson")}
-        </button>
+      <div className={styles.bar}>
+        <div className={styles.seg} role="group">
+          <button type="button" aria-pressed={view === "fields"} onClick={() => setView("fields")}>
+            {t(lang, "viewFields")}
+          </button>
+          <button type="button" aria-pressed={view === "json"} onClick={() => setView("json")}>
+            {t(lang, "viewJson")}
+          </button>
+        </div>
+        <ExportButtons lang={lang} fileName={result.source.fileName} part="records"
+          sheets={() => recordSheets(values)} csv={() => toCsv(recordRows(values))} />
       </div>
       {view === "json" ? (
         <pre className={styles.json} dir="auto">
