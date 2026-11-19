@@ -19,3 +19,6 @@ public/showcase/
 
 # Mac Studio setup steps stay local, shared by hand
 SETUP.md
+
+# packed page data (showcase.tgz) for moving between machines
+*.tgz
