@@ -60,21 +60,28 @@ npm start
 
 The site is fully static. It reads the saved DocAI outputs from `public/showcase/` and never calls DocAI at runtime.
 
+### Docker (office Mac Studio)
+
+The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. All steps, including copying the page data over, are in [SETUP.md](SETUP.md).
+
 **Load testing:** open `http://localhost:3000/?stress=400` to see how the grid behaves with 400 pages. The real pages are duplicated in the browser only; nothing on disk changes. The limit is 2000.
 
 ## Where the data lives
 
 | Path | In git | What it is |
 |---|---|---|
-| `public/showcase/manifest.json` | yes | The list the site renders: categories, pages, thumbnails, wall images |
-| `public/showcase/<category>/<type>/result.json` | yes | DocAI output for one page, normalised for all 5 stages |
-| `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg` | yes | The page image DocAI rendered (max 2400px) and its card thumbnail |
-| `public/showcase/wall/` | yes | 160px thumbnails for the decorative background wall |
+| `public/showcase/manifest.json`, `manifest.local.json` | no | The list the site renders: categories, pages, thumbnails, wall images |
+| `public/showcase/<category>/<type>/result.json` | no | DocAI output for one page, normalised for all 5 stages |
+| `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg` | no | The page image DocAI rendered (max 2400px) and its card thumbnail |
+| `public/showcase/wall/` | no | 160px thumbnails for the decorative background wall |
 | `samples.json` | yes | Which corpus page is shown for each type, its language and its review status |
 | `wall.json` | yes | Corpus files used for the background wall |
 | `providus-arabic-english-dataset/` | no | The source corpus (about 660 MB), kept locally |
 | `generator/out/` | no | Upload copies and the local review page |
+| `public/showcase/e4c/` | no | The 915 reviewed E4c pages |
 | `.env.x-api-key` | no | The DocAI API key (`api-key=...`) |
+
+All of `public/showcase/` (about 280 MB, 1009 pages) stays on local machines and is copied to the server by hand; see [SETUP.md](SETUP.md). Older commits on GitHub still hold the first 94 pages.
 
 DocAI itself keeps its copies of the uploaded pages in its own local Docker volumes and database.
 

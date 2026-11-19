@@ -13,6 +13,6 @@ next-env.d.ts
 *.tsbuildinfo
 generator/*.log
 
-# reviewed E4c pages: imported locally, not committed until deployment decides where they live
-public/showcase/e4c/
-public/showcase/manifest.local.json
+# all page data (images, DocAI results, manifests, wall thumbnails) stays local, never in git;
+# it is copied to the server by hand (see SETUP.md)
+public/showcase/
