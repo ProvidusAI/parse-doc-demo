@@ -4,10 +4,6 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 **Try DocAI:** [platform.providus.ai](https://platform.providus.ai/)
 
-![Landing page](docs/screenshots/01-landing.png)
-
-<sub>Shown in the stress view (<code>/?stress=400</code>); the live dataset has 94 pages.</sub>
-
 ## What it shows
 
 94 pages in 18 categories. 21 of them, one per document type, were run through every DocAI stage: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. The other 73 are industry documents (chemical, education, health, manufacturing, marine, municipality, postal, sports) that a teammate had already parsed with the E4c OCR model. Those show the parse stages only; split and extract were not run on them. The **All** tab shows every page grouped by category. Click a page to open the inspector: the page first appears on its own while DocAI's scan plays, then the panel opens on Parsed chunks, with the page on the left and the 5 DocAI stages on the right:
@@ -21,26 +17,6 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 | 5 | Extracted schema | Extracted values with confidence. Click one to see where it came from, or switch to the raw JSON |
 
 Anything DocAI did not return is shown as *"Not returned by DocAI"*. Numbers are never filled in. The panel switches between **English and Arabic (RTL)**, and ← / → move between pages in a category. The dropdown at the end of the category bar lists every category. The magnifier button on the page turns on a lens that enlarges the page 2.5× under the cursor.
-
-> The screenshots below use the stress view (`/?stress=400`). The real pages are duplicated to 400 to show how the site behaves with a large corpus.
-
-| All tab: 400 pages, ParseBench-style mosaic | Ctrl/⌘ + scroll to zoom, drag to pan |
-|---|---|
-| ![All tab mosaic](docs/screenshots/02-dataset.png) | ![Zoomed mosaic](docs/screenshots/10-mosaic-zoomed.png) |
-| **Page regions** | **Parsed chunks with grounding** |
-| ![Page regions](docs/screenshots/03-ocr-regions.png) | ![Parsed chunks](docs/screenshots/04-parsed-chunks.png) |
-| **Split result** | **Extracted values, grounded on the page** |
-| ![Split result](docs/screenshots/05-split-result.png) | ![Extracted schema](docs/screenshots/06-extracted-schema.png) |
-| **Arabic panel (RTL)** | |
-| ![Arabic panel](docs/screenshots/07-arabic-panel.png) | |
-
-<p>
-  <img src="docs/screenshots/08-mobile-landing.png" alt="Mobile landing" width="240">
-  &nbsp;
-  <img src="docs/screenshots/11-mobile-mosaic.png" alt="Mobile mosaic" width="240">
-  &nbsp;
-  <img src="docs/screenshots/09-mobile-inspector.png" alt="Mobile inspector" width="240">
-</p>
 
 ## Run it
 
@@ -141,7 +117,6 @@ components/     Landing, page wall, dataset browser, inspector, 7-stage panel
 lib/            Shared types, helpers, EN/AR UI strings, manifest loader
 generator/      DocAI client, page cutting, normalisation, batch runner (+ tests)
 public/showcase Generated DocAI outputs served by the site
-docs/           Design spec, implementation plan, screenshots
 ```
 
 Built with Next.js 16, React 19 and TypeScript, using plain CSS modules.
