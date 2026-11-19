@@ -1,0 +1,45 @@
+# Runs on every push and pull request: the site's tests and build, and the generator's tests.
+# Page data is not in git, so the build runs without it (an empty site); that it still builds is part of the check.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    name: Site (tests + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tests
+        run: npm test
+      - name: Build (includes the TypeScript check)
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  generator:
+    name: Generator (tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: generator/requirements.txt
+      - run: pip install -r generator/requirements.txt
+      - name: Tests
+        run: python -m unittest discover -s generator/tests -t .
