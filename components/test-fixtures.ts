@@ -10,7 +10,6 @@ const page = (cat: string, sub: string, label: string) => ({
 
 export const manifest: Manifest = {
   generatedAt: "2026-11-10T00:00:00+00:00",
-  wall: ["/showcase/wall/w000.jpg", "/showcase/wall/w001.jpg"],
   categories: [
     {
       key: "financial",

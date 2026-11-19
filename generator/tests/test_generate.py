@@ -123,6 +123,7 @@ class GenerateTest(unittest.TestCase):
             (wall / f"w{i:03d}.jpg").write_bytes(b"old")
         generate.write_wall(["financial/invoices/a.png"], self.corpus, self.showcase)
         self.assertEqual(sorted(p.name for p in wall.glob("*.jpg")), ["w000.jpg"])
+        self.assertTrue((self.showcase / "wall.jpg").exists())  # the one tiled background the site uses
 
     def test_split_failure_keeps_entry(self):
         self.run_entry(entry(), FakeClient(fail={"/v1/split/runs"}))
@@ -158,10 +159,8 @@ class GenerateTest(unittest.TestCase):
         for sub in ("invoices", "receipts"):
             self.run_entry(entry(sub), FakeClient())
         samples = [entry("invoices", status="approved"), entry("receipts", status="candidate")]
-        (self.showcase / "wall").mkdir()
-        (self.showcase / "wall" / "w000.jpg").write_bytes(b"x")
         m = generate.build_manifest(samples, self.showcase)
-        self.assertEqual(m["wall"], ["/showcase/wall/w000.jpg"])
+        self.assertNotIn("wall", m)  # the background is public/showcase/wall.jpg, not a list
         self.assertEqual(m["categories"], [{"key": "financial", "label": "Financial", "pages": [
             {"id": "financial/invoices", "subCategoryLabel": "Invoices", "fileName": "a.png",
              "thumb": "/showcase/financial/invoices/thumb.jpg",

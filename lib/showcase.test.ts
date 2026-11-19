@@ -70,13 +70,12 @@ describe("loadManifest", () => {
   afterEach(() => vi.restoreAllMocks());
   test("missing file gives empty manifest", () => {
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
-    expect(loadManifest()).toEqual({ generatedAt: "", wall: [], categories: [] });
+    expect(loadManifest()).toEqual({ generatedAt: "", categories: [] });
   });
 });
 
 const m: Manifest = {
   generatedAt: "",
-  wall: [],
   categories: [
     { key: "financial", label: "Financial", pages },
     { key: "legal", label: "Legal", pages: [{ id: "legal/laws", subCategoryLabel: "Laws", fileName: "l.pdf", thumb: "", result: "/r/l.json" }] },

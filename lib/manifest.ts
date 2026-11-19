@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Manifest } from "./types";
 
-const EMPTY: Manifest = { generatedAt: "", wall: [], categories: [] };
+const EMPTY: Manifest = { generatedAt: "", categories: [] };
 
 const read = (file: string): Manifest | null =>
   fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as Manifest) : null;

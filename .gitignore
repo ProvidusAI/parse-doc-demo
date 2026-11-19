@@ -15,7 +15,9 @@ generator/*.log
 
 # all page data (images, DocAI results, manifests, wall thumbnails) stays local, never in git;
 # it is copied to the server by hand (see SETUP.md)
-public/showcase/
+public/showcase/*
+# except the background wall (one tiled image), which the site needs everywhere
+!public/showcase/wall.jpg
 
 # Mac Studio setup steps stay local, shared by hand
 SETUP.md

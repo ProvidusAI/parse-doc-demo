@@ -98,6 +98,5 @@ export interface Category {
 
 export interface Manifest {
   generatedAt: string;
-  wall: string[];
   categories: Category[];
 }

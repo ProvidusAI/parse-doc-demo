@@ -4,14 +4,12 @@ import type { Manifest, PageSummary } from "./types";
 const page = (id: string): PageSummary => ({ id, subCategoryLabel: id, fileName: `${id}.jpg`, thumb: "", result: "" });
 const base: Manifest = {
   generatedAt: "t",
-  wall: ["/w.jpg"],
   categories: [{ key: "financial", label: "Financial", pages: [page("financial/receipts")] }],
 };
 
 test("local pages join their category after the committed ones; new categories are added", () => {
   const local: Manifest = {
     generatedAt: "l",
-    wall: [],
     categories: [
       { key: "financial", label: "Financial", pages: [page("e4c/a_p1")] },
       { key: "research", label: "Research", pages: [page("e4c/b_p1")] },
@@ -22,10 +20,10 @@ test("local pages join their category after the committed ones; new categories a
     ["financial", ["financial/receipts", "e4c/a_p1"]],
     ["research", ["e4c/b_p1"]],
   ]);
-  expect(m.wall).toEqual(["/w.jpg"]);
   expect(base.categories[0].pages).toHaveLength(1); // the committed manifest is not changed
 });
 
 test("no local manifest: the committed one as it is", () => {
   expect(mergeManifests(base, null)).toBe(base);
 });
+
