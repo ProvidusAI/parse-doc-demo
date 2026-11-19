@@ -1,0 +1,531 @@
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: #fff;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  font-size: 13px;
+}
+.aur {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 260px;
+  background: radial-gradient(closest-side, rgba(0, 119, 199, 0.1), transparent),
+    radial-gradient(closest-side at 70% 40%, rgba(120, 80, 255, 0.07), transparent);
+  animation: aurora-drift 18s ease-in-out infinite;
+  pointer-events: none;
+}
+.ph {
+  position: relative;
+  padding: 20px 22px 0;
+}
+.lang {
+  position: absolute;
+  inset-inline-end: 22px;
+  top: 18px;
+  display: flex;
+  border: 1px solid var(--border);
+  font: 11px var(--mono);
+}
+.lang button {
+  border: 0;
+  background: #fff;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.lang button:global(.ar) {
+  font-family: var(--arabic);
+  font-size: 12px;
+}
+.lang button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+.ph :global(.lbl) {
+  margin-bottom: 8px;
+}
+.tagrow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+}
+.dot::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: #000;
+  border-radius: 50%;
+}
+.steps {
+  position: relative; /* offsetParent for centring the active step */
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.steps::-webkit-scrollbar {
+  display: none;
+}
+.step {
+  flex: none;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  color: var(--t3);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.step:hover {
+  border-color: #000;
+}
+.step i {
+  font: 11px var(--mono);
+  font-style: normal;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+}
+.step.done {
+  color: #000;
+}
+.step.done i {
+  background: #e8f2fa;
+  border-color: #bcd9ef;
+  color: var(--ring);
+}
+.step[aria-current="step"] {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+.step[aria-current="step"] i {
+  border-color: #555;
+  color: #fff;
+}
+.pb {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  padding: 18px 22px;
+  animation: fade-in 0.35s ease both;
+}
+.ttl {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.ttl h3 {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.ttl p {
+  color: var(--t3);
+  font-size: 14px;
+  margin-top: 2px;
+}
+.pill {
+  flex: none;
+  font: 11px var(--mono);
+  border: 1px solid var(--border);
+  padding: 5px 9px;
+  background: var(--muted);
+  white-space: nowrap;
+}
+.pass {
+  background: #e9f6ef;
+  border-color: #c5e7d4;
+  color: var(--ok);
+}
+.review {
+  background: #fff7e6;
+  border-color: #f2dcaa;
+  color: #8a5a00;
+}
+.fail {
+  background: #fdecec;
+  border-color: #f3c3c3;
+  color: #b42318;
+}
+.rows,
+.fields {
+  list-style: none;
+  padding: 0;
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  animation: fade-in 0.4s ease both;
+}
+/* parsed chunk card, like DocAI's: header line, then content using the full width */
+.chunk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  animation: fade-in 0.4s ease both;
+}
+.chunk > * {
+  flex: none;
+  width: 100%;
+}
+.chead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chead > * {
+  width: auto;
+}
+.chead .pg {
+  margin-inline-start: auto;
+}
+.hover {
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.hover:hover,
+.hover[data-hi],
+.hover:focus {
+  border-color: var(--ring);
+  background: #f5fafd;
+  outline: none;
+}
+.k {
+  font: 10px var(--mono);
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  flex: none;
+  white-space: nowrap;
+}
+.k.typed {
+  color: color-mix(in srgb, var(--c) 80%, #000);
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+  border-color: color-mix(in srgb, var(--c) 35%, #fff);
+}
+/* full text: DocAI paragraphs are the point of the demo, never truncate them */
+.tx {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+.muted {
+  flex: 1;
+  color: var(--t3);
+  font: 12px var(--mono);
+}
+.pg {
+  font: 11px var(--mono);
+  color: var(--t3);
+}
+.types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.typeCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 11px var(--mono);
+  color: var(--t3);
+}
+.rule,
+.record {
+  align-items: flex-start;
+}
+.ruleText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.strong {
+  font-weight: 500;
+  font-size: 14px;
+}
+.desc {
+  color: var(--t3);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.toggle {
+  width: 34px;
+  height: 20px;
+  background: #000;
+  border-radius: 10px;
+  position: relative;
+  flex: none;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+}
+.quality {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.idx {
+  font: 14px var(--mono);
+  border: 1px solid #cddff3;
+  background: #eef3fb;
+  color: var(--ring);
+  padding: 8px 10px;
+}
+.recMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.conf {
+  font: 11px var(--mono);
+  color: var(--ok);
+  text-transform: uppercase;
+}
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.f {
+  border: 1px solid var(--border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  animation: fade-in 0.4s ease both;
+}
+.f > :global(.mono) {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+/* OCR engine · model · parse time above the chunks */
+.run {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+.fhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.fhead :global(.lbl) {
+  overflow-wrap: anywhere;
+}
+.req {
+  font: 10px var(--mono);
+  color: #b42318;
+  background: #fdecec;
+  border: 1px solid #f3c3c3;
+  padding: 2px 6px;
+}
+.ok {
+  font: 500 11px var(--mono);
+  color: var(--ok);
+  background: #e9f6ef;
+  border: 1px solid #c5e7d4;
+  padding: 2px 6px;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.seg button {
+  border: 0;
+  background: #fff;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+.json {
+  font: 12px/1.55 var(--mono);
+  background: #fafafa;
+  border: 1px solid var(--border);
+  padding: 14px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.missing {
+  color: var(--t3);
+  font-size: 13px;
+}
+.pf {
+  border-top: 1px solid var(--border);
+  padding: 12px 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 12px var(--mono);
+  color: var(--t3);
+}
+.pf b {
+  color: #000;
+  font-weight: 500;
+}
+@media (max-width: 760px) {
+  .panel {
+    height: auto;
+    min-height: 70vh;
+  }
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes aurora-drift {
+  0%, 100% { transform: translate(0) scale(1); }
+  25% { transform: translate(5%, 3%) scale(1.05); }
+  50% { transform: translate(-3%, 5%) scale(0.95); }
+  75% { transform: translate(3%, -3%) scale(1.02); }
+}
+
+/* table chunk as a grid, like DocAI's Chunks tab */
+.tableWrap {
+  flex: 1;
+  min-width: 0;
+  max-height: 224px;
+  overflow: auto;
+  border: 1px solid var(--border);
+}
+.grid {
+  /* natural column widths; the wrapper scrolls both ways instead of squeezing columns */
+  table-layout: auto;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.grid th,
+.grid td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  vertical-align: top;
+  min-width: 80px;
+  max-width: 260px;
+  overflow-wrap: anywhere;
+}
+.grid th {
+  background: #f5f4f2;
+  font-weight: 600;
+  text-align: start;
+}
+/* DocAI's clickable cells: the whole cell is the button; the picked one turns amber like its box on the page */
+.grid .pickCell {
+  padding: 0;
+}
+.pick {
+  display: block;
+  width: 100%;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pick:hover {
+  background: rgba(0, 119, 199, 0.06);
+}
+.pick[aria-pressed="true"] {
+  background: rgba(251, 191, 36, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.6);
+}
+/* download buttons: right side of a table card's head, and beside the Fields / JSON switch */
+.export {
+  display: inline-flex;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+.chead .export + .pg {
+  margin-inline-start: 0;
+}
+.export button {
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--t2);
+  font: 600 11px/1 var(--mono);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.export button:hover {
+  border-color: #000;
+  color: #000;
+}
+.export button[aria-busy="true"] {
+  opacity: 0.5;
+  cursor: progress;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.bar .seg {
+  margin-bottom: 0;
+}

@@ -1,0 +1,11 @@
+[
+  {"id": "p1_e0000", "title": "header", "type": "header", "markdown": "TAX INVOICE فاتورة ضريبية",
+   "coordinates": {"pageNumber": 1, "xmin": 300, "ymin": 20, "xmax": 700, "ymax": 60, "sourceType": "pdf"}, "sourceType": "pdf"},
+  {"id": "p1_e0001", "title": "text", "type": "text", "markdown": "Supplier: شركة تجريبية",
+   "coordinates": {"pageNumber": 1, "xmin": 40, "ymin": 80, "xmax": 1200, "ymax": 110, "sourceType": "pdf"}, "sourceType": "pdf"},
+  {"id": "p1_e0002", "title": "table", "type": "table", "markdown": "<table><tr><td>Item</td><td>Qty</td></tr><tr><td>Product 1</td><td>10</td></tr></table>",
+   "coordinates": {"pageNumber": 1, "xmin": 40, "ymin": 200, "xmax": 960, "ymax": 600, "sourceType": "pdf"}, "sourceType": "pdf"},
+  {"id": "p1_e0003", "title": "logo", "type": "logo", "markdown": "", "textless": true,
+   "coordinates": {"pageNumber": 1, "xmin": 20, "ymin": 10, "xmax": 120, "ymax": 70, "sourceType": "pdf"}, "sourceType": "pdf"},
+  {"id": "p1_e0004", "title": "text", "type": "text", "markdown": "no box", "sourceType": "pdf"}
+]

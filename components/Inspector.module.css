@@ -1,0 +1,179 @@
+.modal {
+  /* just clear of the ‹ › buttons (28px + 44px) */
+  --pad-x: 80px;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 68px var(--pad-x) 16px;
+}
+.veil {
+  position: absolute;
+  inset: 0;
+  background: var(--veil);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fade 0.25s both;
+}
+/* columns size to their content and the pair is centred as one block */
+/* page | divider | panel; --split is the page's share (%), equal to start, dragged with the divider */
+.wrap {
+  --divider: 12px;
+  position: relative;
+  display: grid;
+  grid-template-columns: calc((100% - var(--divider)) * var(--split, 50) / 100) var(--divider) minmax(0, 1fr);
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  animation: fade-in 0.35s ease both;
+}
+/* intro: the page alone, centred at the width it will keep, while it scans */
+.wrap[data-phase="intro"] {
+  grid-template-columns: calc((100% - var(--divider)) * var(--split, 50) / 100);
+}
+.pagecol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+/* DocAI's resize handle: a 12px muted bar, a white grip box in the middle, tinted while dragging */
+.divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  touch-action: none;
+  background: rgba(245, 245, 245, 0.5);
+  transition: background 0.15s;
+}
+.divider::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto;
+  left: 50%;
+  width: 1px;
+  background: var(--border);
+}
+.divider:hover,
+.divider:active,
+.divider:focus-visible {
+  background: rgba(0, 119, 199, 0.12);
+  outline: none;
+}
+.grip {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--t3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.panelcol {
+  display: flex;
+  min-height: 0;
+}
+.panelcol[data-enter] {
+  animation: panel-in 0.45s ease both;
+}
+.panelcol > * {
+  flex: 1;
+  min-width: 0;
+}
+.loading {
+  color: var(--t3);
+  align-self: center;
+}
+.arr,
+.x {
+  position: absolute;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.arr:hover,
+.x:hover {
+  border-color: #000;
+}
+.arr {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.left {
+  left: 28px;
+}
+.right {
+  right: 28px;
+}
+.x {
+  top: 18px;
+  right: 24px;
+}
+@media (max-width: 1100px) {
+  .modal {
+    --pad-x: 64px;
+    padding: 68px var(--pad-x) 16px;
+  }
+  .left {
+    left: 14px;
+  }
+  .right {
+    right: 14px;
+  }
+}
+@media (max-width: 760px) {
+  .modal {
+    display: block;
+    padding: 72px 16px 88px;
+    overflow-y: auto;
+  }
+  .wrap,
+  .wrap[data-phase="intro"] {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    gap: 16px;
+  }
+  .pagecol {
+    width: auto;
+  }
+  /* stacked on phones: nothing to resize */
+  .divider {
+    display: none;
+  }
+  .arr {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    transform: none;
+  }
+  .x {
+    position: fixed;
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(24px); }
+}

@@ -1,0 +1,24 @@
+# source corpus (663 MB) and reference screenshots stay local
+providus-arabic-english-dataset/
+design.md/
+.scratch/
+
+node_modules/
+.next/
+out/
+.env*
+generator/out/
+__pycache__/
+next-env.d.ts
+*.tsbuildinfo
+generator/*.log
+
+# all page data (images, DocAI results, manifests, wall thumbnails) stays local, never in git;
+# it is copied to the server by hand (see SETUP.md)
+public/showcase/
+
+# Mac Studio setup steps stay local, shared by hand
+SETUP.md
+
+# packed page data (showcase.tgz) for moving between machines
+*.tgz

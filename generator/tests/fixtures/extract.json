@@ -1,0 +1,7 @@
+{"jsonResult": {"total_amount": "1150.00", "supplier_name": "شركة تجريبية", "items": [{"description": "Product 1"}, {"description": "Product 2"}]},
+ "citations": [
+  {"path": "/field-root-total-amount", "quote": "1150.00", "segmentId": "p1_e0002", "confidence": 0.97, "pageNumber": 1},
+  {"path": "/field-root-supplier-name", "quote": "شركة تجريبية", "segmentId": "p1_e9999", "confidence": 0.9, "pageNumber": 1},
+  {"path": "/field-root-items/field-root-items-description", "quote": "Product 1", "segmentId": "p1_e0002", "confidence": 0.88, "pageNumber": 1}
+ ],
+ "modelId": "lmstudio/qwen/qwen3-vl-8b"}

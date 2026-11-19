@@ -1,0 +1,15 @@
+# never in the image: secrets, the raw corpus, build output, local tooling
+.env*
+providus-arabic-english-dataset/
+generator/
+node_modules/
+.next/
+out/
+.git/
+.scratch/
+.superpowers/
+.claude/
+docs/
+design.md
+*.tsbuildinfo
+e4c.tgz

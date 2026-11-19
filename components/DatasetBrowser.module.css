@@ -1,0 +1,283 @@
+/* sticky inside the dataset section: it takes real space, so the heading below is never hidden */
+.bar {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.35s, transform 0.35s;
+}
+:global([data-on-data]) .bar {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.tabs,
+.view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* one row however many categories: the strip scrolls sideways, search and view stay put */
+.tabs {
+  position: relative; /* chip.offsetLeft is measured from the strip */
+  padding-inline-end: 40px; /* extra scroll room so the last chip can clear the right fade */
+  flex: 1 1 0;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tabs .chip {
+  flex: none;
+}
+.chip {
+  height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.chip:hover {
+  border-color: #000;
+}
+.chip em {
+  font: 12px var(--mono);
+  font-style: normal;
+  opacity: 0.55;
+}
+.chip[aria-selected="true"],
+.chip[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+.pick {
+  flex: none;
+  height: 34px;
+  max-width: 200px;
+  padding: 0 28px 0 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  cursor: pointer;
+}
+.pick:hover {
+  border-color: #000;
+}
+.sp {
+  flex: none;
+}
+.search {
+  height: 34px;
+  width: 220px;
+  border: 1px solid var(--border);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--t3);
+  background: #fff;
+}
+.search:focus-within {
+  border-color: #000;
+}
+.search input {
+  border: 0;
+  outline: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  background: transparent;
+}
+.section {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 32px 120px;
+}
+.group + .group {
+  margin-top: 56px;
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.head h2 {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.head span {
+  font: 12px var(--mono);
+  color: var(--t3);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 22px;
+}
+.card {
+  display: block;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  animation: fade-in 0.5s ease both;
+}
+.th {
+  display: block;
+  border: 1px solid var(--border);
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s;
+}
+.th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  transition: transform 0.5s;
+}
+.card:hover .th,
+.card:focus-visible .th {
+  border-color: #000;
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-3px);
+}
+.card:hover img {
+  transform: scale(1.03);
+}
+.cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.cap span {
+  font: 11px var(--mono);
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.none,
+.empty {
+  color: var(--t3);
+  padding: 40px 0;
+}
+.empty {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.zoom {
+  min-width: 48px;
+  text-align: right;
+  font: 12px var(--mono);
+  color: var(--t3);
+  padding: 0 4px;
+}
+.noneGrid {
+  padding: 40px 32px;
+}
+.hintIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+.hintGrid {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hint {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+  padding: 14px 22px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+:global([data-on-data]) .hint {
+  opacity: 1;
+}
+/* the grid's hint never shows through an open page */
+:global([data-on-data][data-inspecting]) .hint {
+  opacity: 0;
+}
+@media (max-width: 760px) {
+  .bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs {
+    flex: none; /* the whole bar scrolls here, so the strip needs its own width */
+    width: 62vw;
+    flex-wrap: nowrap;
+  }
+  .chip {
+    flex: none;
+  }
+  .sp,
+  .view {
+    display: none;
+  }
+  .search {
+    flex: none;
+    width: 170px;
+  }
+  .section {
+    padding: 28px 16px 120px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .hint {
+    display: none;
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: none; }
+}
