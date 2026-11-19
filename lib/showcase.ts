@@ -1,5 +1,12 @@
 import type { Box, Manifest, PageSummary } from "./types";
 
+/** Where a page file lives. With NEXT_PUBLIC_DATA_URL set (the R2 bucket's public address) a
+ * `/showcase/...` path becomes the same path in the bucket; without it, the file on this server. */
+export function dataUrl(path: string): string {
+  const base = (process.env.NEXT_PUBLIC_DATA_URL ?? "").replace(/\/+$/, "");
+  return base && path.startsWith("/showcase/") ? base + path.slice("/showcase".length) : path;
+}
+
 /** Tab key that shows every category at once. */
 export const ALL = "all";
 

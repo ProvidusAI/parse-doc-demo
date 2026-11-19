@@ -34,7 +34,14 @@ npm run build
 npm start
 ```
 
-The site is fully static. It reads the saved DocAI outputs from `public/showcase/` and never calls DocAI at runtime.
+The site is fully static and never calls DocAI at runtime. It reads the saved DocAI outputs from one of two places:
+
+| `NEXT_PUBLIC_DATA_URL` | Page list, images and results come from |
+|---|---|
+| not set (local default) | `public/showcase/` on this machine |
+| the R2 bucket's public address, e.g. `https://pub-c99bc626b15545bab2dacce930228a2f.r2.dev` | the Cloudflare R2 bucket `parse-doc-demo-pages` |
+
+The page list is read when the site is **built**, so a change to the data address or to the pages needs a rebuild. On Vercel, set `NEXT_PUBLIC_DATA_URL` under **Project → Settings → Environment Variables**, then redeploy. Locally, put it in `.env.local` to try the R2 data.
 
 ### Docker (office Mac Studio)
 
@@ -46,18 +53,26 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The s
 
 | Path | In git | What it is |
 |---|---|---|
-| `public/showcase/manifest.json`, `manifest.local.json` | no | The list the site renders: categories, pages, thumbnails, wall images |
+| `public/showcase/manifest.json`, `manifest.local.json` | no | The list the site renders: categories, pages, thumbnails |
 | `public/showcase/<category>/<type>/result.json` | no | DocAI output for one page, normalised for all 5 stages |
 | `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg` | no | The page image DocAI rendered (max 2400px) and its card thumbnail |
-| `public/showcase/wall/` | no | 160px thumbnails for the decorative background wall |
+| `public/showcase/wall.jpg` | yes | The background wall: one tiled image of 36 corpus pages |
+| `public/showcase/wall/` | no | The 160px thumbnails `wall.jpg` is built from |
 | `samples.json` | yes | Which corpus page is shown for each type, its language and its review status |
 | `wall.json` | yes | Corpus files used for the background wall |
 | `providus-arabic-english-dataset/` | no | The source corpus (about 660 MB), kept locally |
 | `generator/out/` | no | Upload copies and the local review page |
 | `public/showcase/e4c/` | no | The 915 reviewed E4c pages |
 | `.env.x-api-key` | no | The DocAI API key (`api-key=...`) |
+| `.env` | no | R2 keys for uploading: `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY`, `S3_API_ENDPOINT` (optional `R2_BUCKET`, default `parse-doc-demo-pages`) |
 
-All of `public/showcase/` (about 280 MB, 1009 pages) stays on local machines and is copied to the server by hand. Older commits on GitHub still hold the first 94 pages.
+Page data is never in git. The master copy is `public/showcase/` on the machine that generates it (about 280 MB, 1009 pages); the deployed site reads the copy in the R2 bucket, where every file keeps its path (`public/showcase/e4c/<page>/result.json` → `<bucket address>/e4c/<page>/result.json`). The bucket is public and lets any site read it (CORS: GET from any origin).
+
+After adding or changing pages, upload them and rebuild the site. The upload needs [rclone](https://rclone.org) and the keys in `.env`; it only sends new or changed files and never deletes anything in the bucket:
+
+```bash
+bash scripts/upload-r2.sh
+```
 
 DocAI itself keeps its copies of the uploaded pages in its own local Docker volumes and database.
 

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { loadManifest } from "./manifest";
-import { ALL, boxToPercent, expandForStress, filterPages, hasArabic, nextIndex, pagesFor } from "./showcase";
+import { ALL, boxToPercent, dataUrl, expandForStress, filterPages, hasArabic, nextIndex, pagesFor } from "./showcase";
 import { STAGES, t } from "./i18n";
 import type { Manifest, PageSummary } from "./types";
 
@@ -66,11 +66,66 @@ describe("i18n", () => {
   });
 });
 
+const R2 = "https://pub-x.r2.dev";
+
+describe("dataUrl", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  test("no data URL set: the path on this server, as it is", () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", "");
+    expect(dataUrl("/showcase/e4c/a_p1/page.jpg")).toBe("/showcase/e4c/a_p1/page.jpg");
+  });
+  test("data URL set: the same path in the bucket (no /showcase prefix, no double slash)", () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", `${R2}/`);
+    expect(dataUrl("/showcase/e4c/a_p1/page.jpg")).toBe(`${R2}/e4c/a_p1/page.jpg`);
+  });
+  test("anything outside /showcase/ is left alone", () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", R2);
+    expect(dataUrl("/icon.svg")).toBe("/icon.svg");
+  });
+});
+
 describe("loadManifest", () => {
-  afterEach(() => vi.restoreAllMocks());
-  test("missing file gives empty manifest", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  test("from disk: missing file gives empty manifest", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", "");
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
-    expect(loadManifest()).toEqual({ generatedAt: "", categories: [] });
+    expect(await loadManifest()).toEqual({ generatedAt: "", categories: [] });
+  });
+
+  test("from R2: both manifests are fetched, merged, and point at the bucket", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", R2);
+    const page = (id: string) => ({ id, subCategoryLabel: id, fileName: "f.jpg", thumb: `/showcase/${id}/thumb.jpg`, result: `/showcase/${id}/result.json` });
+    const files: Record<string, Manifest> = {
+      [`${R2}/manifest.json`]: { generatedAt: "t", categories: [{ key: "financial", label: "Financial", pages: [page("financial/receipts")] }] },
+      [`${R2}/manifest.local.json`]: { generatedAt: "l", categories: [{ key: "financial", label: "Financial", pages: [page("e4c/a_p1")] }] },
+    };
+    const fetch = vi.fn(async (url: string) => (url in files ? new Response(JSON.stringify(files[url])) : new Response("", { status: 404 })));
+    vi.stubGlobal("fetch", fetch);
+    const m = await loadManifest();
+    expect(m.categories[0].pages.map((p) => [p.thumb, p.result])).toEqual([
+      [`${R2}/financial/receipts/thumb.jpg`, `${R2}/financial/receipts/result.json`],
+      [`${R2}/e4c/a_p1/thumb.jpg`, `${R2}/e4c/a_p1/result.json`],
+    ]);
+    vi.unstubAllGlobals();
+  });
+
+  test("from R2: no local manifest is fine", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", R2);
+    const only: Manifest = { generatedAt: "t", categories: [] };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => (url.endsWith("/manifest.json") ? new Response(JSON.stringify(only)) : new Response("", { status: 404 }))));
+    expect(await loadManifest()).toEqual(only);
+    vi.unstubAllGlobals();
+  });
+
+  test("from R2: a missing main manifest fails the build instead of shipping an empty site", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DATA_URL", R2);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 403 })));
+    await expect(loadManifest()).rejects.toThrow(/manifest\.json.*403/);
+    vi.unstubAllGlobals();
   });
 });
 

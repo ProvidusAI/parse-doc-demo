@@ -89,6 +89,17 @@ test("panel language survives moving to the next page", async () => {
   expect(screen.getByRole("region", { name: "DocAI pipeline" })).toHaveAttribute("dir", "rtl");
 });
 
+test("with an R2 data URL the page image loads from the bucket", async () => {
+  vi.stubEnv("NEXT_PUBLIC_DATA_URL", "https://pub-x.r2.dev");
+  try {
+    setup(0);
+    await shown("receipts.png");
+    expect(screen.getByRole("img").getAttribute("src")).toBe("https://pub-x.r2.dev/financial/receipts/page.jpg");
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
+
 test("fetch failure shows a message", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })));
   setup(0);

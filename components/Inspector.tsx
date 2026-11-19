@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { t, type UiLang } from "@/lib/i18n";
 import { pickUnits } from "@/lib/segments";
-import { nextIndex } from "@/lib/showcase";
+import { dataUrl, nextIndex } from "@/lib/showcase";
 import type { PageSummary, ShowcaseResult } from "@/lib/types";
 import styles from "./Inspector.module.css";
 import PageView, { type PageBox, type PageCell } from "./PageView";
@@ -133,7 +133,9 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     setCell(null);
     fetch(summary.result)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((r: ShowcaseResult) => live && setLoaded({ url: summary.result, result: r }))
+      // the page image path inside result.json is relative to /showcase: point it where the data lives
+      .then((r: ShowcaseResult) => ({ ...r, page: { ...r.page, image: dataUrl(r.page.image), thumb: dataUrl(r.page.thumb) } }))
+      .then((r) => live && setLoaded({ url: summary.result, result: r }))
       .catch(() => live && setError(true));
     return () => {
       live = false;
