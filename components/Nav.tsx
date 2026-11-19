@@ -11,10 +11,9 @@ export default function Nav() {
           ProvidusBench
         </a>
         <a href="#dataset">Dataset</a>
-        <a href="#pipeline">Pipeline</a>
       </div>
       <span className={styles.sp} />
-      <a className="btn" href="https://providus.ai" target="_blank" rel="noreferrer">
+      <a className="btn" href="https://docs.providus.ai/introduction" target="_blank" rel="noreferrer">
         Docs
       </a>
       <a className="btn btn-dark" href="https://platform.providus.ai/" target="_blank" rel="noreferrer">

@@ -54,10 +54,7 @@ export default function Hero({ categories, pages, progress, onExplore }: Props) 
             <button type="button" className="btn btn-dark" onClick={onExplore}>
               Explore the pages
             </button>
-            <a className="btn" href="#pipeline">
-              How it works
-            </a>
-            <a className="btn" href="https://providus.ai" target="_blank" rel="noreferrer">
+            <a className="btn" href="https://providus.ai/#cta-contact" target="_blank" rel="noreferrer">
               Talk to us
             </a>
           </div>
