@@ -38,7 +38,7 @@ The site is fully static. It reads the saved DocAI outputs from `public/showcase
 
 ### Docker (office Mac Studio)
 
-The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. All steps, including copying the page data over, are in [SETUP.md](SETUP.md).
+The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The step-by-step setup guide (`SETUP.md`) is kept out of git and shared by hand.
 
 **Load testing:** open `http://localhost:3000/?stress=400` to see how the grid behaves with 400 pages. The real pages are duplicated in the browser only; nothing on disk changes. The limit is 2000.
 
@@ -57,7 +57,7 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. All s
 | `public/showcase/e4c/` | no | The 915 reviewed E4c pages |
 | `.env.x-api-key` | no | The DocAI API key (`api-key=...`) |
 
-All of `public/showcase/` (about 280 MB, 1009 pages) stays on local machines and is copied to the server by hand; see [SETUP.md](SETUP.md). Older commits on GitHub still hold the first 94 pages.
+All of `public/showcase/` (about 280 MB, 1009 pages) stays on local machines and is copied to the server by hand. Older commits on GitHub still hold the first 94 pages.
 
 DocAI itself keeps its copies of the uploaded pages in its own local Docker volumes and database.
 

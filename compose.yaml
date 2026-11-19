@@ -1,4 +1,4 @@
-# The site plus an ngrok tunnel, both restarted by Docker after a crash or reboot. See SETUP.md.
+# The site plus an ngrok tunnel, both restarted by Docker after a crash or reboot. Setup steps: SETUP.md (not in git, shared by hand).
 #   docker compose up -d --build      start or update both
 #   docker compose up -d --build app  the site only, without the tunnel
 # NGROK_AUTHTOKEN and NGROK_DOMAIN come from a .env file next to this one (git-ignored).

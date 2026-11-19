@@ -1,6 +1,6 @@
 # ProvidusBench site. The page data in public/showcase (git-ignored, copied in by hand) is baked into
 # the image, so it must be in place before building: the page list is fixed at build time.
-# Run it with compose.yaml; the full steps are in SETUP.md.
+# Run it with compose.yaml; the full steps are in SETUP.md (not in git, shared by hand).
 
 FROM node:24-alpine AS build
 WORKDIR /app
