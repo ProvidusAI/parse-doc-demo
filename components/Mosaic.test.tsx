@@ -29,6 +29,15 @@ test("tiles start at the size that fits every page on screen", () => {
   expect(screen.getAllByRole("button")[0]).toHaveStyle({ width: `${tileW}px` });
 });
 
+test("small tiles can load the 160px copy; pages without one keep the card thumbnail", () => {
+  const { container } = setup([{ ...items[0], tile: "/s0.jpg" }, items[1]]);
+  const [withTile, without] = container.querySelectorAll("img");
+  expect(withTile).toHaveAttribute("srcset", "/s0.jpg 160w, /t0.jpg 480w");
+  expect(withTile.getAttribute("sizes")).toMatch(/^\d+px$/);
+  expect(without).not.toHaveAttribute("srcset");
+  expect(without).toHaveAttribute("src", "/t1.jpg");
+});
+
 test("clicking a tile opens that page", () => {
   const { onOpen } = setup();
   fireEvent.click(screen.getByRole("button", { name: "Page 3 · Government" }));

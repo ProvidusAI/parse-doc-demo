@@ -9,6 +9,7 @@ import pypdfium2 as pdfium
 from PIL import Image, ImageDraw, ImageOps
 
 CARD_WIDTH = 480
+TILE_WIDTH = 160  # the grid's small tiles (24–240px wide); the site picks it over the 480px card with srcset
 WALL_WIDTH = 160
 WALL_COLS = 6  # cards per row in the tiled background
 PAGE_MAX_SIDE = 2400  # boxes are 0–1000 normalised, so downscaling is safe

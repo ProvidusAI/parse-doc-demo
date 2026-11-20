@@ -23,7 +23,8 @@ from pathlib import Path
 
 from generator.docai_client import DocAI, DocAIError
 from generator.normalize import OCR_MODELS, _segment, build_result
-from generator.pages import CARD_WIDTH, compose_wall_tile, cut_page, make_thumb, page_jpeg, render_wall_thumb
+from generator.pages import (CARD_WIDTH, TILE_WIDTH, compose_wall_tile, cut_page, make_thumb, page_jpeg,
+                             render_wall_thumb)
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "providus-arabic-english-dataset"
@@ -232,6 +233,7 @@ def _write(out: Path, page: bytes, result: dict) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     (out / "page.jpg").write_bytes(page)
     make_thumb(page, out / "thumb.jpg", CARD_WIDTH)
+    make_thumb(page, out / "tile.jpg", TILE_WIDTH)
     tmp = out / "result.json.tmp"
     tmp.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(out / "result.json")
@@ -266,8 +268,28 @@ def build_manifest(samples, showcase: Path) -> dict:
         cat = cats.setdefault(e["category"], {"key": e["category"], "label": e["categoryLabel"], "pages": []})
         cat["pages"].append({"id": rid, "subCategoryLabel": e["subCategoryLabel"],
                              "fileName": e["sourcePath"].split("/")[-1],
-                             "thumb": f"/showcase/{rid}/thumb.jpg", "result": f"/showcase/{rid}/result.json"})
+                             "thumb": f"/showcase/{rid}/thumb.jpg", "result": f"/showcase/{rid}/result.json",
+                             **_tile(rid, showcase)})
     return {"generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "categories": list(cats.values())}
+
+
+def _tile(rid, showcase: Path) -> dict:
+    """{"tile": url} once the page has its 160px tile, made from the thumbnail for pages written before tiles existed."""
+    out = showcase / rid
+    if not (out / "tile.jpg").exists() and (out / "thumb.jpg").exists():
+        make_thumb(out / "thumb.jpg", out / "tile.jpg", TILE_WIDTH)
+    return {"tile": f"/showcase/{rid}/tile.jpg"} if (out / "tile.jpg").exists() else {}
+
+
+def add_tiles(manifest: Path, showcase: Path) -> None:
+    """Tiles for a manifest this run doesn't rebuild (manifest.local.json: its page list comes from --import-review)."""
+    if not manifest.exists():
+        return
+    m = json.loads(manifest.read_text(encoding="utf-8"))
+    for c in m["categories"]:
+        for p in c["pages"]:
+            p.update(_tile(p["id"], showcase))
+    manifest.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def write_wall(files, corpus: Path, showcase: Path):
@@ -280,20 +302,21 @@ def write_wall(files, corpus: Path, showcase: Path):
 
 
 def write_review(samples, showcase: Path, dst: Path):
+    esc = lambda v: html.escape(str(v))  # everything below comes from samples.json or DocAI
     rows = []
     for e in samples:
         rid, f = entry_id(e), showcase / entry_id(e) / "result.json"
         if not f.exists():
-            rows.append(f"<tr><td>{rid}<br><b>{e['status']}</b></td><td colspan=2>not generated</td></tr>")
+            rows.append(f"<tr><td>{esc(rid)}<br><b>{esc(e['status'])}</b></td><td colspan=2>not generated</td></tr>")
             continue
         r = json.loads(f.read_text(encoding="utf-8"))
-        segs = "".join(f"<li><code>{s['type']}</code> {html.escape(s['text'][:120])}</li>" for s in r["segments"][:25])
-        vals = "".join(f"<li><code>{html.escape(v['path'])}</code> {html.escape(v['value'][:80])} "
-                       f"({v['confidence']})</li>" for v in (r["extraction"] or {}).get("values", [])[:25])
+        segs = "".join(f"<li><code>{esc(s['type'])}</code> {esc(s['text'][:120])}</li>" for s in r["segments"][:25])
+        vals = "".join(f"<li><code>{esc(v['path'])}</code> {esc(v['value'][:80])} "
+                       f"({esc(v['confidence'])})</li>" for v in (r["extraction"] or {}).get("values", [])[:25])
         split = r["split"] and f"{len(r['split']['records'])} record(s), {r['split']['qualityStatus']}"
-        rows.append(f"<tr><td>{rid}<br>{html.escape(e['sourcePath'])}<br>lang {e['lang']}<br><b>{e['status']}</b>"
-                    f"<br>backend {r['upload']['backend']}<br>split: {split}</td>"
-                    f"<td><img src='../../public{r['page']['image']}' width=360></td>"
+        rows.append(f"<tr><td>{esc(rid)}<br>{esc(e['sourcePath'])}<br>lang {esc(e['lang'])}<br><b>{esc(e['status'])}</b>"
+                    f"<br>backend {esc(r['upload']['backend'])}<br>split: {esc(split)}</td>"
+                    f"<td><img src='../../public{esc(r['page']['image'])}' width=360></td>"
                     f"<td><ol dir=auto>{segs}</ol><ul dir=auto>{vals or '<li>no extraction</li>'}</ul></td></tr>")
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_text("<!doctype html><meta charset=utf-8><title>Showcase review</title>"
@@ -361,7 +384,8 @@ def main(argv=None):
     if a.manifest:
         (SHOWCASE / "manifest.json").write_text(json.dumps(build_manifest(samples, SHOWCASE), ensure_ascii=False,
                                                            indent=1), encoding="utf-8")
-        print(f"wrote {SHOWCASE / 'manifest.json'}")
+        add_tiles(SHOWCASE / "manifest.local.json", SHOWCASE)
+        print(f"wrote {SHOWCASE / 'manifest.json'} (and tiles for manifest.local.json, if present)")
 
 
 if __name__ == "__main__":

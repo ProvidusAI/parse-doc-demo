@@ -27,3 +27,6 @@ SETUP.md
 
 # pages added later (list of local/web sources), kept local like the data
 samples.local.json
+
+# local Python environment for the generator
+.venv/

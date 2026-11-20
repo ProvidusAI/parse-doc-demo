@@ -49,6 +49,8 @@ The site is fully static and never calls DocAI at runtime. It reads the saved Do
 
 The page list is read when the site is **built**, so a change to the data address or to the pages needs a rebuild. On Vercel, set `NEXT_PUBLIC_DATA_URL` under **Project → Settings → Environment Variables**, then redeploy. Locally, put it in `.env.local` to try the R2 data.
 
+Browsers never call the bucket directly: they always ask the site for `/showcase/...`, and with the bucket set, `next.config.ts` forwards those requests to it. On Vercel the CDN caches the answers (`vercel.json` turns that on), so only the first request for a file in each region waits for `r2.dev`, which is uncached and takes 0.4–1 s per file. Every later request comes from Vercel's cache. A changed file can show for up to a day, the files' `max-age`; to see it sooner, purge the CDN cache under Vercel **Project → Settings → Caches**.
+
 ### Docker (office Mac Studio)
 
 The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The step-by-step setup guide (`SETUP.md`) is kept out of git and shared by hand.
@@ -61,7 +63,7 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The s
 |---|---|---|
 | `public/showcase/manifest.json`, `manifest.local.json` | no | The list the site renders: categories, pages, thumbnails |
 | `public/showcase/<category>/<type>/result.json` | no | DocAI output for one page, normalised for all 5 stages |
-| `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg` | no | The page image DocAI rendered (max 2400px) and its card thumbnail |
+| `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg`, `tile.jpg` | no | The page image DocAI rendered (max 2400px), its card thumbnail (480px) and the grid's small tile (160px; `--manifest` makes any that are missing) |
 | `public/showcase/wall.jpg` | yes | The background wall: one tiled image of 36 corpus pages |
 | `public/showcase/wall/` | no | The 160px thumbnails `wall.jpg` is built from |
 | `samples.json` | yes | Which corpus page is shown for each type, its language and its review status |
@@ -75,13 +77,17 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The s
 | `.env.x-api-key` | no | The DocAI API key (`api-key=...`) |
 | `.env` | no | R2 keys for uploading: `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY`, `S3_API_ENDPOINT` (optional `R2_BUCKET`, default `parse-doc-demo-pages`) |
 
-Page data is never in git. The master copy is `public/showcase/` on the machine that generates it (about 280 MB, 1009 pages); the deployed site reads the copy in the R2 bucket, where every file keeps its path (`public/showcase/e4c/<page>/result.json` → `<bucket address>/e4c/<page>/result.json`). The bucket is public and lets any site read it (CORS: GET from any origin).
+Page data is never in git. The master copy is `public/showcase/` on the machine that generates it (about 280 MB, 1009 pages); the deployed site reads the copy in the R2 bucket, where every file keeps its path (`public/showcase/e4c/<page>/result.json` → `<bucket address>/e4c/<page>/result.json`). The bucket is public; the site reads it through its own `/showcase/...` addresses (see above).
 
-After adding or changing pages, upload them and rebuild the site. The upload needs [rclone](https://rclone.org) and the keys in `.env`; it only sends new or changed files and never deletes anything in the bucket:
+After adding or changing pages, upload them and rebuild the site. The upload needs [rclone](https://rclone.org), Node and the keys in `.env`; it only sends new or changed files and never deletes anything in the bucket:
 
 ```bash
 bash scripts/upload-r2.sh
 ```
+
+Only the pages listed in `manifest.json` / `manifest.local.json` are uploaded, and only they go into the Docker image (`scripts/approved-files.mjs`): a rejected page left on disk is never public. A page that is already in the bucket stays there after you reject it; remove it with `rclone delete "r2:parse-doc-demo-pages/<category>/<type>"` (same `RCLONE_CONFIG_R2_*` settings as the script).
+
+Uploaded files carry `Cache-Control: public, max-age=86400`, so browsers keep them for a day. Files uploaded before that have no header; `bash scripts/upload-r2.sh --ignore-times` re-sends everything once to add it.
 
 DocAI itself keeps its copies of the uploaded pages in its own local Docker volumes and database.
 
@@ -107,18 +113,18 @@ The generator asks DocAI which engine it is running. It refuses a batch on the w
 **Commands**
 
 ```bash
-python -m generator.generate --lang ar-en                 # run a batch (skips pages already done)
-python -m generator.generate --lang en --only travel_transport/boarding_passes --force
-python -m generator.generate --review                     # writes generator/out/review.html
-python -m generator.generate --manifest                   # publishes approved pages to the site
-python -m generator.generate --wall                       # re-renders the background wall
-python -m generator.generate --local --jobs 4             # parses samples.local.json, 4 pages at once
+python3 -m generator.generate --lang ar-en                 # run a batch (skips pages already done)
+python3 -m generator.generate --lang en --only travel_transport/boarding_passes --force
+python3 -m generator.generate --review                     # writes generator/out/review.html
+python3 -m generator.generate --manifest                   # publishes approved pages to the site
+python3 -m generator.generate --wall                       # re-renders the background wall
+python3 -m generator.generate --local --jobs 4             # parses samples.local.json, 4 pages at once
 ```
 
 **Pages parsed elsewhere.** Entries with a `"parsed"` key (e.g. `"Chemical/01-eng"`) are not sent to DocAI. `--import-parsed` reads `<parsed>.segments.json` and `.extraction.json` from `../Industry-documents-E4c-parsed` (or `PARSED_DIR`) and the page image `sourcePath` from `../../Indusry documents` (or `PARSED_IMAGES_DIR`), then writes the same files as a DocAI run. The entry's `ocrModel` / `ocrEngine` say what was used; anything not recorded, like parse time, shows as "Not returned by DocAI".
 
 ```bash
-python -m generator.generate --import-parsed --manifest
+python3 -m generator.generate --import-parsed --manifest
 ```
 
 **Added pages.** `--local` parses each approved entry in `samples.local.json` with its `ocrModel` (`docai-arabic-ocr-e4c`) and skips split and extract. It then rewrites `manifest.local.json` with the review set and these pages. DocAI's worker runs one parse at a time, so `--jobs` only helps with more workers (`docker compose ... up -d --no-recreate --scale docai-core-worker=4 docai-core-worker`, started while no job is running); the OCR model server is the real limit.
@@ -133,7 +139,7 @@ Only pages without personal data are shown. That means no private names, ID or a
 
 ```bash
 npm test                                              # site (Vitest + Testing Library)
-python -m unittest discover -s generator/tests -t .   # generator
+python3 -m unittest discover -s generator/tests -t .   # generator
 ```
 
 ## Project layout

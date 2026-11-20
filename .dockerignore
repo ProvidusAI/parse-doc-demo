@@ -13,3 +13,4 @@ docs/
 design.md
 *.tsbuildinfo
 e4c.tgz
+.venv/

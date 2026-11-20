@@ -209,7 +209,28 @@ class GenerateTest(unittest.TestCase):
         self.assertEqual(m["categories"], [{"key": "financial", "label": "Financial", "pages": [
             {"id": "financial/invoices", "subCategoryLabel": "Invoices", "fileName": "a.png",
              "thumb": "/showcase/financial/invoices/thumb.jpg",
-             "result": "/showcase/financial/invoices/result.json"}]}])
+             "result": "/showcase/financial/invoices/result.json",
+             "tile": "/showcase/financial/invoices/tile.jpg"}]}])
+
+    def test_manifest_backfills_tiles_for_older_pages(self):
+        self.run_entry(entry(), FakeClient())
+        tile = self.showcase / "financial" / "invoices" / "tile.jpg"
+        tile.unlink()  # a page written before tiles existed
+        page = generate.build_manifest([entry(status="approved")], self.showcase)["categories"][0]["pages"][0]
+        self.assertEqual(page["tile"], "/showcase/financial/invoices/tile.jpg")
+        with Image.open(tile) as im:
+            self.assertEqual(im.width, 160)
+
+    def test_add_tiles_to_a_manifest_it_does_not_rebuild(self):
+        self.run_entry(entry(), FakeClient())
+        (self.showcase / "financial" / "invoices" / "tile.jpg").unlink()
+        local = self.showcase / "manifest.local.json"
+        pages = [{"id": "financial/invoices", "thumb": "t"}, {"id": "gone/page", "thumb": "t"}]
+        local.write_text(json.dumps({"categories": [{"key": "financial", "pages": pages}]}), encoding="utf-8")
+        generate.add_tiles(local, self.showcase)
+        got = json.loads(local.read_text(encoding="utf-8"))["categories"][0]["pages"]
+        self.assertEqual(got, [{"id": "financial/invoices", "thumb": "t", "tile": "/showcase/financial/invoices/tile.jpg"},
+                               {"id": "gone/page", "thumb": "t"}])  # no thumbnail on disk: no tile, no broken link
 
 
 def parsed_entry(status="approved"):
@@ -256,6 +277,16 @@ class ImportParsedTest(unittest.TestCase):
 
 
 class ClientTest(unittest.TestCase):
+    def test_api_key_goes_to_docai_only(self):
+        c, sent = DocAI("http://docai:8787", "k"), []
+        resp = mock.MagicMock(status=200, headers={"content-type": "image/png"})
+        resp.read.return_value = b"png"
+        resp.__enter__.return_value = resp
+        with mock.patch.object(docai_client.urllib.request, "urlopen", side_effect=lambda req, timeout: sent.append(req) or resp):
+            for url in ("/v1/files", "http://docai:8787/img/1.png", "https://bucket.example/1.png", "http://docai:8787.evil/1"):
+                c._req("GET", url)
+        self.assertEqual([r.get_header("X-api-key") for r in sent], ["k", "k", None, None])
+
     def test_run_op_polls_until_completed(self):
         c = DocAI("http://x", "k")
         replies = iter([(202, {"operation_id": "op1", "status": "queued"}),
