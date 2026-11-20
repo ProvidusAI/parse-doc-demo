@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# only the pages the manifests list go into the image: a rejected page left on disk is never served
+RUN node scripts/approved-files.mjs --prune
 ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
 RUN npm run build
 

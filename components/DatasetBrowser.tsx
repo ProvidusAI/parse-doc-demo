@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { THUMB_WIDTH } from "@/lib/mosaic";
 import { ALL, filterPages } from "@/lib/showcase";
@@ -15,7 +15,10 @@ interface Props {
   onOpen(id: string): void;
 }
 
-export default function DatasetBrowser({ manifest, active, onActive, onOpen }: Props) {
+// memo: Showcase re-renders on every scroll frame while the hero fades; the ~1000-tile grid must not follow
+export default memo(DatasetBrowser);
+
+function DatasetBrowser({ manifest, active, onActive, onOpen }: Props) {
   const [query, setQuery] = useState("");
   const [fit, setFit] = useState(false); // false = Grid (mosaic), true = Fit page (captioned cards)
   const [tileW, setTileW] = useState(0);
@@ -74,7 +77,7 @@ export default function DatasetBrowser({ manifest, active, onActive, onOpen }: P
   const delay = (i: number) => ({ animationDelay: `${Math.min(i, 12) * 70}ms` });
 
   const tiles = visible.flatMap((c) =>
-    c.matches.map((p) => ({ id: p.id, label: c.label, sub: p.subCategoryLabel, thumb: p.thumb })),
+    c.matches.map((p) => ({ id: p.id, label: c.label, sub: p.subCategoryLabel, thumb: p.thumb, tile: p.tile })),
   );
 
   return (

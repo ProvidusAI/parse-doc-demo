@@ -43,7 +43,7 @@ export async function loadManifest(): Promise<Manifest> {
     ...m,
     categories: m.categories.map((c) => ({
       ...c,
-      pages: c.pages.map((p) => ({ ...p, thumb: dataUrl(p.thumb), result: dataUrl(p.result) })),
+      pages: c.pages.map((p) => ({ ...p, thumb: dataUrl(p.thumb), result: dataUrl(p.result), ...(p.tile && { tile: dataUrl(p.tile) }) })),
     })),
   };
 }

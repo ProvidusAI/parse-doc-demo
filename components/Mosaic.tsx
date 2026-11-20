@@ -9,6 +9,8 @@ export interface MosaicItem {
   label: string; // category
   sub: string; // document type
   thumb: string;
+  /** 160px copy of `thumb` (generator TILE_WIDTH): with ~1000 pages on screen the 480px cards alone are ~33 MB */
+  tile?: string;
 }
 
 interface Props {
@@ -124,7 +126,15 @@ export default function Mosaic({ items, onOpen, onZoom }: Props) {
             onClick={() => open(it.id)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={it.thumb} alt="" loading="lazy" decoding="async" draggable={false} />
+            <img
+              src={it.thumb}
+              srcSet={it.tile && `${it.tile} 160w, ${it.thumb} 480w`}
+              sizes={it.tile && `${Math.round(tileW)}px`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
           </button>
         ))}
       </div>

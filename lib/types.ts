@@ -87,6 +87,8 @@ export interface PageSummary {
   subCategoryLabel: string;
   fileName: string;
   thumb: string;
+  /** 160px copy of `thumb` for the grid's small tiles; absent on pages generated before it existed */
+  tile?: string;
   result: string;
 }
 

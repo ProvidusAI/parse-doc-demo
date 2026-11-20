@@ -47,7 +47,7 @@ export default function Showcase({ manifest: real }: { manifest: Manifest }) {
   return (
     <div className={styles.root} data-on-data={progress > 0.85 || undefined} data-inspecting={openIndex >= 0 || undefined}>
       <Nav />
-      <PageWall blur={progress * 4} />
+      <PageWall progress={progress} />
       <Hero categories={manifest.categories.length} pages={pages} progress={progress} onExplore={explore} />
       <main id="dataset" ref={dataRef} className={styles.data}>
         <DatasetBrowser manifest={manifest} active={active} onActive={setActive} onOpen={setOpenId} />
