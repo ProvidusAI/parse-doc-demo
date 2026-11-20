@@ -2,7 +2,7 @@
 
     python -m generator.generate --lang ar-en      # run a batch (skips finished entries)
     python -m generator.generate --lang en --only financial/invoices --force
-    python -m generator.generate --wall            # render wall.json thumbnails
+    python -m generator.generate --wall            # render wall.json thumbnails into wall.jpg
     python -m generator.generate --review          # write generator/out/review.html
     python -m generator.generate --manifest        # write public/showcase/manifest.json (approved only)
     python -m generator.generate --import-parsed   # pages already parsed elsewhere ("parsed" entries)
@@ -21,7 +21,7 @@ from pathlib import Path
 
 from generator.docai_client import DocAI, DocAIError
 from generator.normalize import OCR_MODELS, _segment, build_result
-from generator.pages import CARD_WIDTH, cut_page, make_thumb, page_jpeg, render_wall_thumb
+from generator.pages import CARD_WIDTH, compose_wall_tile, cut_page, make_thumb, page_jpeg, render_wall_thumb
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "providus-arabic-english-dataset"
@@ -232,9 +232,7 @@ def build_manifest(samples, showcase: Path) -> dict:
         cat["pages"].append({"id": rid, "subCategoryLabel": e["subCategoryLabel"],
                              "fileName": e["sourcePath"].split("/")[-1],
                              "thumb": f"/showcase/{rid}/thumb.jpg", "result": f"/showcase/{rid}/result.json"})
-    wall = sorted(f"/showcase/wall/{p.name}" for p in (showcase / "wall").glob("*.jpg"))
-    return {"generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "wall": wall,
-            "categories": list(cats.values())}
+    return {"generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "categories": list(cats.values())}
 
 
 def write_wall(files, corpus: Path, showcase: Path):
@@ -242,6 +240,8 @@ def write_wall(files, corpus: Path, showcase: Path):
         old.unlink()
     for i, rel in enumerate(files):
         render_wall_thumb(corpus / rel, showcase / "wall" / f"w{i:03d}.jpg")
+    # the site shows one tiled image (committed); the thumbnails above only feed it
+    compose_wall_tile(sorted((showcase / "wall").glob("w*.jpg")), showcase / "wall.jpg")
 
 
 def write_review(samples, showcase: Path, dst: Path):

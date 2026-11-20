@@ -1,13 +1,15 @@
 """Cut one page out of a corpus file for upload, and make thumbnails."""
 import io
+import random
 import shutil
 from pathlib import Path
 
 import pypdfium2 as pdfium
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 CARD_WIDTH = 480
 WALL_WIDTH = 160
+WALL_COLS = 6  # cards per row in the tiled background
 PAGE_MAX_SIDE = 2400  # boxes are 0–1000 normalised, so downscaling is safe
 
 
@@ -73,3 +75,22 @@ def render_wall_thumb(src: Path, dst: Path) -> None:
         make_thumb(buf.getvalue(), dst, WALL_WIDTH)
     else:
         make_thumb(src, dst, WALL_WIDTH)
+
+
+def compose_wall_tile(thumbs: list[Path], dst: Path) -> None:
+    """The site's background as one image: the wall thumbnails as 3:4 cards (white gaps, light border, top of the
+    page showing), 6 per row, drawn at 2x. The site repeats it at half size (468x612 CSS px)."""
+    cw, ch, gap, line = 144, 192, 12, 2
+    order = list(thumbs)
+    random.Random(0).shuffle(order)  # scatter neighbours from the same category, the same way every run
+    cells = -(-len(order) // WALL_COLS) * WALL_COLS
+    tile = Image.new("RGB", (WALL_COLS * (cw + gap), cells // WALL_COLS * (ch + gap)), "white")
+    draw = ImageDraw.Draw(tile)
+    for i in range(cells):
+        x, y = i % WALL_COLS * (cw + gap), i // WALL_COLS * (ch + gap)
+        with Image.open(order[i % len(order)]) as im:
+            card = ImageOps.fit(im.convert("RGB"), (cw - 2 * line, ch - 2 * line), Image.LANCZOS, centering=(0.5, 0))
+        tile.paste(card, (x + line, y + line))
+        draw.rectangle([x, y, x + cw - 1, y + ch - 1], outline="#e7e7e7", width=line)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tile.save(dst, "JPEG", quality=80, progressive=True, optimize=True)

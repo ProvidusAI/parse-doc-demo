@@ -5,7 +5,7 @@ from pathlib import Path
 import pypdfium2 as pdfium
 from PIL import Image
 
-from generator.pages import cut_page, make_thumb, page_jpeg, render_wall_thumb
+from generator.pages import compose_wall_tile, cut_page, make_thumb, page_jpeg, render_wall_thumb
 
 
 def size(path):
@@ -95,6 +95,23 @@ class PagesTest(unittest.TestCase):
         render_wall_thumb(src, dst)
         self.assertEqual(size(dst)[0], 160)
 
+
+    def test_compose_wall_tile(self):
+        # 7 thumbnails fill 2 rows of 6 cards (the last row cycles back to the start), drawn at 2x:
+        # 144x192 cards with 12px gaps, so the site can repeat it at 468x612 CSS px
+        thumbs = []
+        for i in range(7):
+            thumbs.append(self.tmp / f"w{i:03d}.jpg")
+            Image.new("RGB", (160, 226), (200, 30, 30)).save(thumbs[-1])
+        dst = self.tmp / "wall.jpg"
+        compose_wall_tile(thumbs, dst)
+        with Image.open(dst) as im:
+            self.assertEqual(im.size, (936, 408))
+            self.assertTrue(min(im.getpixel((150, 100))) > 240)  # gap stays white (JPEG may shift it by a shade)
+            r, g, b = im.getpixel((70, 100))  # inside a card: the thumbnail
+            self.assertTrue(r > 150 and g < 90 and b < 90)
+            r, g, b = im.getpixel((5 * 156 + 70, 204 + 100))  # last card of row 2 is filled too
+            self.assertTrue(r > 150 and g < 90)
 
 if __name__ == "__main__":
     unittest.main()

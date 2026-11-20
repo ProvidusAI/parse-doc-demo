@@ -64,7 +64,7 @@ test("fit page shows captioned cards", () => {
 
 test("empty manifest shows a notice", () => {
   render(
-    <DatasetBrowser manifest={{ generatedAt: "", wall: [], categories: [] }} active="" onActive={vi.fn()} onOpen={vi.fn()} />,
+    <DatasetBrowser manifest={{ generatedAt: "", categories: [] }} active="" onActive={vi.fn()} onOpen={vi.fn()} />,
   );
   expect(screen.getByText(/No showcase pages yet/)).toBeInTheDocument();
 });
