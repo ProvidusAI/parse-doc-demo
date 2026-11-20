@@ -6,3 +6,10 @@
   pointer-events: none;
   background: var(--bg) url("/showcase/wall.jpg") 6px 6px / 468px 612px repeat;
 }
+/* the blurred copy: 12px past every edge so the blur's soft rim stays off screen, the cards still lined up */
+.blurred {
+  inset: calc(var(--nav-h) - 12px) -12px -12px;
+  background-position: 18px 18px;
+  filter: blur(4px);
+  will-change: opacity;
+}

@@ -32,7 +32,9 @@ class DocAI:
     def _req(self, method, path, body=None, raw=None, content_type=None):
         data = raw if raw is not None else (json.dumps(body).encode() if body is not None else None)
         url = path if path.startswith("http") else self.base + path
-        req = urllib.request.Request(url, data=data, method=method, headers={"x-api-key": self.key})
+        # the key goes to DocAI only, never to a full URL it hands back (a page image may live elsewhere)
+        headers = {"x-api-key": self.key} if url.startswith(self.base + "/") else {}
+        req = urllib.request.Request(url, data=data, method=method, headers=headers)
         if data is not None:
             req.add_header("content-type", content_type or "application/json")
         try:
