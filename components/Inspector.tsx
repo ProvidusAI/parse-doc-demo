@@ -142,6 +142,17 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
     };
   }, [summary.result]);
 
+  // every request to the bucket waits 0.4–1 s before its first byte (r2.dev: no CDN cache, HTTP/1.1), so the page
+  // image starts with its result.json instead of after it (same folder), and both neighbours load ahead for ← / →
+  const near = [index, nextIndex(index, n, 1), nextIndex(index, n, -1)].map((i) => pages[i].result).filter((u, k, a) => a.indexOf(u) === k);
+  const nearKey = near.join(" ");
+  useEffect(() => {
+    nearKey.split(" ").forEach((url, k) => {
+      new Image().src = url.replace(/result\.json$/, "page.jpg");
+      if (k) fetch(url).catch(() => {}); // the open page's own fetch is the effect above
+    });
+  }, [nearKey]);
+
   // stable handlers for the window listener
   const nav = useRef({ onIndex, onClose, index, n });
   nav.current = { onIndex, onClose, index, n };

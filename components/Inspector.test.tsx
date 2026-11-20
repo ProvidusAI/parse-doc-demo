@@ -89,6 +89,17 @@ test("panel language survives moving to the next page", async () => {
   expect(screen.getByRole("region", { name: "DocAI pipeline" })).toHaveAttribute("dir", "rtl");
 });
 
+test("the page image starts with its result.json, and both neighbours are fetched ahead for ← / →", () => {
+  const images: string[] = [];
+  vi.stubGlobal("Image", class { set src(v: string) { images.push(v); } });
+  vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {}))); // result.json never answers
+  setup(0);
+  // pages: receipts, invoices, …, and the 4th wraps round to the left of the 1st
+  expect(images).toEqual(["/showcase/financial/receipts/page.jpg", `${pages[1].result.replace("result.json", "page.jpg")}`,
+    `${pages[3].result.replace("result.json", "page.jpg")}`]);
+  expect(vi.mocked(fetch).mock.calls.map(([u]) => u)).toEqual([pages[0].result, pages[1].result, pages[3].result]);
+});
+
 test("with an R2 data URL the page image loads from the bucket", async () => {
   vi.stubEnv("NEXT_PUBLIC_DATA_URL", "https://pub-x.r2.dev");
   try {
