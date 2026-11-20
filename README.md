@@ -43,6 +43,8 @@ The site is fully static and never calls DocAI at runtime. It reads the saved Do
 
 The page list is read when the site is **built**, so a change to the data address or to the pages needs a rebuild. On Vercel, set `NEXT_PUBLIC_DATA_URL` under **Project → Settings → Environment Variables**, then redeploy. Locally, put it in `.env.local` to try the R2 data.
 
+Browsers never call the bucket directly: they always ask the site for `/showcase/...`, and with the bucket set, `next.config.ts` forwards those requests to it. On Vercel the CDN caches the answers (`vercel.json` turns that on), so only the first request for a file in each region waits for `r2.dev`, which is uncached and takes 0.4–1 s per file. Every later request comes from Vercel's cache. A changed file can show for up to a day, the files' `max-age`; to see it sooner, purge the CDN cache under Vercel **Project → Settings → Caches**.
+
 ### Docker (office Mac Studio)
 
 The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The step-by-step setup guide (`SETUP.md`) is kept out of git and shared by hand.
@@ -66,7 +68,7 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The s
 | `.env.x-api-key` | no | The DocAI API key (`api-key=...`) |
 | `.env` | no | R2 keys for uploading: `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY`, `S3_API_ENDPOINT` (optional `R2_BUCKET`, default `parse-doc-demo-pages`) |
 
-Page data is never in git. The master copy is `public/showcase/` on the machine that generates it (about 280 MB, 1009 pages); the deployed site reads the copy in the R2 bucket, where every file keeps its path (`public/showcase/e4c/<page>/result.json` → `<bucket address>/e4c/<page>/result.json`). The bucket is public and lets any site read it (CORS: GET from any origin).
+Page data is never in git. The master copy is `public/showcase/` on the machine that generates it (about 280 MB, 1009 pages); the deployed site reads the copy in the R2 bucket, where every file keeps its path (`public/showcase/e4c/<page>/result.json` → `<bucket address>/e4c/<page>/result.json`). The bucket is public; the site reads it through its own `/showcase/...` addresses (see above).
 
 After adding or changing pages, upload them and rebuild the site. The upload needs [rclone](https://rclone.org), Node and the keys in `.env`; it only sends new or changed files and never deletes anything in the bucket:
 
@@ -76,7 +78,7 @@ bash scripts/upload-r2.sh
 
 Only the pages listed in `manifest.json` / `manifest.local.json` are uploaded, and only they go into the Docker image (`scripts/approved-files.mjs`): a rejected page left on disk is never public. A page that is already in the bucket stays there after you reject it; remove it with `rclone delete "r2:parse-doc-demo-pages/<category>/<type>"` (same `RCLONE_CONFIG_R2_*` settings as the script).
 
-Uploaded files carry `Cache-Control: public, max-age=86400`, so browsers keep them for a day. Files uploaded before that have no header; `bash scripts/upload-r2.sh --ignore-times` re-sends everything once to add it. The `r2.dev` address is rate-limited and not cached by Cloudflare; for production, connect a custom domain to the bucket (R2 → Settings → Custom Domains) and use that as `NEXT_PUBLIC_DATA_URL`.
+Uploaded files carry `Cache-Control: public, max-age=86400`, so browsers keep them for a day. Files uploaded before that have no header; `bash scripts/upload-r2.sh --ignore-times` re-sends everything once to add it.
 
 DocAI itself keeps its copies of the uploaded pages in its own local Docker volumes and database.
 
