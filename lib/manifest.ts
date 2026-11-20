@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { dataUrl } from "./showcase";
 import type { Manifest } from "./types";
 
 const EMPTY: Manifest = { generatedAt: "", categories: [] };
@@ -29,21 +28,13 @@ export function mergeManifests(base: Manifest, local: Manifest | null): Manifest
 }
 
 /** Server-only, at build time: the page list (plus any local-only pages), from the R2 bucket when
- * NEXT_PUBLIC_DATA_URL is set, else from public/showcase. Thumb and result links point where the files live. */
+ * NEXT_PUBLIC_DATA_URL is set, else from public/showcase. Page links stay `/showcase/...` on this site either way:
+ * next.config proxies them to the bucket. */
 export async function loadManifest(): Promise<Manifest> {
-  let m: Manifest;
-  if (process.env.NEXT_PUBLIC_DATA_URL) {
-    const at = (f: string) => dataUrl(`/showcase/${f}`);
-    m = mergeManifests((await fetchManifest(at("manifest.json"), true))!, await fetchManifest(at("manifest.local.json"), false));
-  } else {
-    const dir = path.join(process.cwd(), "public", "showcase");
-    m = mergeManifests(read(path.join(dir, "manifest.json")) ?? EMPTY, read(path.join(dir, "manifest.local.json")));
+  const bucket = (process.env.NEXT_PUBLIC_DATA_URL ?? "").replace(/\/+$/, "");
+  if (bucket) {
+    return mergeManifests((await fetchManifest(`${bucket}/manifest.json`, true))!, await fetchManifest(`${bucket}/manifest.local.json`, false));
   }
-  return {
-    ...m,
-    categories: m.categories.map((c) => ({
-      ...c,
-      pages: c.pages.map((p) => ({ ...p, thumb: dataUrl(p.thumb), result: dataUrl(p.result), ...(p.tile && { tile: dataUrl(p.tile) }) })),
-    })),
-  };
+  const dir = path.join(process.cwd(), "public", "showcase");
+  return mergeManifests(read(path.join(dir, "manifest.json")) ?? EMPTY, read(path.join(dir, "manifest.local.json")));
 }
