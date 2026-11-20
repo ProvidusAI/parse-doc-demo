@@ -31,6 +31,16 @@ class PagesTest(unittest.TestCase):
         self.assertEqual(out.suffix, ".pdf")
         self.assertEqual(len(pdfium.PdfDocument(str(out))), 1)
 
+    def test_cut_pdf_pages_from_many_threads(self):
+        # PDFium is not thread-safe; `generate --local --jobs 4` cuts pages from 4 threads (2026-11-20)
+        from concurrent.futures import ThreadPoolExecutor
+        srcs = []
+        for i in range(16):
+            srcs.append(self.tmp / f"d{i}.pdf"); make_pdf(srcs[-1], 30)
+        with ThreadPoolExecutor(8) as ex:
+            outs = list(ex.map(lambda s: cut_page(s, 7, self.tmp / "out" / s.stem), srcs * 4))
+        self.assertTrue(all(len(pdfium.PdfDocument(str(o))) == 1 for o in outs))
+
     def test_cut_page_out_of_range(self):
         src = self.tmp / "one.pdf"
         make_pdf(src, 1)

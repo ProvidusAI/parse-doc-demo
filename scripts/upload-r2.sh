@@ -11,5 +11,5 @@ BUCKET="$(get R2_BUCKET)"; BUCKET="${BUCKET:-parse-doc-demo-pages}"
 export RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare RCLONE_CONFIG_R2_REGION=auto RCLONE_CONFIG_R2_NO_CHECK_BUCKET=true
 export RCLONE_CONFIG_R2_ACCESS_KEY_ID="$(get ACCESS_KEY_ID)" RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$(get SECRET_ACCESS_KEY)"
 export RCLONE_CONFIG_R2_ENDPOINT="$(get S3_API_ENDPOINT | sed -E 's#^(https?://[^/]*).*#\1#')"
-rclone copy public/showcase "r2:$BUCKET" --exclude "wall/**" --transfers 16 --checkers 16 --stats-one-line -P "$@"
+rclone copy public/showcase "r2:$BUCKET" --exclude "wall/**" --checksum --no-update-modtime --transfers 8 --checkers 8 --retries 6 --stats-one-line -P "$@"
 rclone check public/showcase "r2:$BUCKET" --exclude "wall/**" --one-way

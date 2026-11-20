@@ -2,6 +2,7 @@
 import io
 import random
 import shutil
+import threading
 from pathlib import Path
 
 import pypdfium2 as pdfium
@@ -11,6 +12,7 @@ CARD_WIDTH = 480
 WALL_WIDTH = 160
 WALL_COLS = 6  # cards per row in the tiled background
 PAGE_MAX_SIDE = 2400  # boxes are 0–1000 normalised, so downscaling is safe
+PDFIUM = threading.Lock()  # PDFium is not thread-safe; `generate --local --jobs N` cuts pages from N threads
 
 
 def cut_page(src: Path, page: int, dst_dir: Path, redact=None) -> Path:
@@ -34,13 +36,15 @@ def cut_page(src: Path, page: int, dst_dir: Path, redact=None) -> Path:
     if ext == ".docx":
         raise ValueError(f"docx not supported, pick another file: {src.name}")
     if ext == ".pdf":
-        doc = pdfium.PdfDocument(str(src))
-        if not 1 <= page <= len(doc):
-            raise ValueError(f"{src.name} has {len(doc)} pages, asked for {page}")
-        out = pdfium.PdfDocument.new()
-        out.import_pages(doc, [page - 1])
-        dst = dst_dir / f"{src.stem}-p{page}.pdf"
-        out.save(str(dst))
+        with PDFIUM:
+            doc = pdfium.PdfDocument(str(src))
+            if not 1 <= page <= len(doc):
+                raise ValueError(f"{src.name} has {len(doc)} pages, asked for {page}")
+            out = pdfium.PdfDocument.new()
+            out.import_pages(doc, [page - 1])
+            dst = dst_dir / f"{src.stem}-p{page}.pdf"
+            out.save(str(dst))
+            out.close(); doc.close()
         return dst
     if ext == ".webp":
         dst = dst_dir / f"{src.stem}.png"

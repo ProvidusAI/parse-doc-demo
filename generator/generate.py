@@ -8,7 +8,9 @@
     python -m generator.generate --import-parsed   # pages already parsed elsewhere ("parsed" entries)
     python -m generator.generate --refresh-segments  # re-fetch segments of DocAI-run pages (no re-parse)
     python -m generator.generate --import-review   # the reviewed E4c set, kept local (git-ignored)
+    python -m generator.generate --local [--only id] [--force] [--jobs 4]  # samples.local.json: parse only, kept local
 """
+from concurrent.futures import ThreadPoolExecutor
 import argparse
 import html
 import json
@@ -36,6 +38,8 @@ REVIEW = Path(os.environ.get("REVIEW_DIR", Path.home() / "Downloads" / "E4c-dani
 LOCAL = "e4c"
 # the review set's model, as on the other DocAI GLM pages (the set itself only says "e4c-final")
 REVIEW_MODEL = OCR_MODELS["ar-en"]
+# more pages added later (samples.local.json, git-ignored): parsed with this model only, no split/extract
+LOCAL_SAMPLES = ROOT / "samples.local.json"
 
 # DocAI picks the engine family from DOCAI_OCR_ENGINE; a model from the other family degrades silently.
 EXPECTED_ENGINE = {"ar-en": "glm", "en": "paddle-vl"}
@@ -71,8 +75,8 @@ def _try(label, fn, *args):
         return None
 
 
-def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=False, ocr_engine=None):
-    """Run one sample end to end. Returns the result path, or None when skipped."""
+def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=False, ocr_engine=None, parse_only=False):
+    """Run one sample end to end (or only its parse). Returns the result path, or None when skipped."""
     rid = entry_id(entry)
     out = showcase / rid
     if is_done(entry, showcase) and not force:
@@ -81,16 +85,18 @@ def run_entry(entry, client, corpus: Path, showcase: Path, work: Path, force=Fal
     upload = cut_page(src, entry["page"], work / "upload" / rid, redact=entry.get("redact"))
     name = f"{entry['subCategory']}-{uuid.uuid4().hex[:6]}-{upload.name}"  # DocAI rejects duplicate filenames
     file_id = client.upload(upload, name)
-    options = {"backend": "glm-ocr", "ocr_model": OCR_MODELS[entry["lang"]], "force": True}
+    options = {"backend": "glm-ocr", "ocr_model": entry.get("ocrModel") or OCR_MODELS[entry["lang"]], "force": True}
     job = client.wait_job(file_id, client.parse(file_id, options))
     segments, page = client.segments(file_id), page_jpeg(client.page_image(file_id))
 
-    rules = _try("split rules", client.run_op, "/v1/split/rules/suggest", {"file_id": file_id})
-    split = (_try("split", client.run_op, "/v1/split/runs", {"file_id": file_id, "rules": rules["rules"]})
-             if rules and rules.get("rules") else None)
-    schema = _try("schema", client.run_op, "/v1/extract/schemas/generate", {"file_id": file_id})
-    extraction = (_try("extract", client.run_op, "/v1/extract/runs", {"file_id": file_id, "schema": schema["schema"]})
-                  if schema and schema.get("schema") else None)
+    rules = split = schema = extraction = None
+    if not parse_only:
+        rules = _try("split rules", client.run_op, "/v1/split/rules/suggest", {"file_id": file_id})
+        split = (_try("split", client.run_op, "/v1/split/runs", {"file_id": file_id, "rules": rules["rules"]})
+                 if rules and rules.get("rules") else None)
+        schema = _try("schema", client.run_op, "/v1/extract/schemas/generate", {"file_id": file_id})
+        extraction = (_try("extract", client.run_op, "/v1/extract/runs", {"file_id": file_id, "schema": schema["schema"]})
+                      if schema and schema.get("schema") else None)
 
     file_meta = {"fileName": name, "mimeType": mimetypes.guess_type(upload.name)[0] or "application/octet-stream",
                  "bytes": upload.stat().st_size}
@@ -172,9 +178,38 @@ def import_review(review: Path, corpus: Path, showcase: Path, samples, force=Fal
                               segments=[review_segment(s) for s in raw[e["doc"]].get(e["review"], [])])
         _write(showcase / entry_id(e), page, result)
         written += 1
-    (showcase / "manifest.local.json").write_text(
-        json.dumps(build_manifest(entries, showcase), ensure_ascii=False, indent=1), encoding="utf-8")
+    write_local_manifest(entries, _local_samples(), showcase)
     return written
+
+
+def _local_samples() -> list:
+    return json.loads(LOCAL_SAMPLES.read_text(encoding="utf-8")) if LOCAL_SAMPLES.exists() else []
+
+
+def write_local_manifest(review, added, showcase: Path):
+    """manifest.local.json (git-ignored): the review set's pages, then the pages added later."""
+    (showcase / "manifest.local.json").write_text(
+        json.dumps(build_manifest(list(review) + list(added), showcase), ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def run_local(entries, client, corpus, showcase, work, only=None, force=False, jobs=1):
+    """Parse the added pages (samples.local.json) with their own model; no split/extract.
+    `jobs` pages run at once (the DocAI box takes 4). Returns ids that failed."""
+    engine = client.ocr_engine()
+    if engine != "glm":
+        raise SystemExit(f"DocAI is running the {engine} OCR engine; docai-arabic-ocr-e4c needs glm. Set: {ENGINE_HINT['ar-en']}")
+
+    def one(e):
+        try:
+            done = run_entry(e, client, corpus, showcase, work, force=force, ocr_engine=engine, parse_only=True)
+            print(f"  {entry_id(e)}: {'ok' if done else 'skipped'}", flush=True)
+        except (DocAIError, ValueError, OSError) as err:
+            print(f"  {entry_id(e)}: FAILED {err}", file=sys.stderr, flush=True)
+            return entry_id(e)
+
+    todo = [e for e in entries if e["status"] != "rejected" and (not only or entry_id(e) == only)]
+    with ThreadPoolExecutor(max_workers=jobs) as ex:
+        return [rid for rid in ex.map(one, todo) if rid]
 
 
 def refresh_entry(entry, client, showcase: Path, files: dict) -> bool:
@@ -286,6 +321,8 @@ def main(argv=None):
     ap.add_argument("--import-parsed", action="store_true")
     ap.add_argument("--refresh-segments", action="store_true")
     ap.add_argument("--import-review", action="store_true")
+    ap.add_argument("--local", action="store_true")
+    ap.add_argument("--jobs", type=int, default=1, help="--local: pages parsed at once")
     a = ap.parse_args(argv)
     samples = json.loads((ROOT / "samples.json").read_text(encoding="utf-8"))
     if a.wall:
@@ -304,6 +341,13 @@ def main(argv=None):
     if a.import_review:
         n = import_review(REVIEW, CORPUS, SHOWCASE, samples, force=a.force)
         print(f"imported {n} review page(s); wrote {SHOWCASE / 'manifest.local.json'}")
+    if a.local:
+        client = DocAI(os.environ.get("DOCAI_BASE_URL", "http://localhost:8787"), api_key())
+        added = _local_samples()
+        failed = run_local(added, client, CORPUS, SHOWCASE, WORK, only=a.only, force=a.force, jobs=a.jobs)
+        review = review_entries(_js_json(REVIEW / "data" / "pages.js", "window.PAGES="), samples)
+        write_local_manifest(review, added, SHOWCASE)
+        print(f"wrote {SHOWCASE / 'manifest.local.json'}" + (f"; failed: {', '.join(failed)}" if failed else ""))
     if a.refresh_segments:
         client = DocAI(os.environ.get("DOCAI_BASE_URL", "http://localhost:8787"), api_key())
         files = {f["filename"]: f["id"] for f in client.list_files()}
