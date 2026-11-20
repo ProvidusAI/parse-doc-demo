@@ -6,7 +6,13 @@ A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Vi
 
 ## What it shows
 
-94 pages in 18 categories. 21 of them, one per document type, were run through every DocAI stage: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. The other 73 are industry documents (chemical, education, health, manufacturing, marine, municipality, postal, sports) that a teammate had already parsed with the E4c OCR model. Those show the parse stages only; split and extract were not run on them. The **All** tab shows every page grouped by category. Click a page to open the inspector: the page first appears on its own while DocAI's scan plays, then the panel opens on Parsed chunks, with the page on the left and the 5 DocAI stages on the right:
+1306 pages in 18 categories:
+
+- **94 core pages.** 21 of them, one per document type, were run through every DocAI stage: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. The other 73 are industry documents (chemical, education, health, manufacturing, marine, municipality, postal, sports) that a teammate had already parsed with the E4c OCR model.
+- **915 reviewed E4c pages** from the same teammate's review set.
+- **297 pages added on 2026-11-20** so every category except Postal (27) and Marine (28) has at least 30 pages. Each is one page from a different public document (government, university, company and international-body PDFs), in English, Arabic or both on the same page, parsed with `docai-arabic-ocr-e4c`.
+
+Only the 21 full-run pages show split and extract; the rest show the parse stages. The **All** tab shows every page grouped by category. Click a page to open the inspector: the page first appears on its own while DocAI's scan plays, then the panel opens on Parsed chunks, with the page on the left and the 5 DocAI stages on the right:
 
 | # | Stage | What you see |
 |---|---|---|
@@ -65,6 +71,9 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The s
 | `providus-arabic-english-dataset/` | no | The source corpus (about 660 MB), kept locally |
 | `generator/out/` | no | Upload copies and the local review page |
 | `public/showcase/e4c/` | no | The 915 reviewed E4c pages |
+| `samples.local.json` | no | The 297 pages added later: category, source file and page, language, source URL. Set-aside pages stay listed as `rejected` |
+| `public/showcase/added/` | no | The added pages' outputs |
+| `providus-arabic-english-dataset/web*/` | no | The downloaded public documents the added pages come from |
 | `.env.x-api-key` | no | The DocAI API key (`api-key=...`) |
 | `.env` | no | R2 keys for uploading: `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY`, `S3_API_ENDPOINT` (optional `R2_BUCKET`, default `parse-doc-demo-pages`) |
 
@@ -109,6 +118,7 @@ python3 -m generator.generate --lang en --only travel_transport/boarding_passes 
 python3 -m generator.generate --review                     # writes generator/out/review.html
 python3 -m generator.generate --manifest                   # publishes approved pages to the site
 python3 -m generator.generate --wall                       # re-renders the background wall
+python3 -m generator.generate --local --jobs 4             # parses samples.local.json, 4 pages at once
 ```
 
 **Pages parsed elsewhere.** Entries with a `"parsed"` key (e.g. `"Chemical/01-eng"`) are not sent to DocAI. `--import-parsed` reads `<parsed>.segments.json` and `.extraction.json` from `../Industry-documents-E4c-parsed` (or `PARSED_DIR`) and the page image `sourcePath` from `../../Indusry documents` (or `PARSED_IMAGES_DIR`), then writes the same files as a DocAI run. The entry's `ocrModel` / `ocrEngine` say what was used; anything not recorded, like parse time, shows as "Not returned by DocAI".
@@ -116,6 +126,8 @@ python3 -m generator.generate --wall                       # re-renders the back
 ```bash
 python3 -m generator.generate --import-parsed --manifest
 ```
+
+**Added pages.** `--local` parses each approved entry in `samples.local.json` with its `ocrModel` (`docai-arabic-ocr-e4c`) and skips split and extract. It then rewrites `manifest.local.json` with the review set and these pages. DocAI's worker runs one parse at a time, so `--jobs` only helps with more workers (`docker compose ... up -d --no-recreate --scale docai-core-worker=4 docai-core-worker`, started while no job is running); the OCR model server is the real limit.
 
 Only entries with `"status": "approved"` appear on the site. To replace a page, mark the old entry `rejected`, add a new one for the same type, then run it and approve it. Image pages can carry `"redact": [[x0, y0, x1, y1], ...]` boxes, which are blacked out before upload.
 

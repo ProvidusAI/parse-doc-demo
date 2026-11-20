@@ -88,6 +88,51 @@ class GenerateTest(unittest.TestCase):
         self.assertEqual(client.parse_options,
                          {"backend": "glm-ocr", "ocr_model": "docai-arabic-ocr-e4c", "force": True})
 
+    def test_parse_only_runs_the_entry_model_and_no_later_steps(self):
+        # added pages: parsed with docai-arabic-ocr-e4c whatever their language; no split/extract (user, 2026-11-20)
+        client = FakeClient()
+        e = {**entry(lang="en"), "id": "added/financial/x_p1", "ocrModel": "docai-arabic-ocr-e4c"}
+        generate.run_entry(e, client, self.corpus, self.showcase, self.work, ocr_engine="glm", parse_only=True)
+        self.assertEqual(client.parse_options["ocr_model"], "docai-arabic-ocr-e4c")
+        self.assertFalse([c for c in client.calls if c.startswith("/v1/")])
+        r = json.loads((self.showcase / "added" / "financial" / "x_p1" / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual((r["upload"]["ocrModel"], r["split"], r["extraction"]), ("docai-arabic-ocr-e4c", None, None))
+
+    def test_run_local_parses_pages_in_parallel_and_reports_failures(self):
+        # the DocAI box takes 4 parse jobs at once (user, 2026-11-20)
+        es = [{**entry(status="approved"), "id": f"added/financial/p{i}_p1"} for i in range(6)]
+        es.append({**entry(status="rejected"), "id": "added/financial/r_p1"})
+        seen, running, peak = [], [0], [0]
+        import threading, time
+        lock = threading.Lock()
+
+        def fake_run(e, *a, **k):
+            with lock:
+                running[0] += 1; peak[0] = max(peak[0], running[0])
+            time.sleep(0.05)
+            with lock:
+                running[0] -= 1; seen.append(e["id"])
+            if e["id"].endswith("p3_p1"):
+                raise DocAIError("boom")
+            return True
+
+        client = mock.Mock(); client.ocr_engine.return_value = "glm"
+        with mock.patch.object(generate, "run_entry", side_effect=fake_run):
+            failed = generate.run_local(es, client, self.corpus, self.showcase, self.work, jobs=4)
+        self.assertEqual(sorted(seen), sorted(e["id"] for e in es[:6]))
+        self.assertEqual(failed, ["added/financial/p3_p1"])
+        self.assertEqual(peak[0], 4)
+
+    def test_local_manifest_lists_review_and_added_pages(self):
+        for rid in ("e4c/a_p1", "added/financial/x_p1"):
+            (self.showcase / rid).mkdir(parents=True)
+            (self.showcase / rid / "result.json").write_text(json.dumps({"source": {"path": "financial/invoices/a.png", "page": 1}}))
+        review = [{**entry(status="approved"), "id": "e4c/a_p1"}]
+        added = [{**entry(status="approved"), "id": "added/financial/x_p1"}, {**entry(status="rejected"), "id": "added/financial/y_p1"}]
+        generate.write_local_manifest(review, added, self.showcase)
+        m = json.loads((self.showcase / "manifest.local.json").read_text(encoding="utf-8"))
+        self.assertEqual([p["id"] for p in m["categories"][0]["pages"]], ["e4c/a_p1", "added/financial/x_p1"])
+
     def test_skip_existing_and_no_partial_write(self):
         done = self.showcase / "financial" / "invoices"
         done.mkdir(parents=True)
