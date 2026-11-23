@@ -188,7 +188,10 @@ def _local_samples() -> list:
 
 
 def write_local_manifest(review, added, showcase: Path):
-    """manifest.local.json (git-ignored): the review set's pages, then the pages added later."""
+    """manifest.local.json (git-ignored): the review set's pages, then the pages added later.
+    A review page listed in samples.local.json as rejected (same id) is left out."""
+    hidden = {e["id"] for e in added if e["status"] == "rejected"}
+    review = [e for e in review if e["id"] not in hidden]
     (showcase / "manifest.local.json").write_text(
         json.dumps(build_manifest(list(review) + list(added), showcase), ensure_ascii=False, indent=1), encoding="utf-8")
 

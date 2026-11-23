@@ -132,6 +132,10 @@ class GenerateTest(unittest.TestCase):
         generate.write_local_manifest(review, added, self.showcase)
         m = json.loads((self.showcase / "manifest.local.json").read_text(encoding="utf-8"))
         self.assertEqual([p["id"] for p in m["categories"][0]["pages"]], ["e4c/a_p1", "added/financial/x_p1"])
+        # a review page listed as rejected in samples.local.json is left out (a blank page, user 2026-11-23)
+        generate.write_local_manifest(review, added + [{**entry(status="rejected"), "id": "e4c/a_p1"}], self.showcase)
+        m = json.loads((self.showcase / "manifest.local.json").read_text(encoding="utf-8"))
+        self.assertEqual([p["id"] for p in m["categories"][0]["pages"]], ["added/financial/x_p1"])
 
     def test_skip_existing_and_no_partial_write(self):
         done = self.showcase / "financial" / "invoices"
