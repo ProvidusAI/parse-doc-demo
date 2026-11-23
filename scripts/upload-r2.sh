@@ -19,6 +19,6 @@ grep -q '/result\.json$' "$FILES" || { echo "No pages in public/showcase/manifes
 command -v rclone >/dev/null || { echo "rclone is not installed: brew install rclone" >&2; exit 1; }
 # browsers keep page files a day instead of re-asking on every visit (paths aren't content-hashed, so not forever)
 rclone copy public/showcase "r2:$BUCKET" --files-from "$FILES" --header-upload "Cache-Control: public, max-age=86400" \
-  --transfers 16 --checkers 16 --stats-one-line -P "$@"
+  --checksum --no-update-modtime --transfers 8 --checkers 8 --retries 6 --stats-one-line -P "$@"
 # a dry run sent nothing, so there is nothing to verify (the check would list every new file as missing)
 [[ " $* " == *" --dry-run "* ]] || rclone check public/showcase "r2:$BUCKET" --files-from "$FILES" --one-way

@@ -25,5 +25,8 @@ SETUP.md
 # packed page data (showcase.tgz) for moving between machines
 *.tgz
 
+# pages added later (list of local/web sources), kept local like the data
+samples.local.json
+
 # local Python environment for the generator
 .venv/

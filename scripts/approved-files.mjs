@@ -15,7 +15,9 @@ for (const name of ["manifest.json", "manifest.local.json"]) {
 }
 
 const files = fs.existsSync(dir)
-  ? fs.readdirSync(dir, { recursive: true }).filter((f) => fs.statSync(path.join(dir, f)).isFile())
+  ? fs.readdirSync(dir, { recursive: true })
+      .filter((f) => fs.statSync(path.join(dir, f)).isFile())
+      .map((f) => f.split(path.sep).join("/")) // Windows lists e4c\x\result.json; the manifest ids use /
   : [];
 if (process.argv.includes("--prune")) {
   for (const f of files) if (!keep.has(f)) fs.rmSync(path.join(dir, f));
