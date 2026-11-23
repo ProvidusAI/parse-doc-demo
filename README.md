@@ -78,7 +78,7 @@ bash scripts/upload-r2.sh
 
 Only the pages listed in `manifest.json` / `manifest.local.json` are uploaded, and only they go into the Docker image (`scripts/approved-files.mjs`): a rejected page left on disk is never public. A page that is already in the bucket stays there after you reject it; remove it with `rclone delete "r2:parse-doc-demo-pages/<category>/<type>"` (same `RCLONE_CONFIG_R2_*` settings as the script).
 
-Uploaded files carry `Cache-Control: public, max-age=86400`, so browsers keep them for a day. Files uploaded before that have no header; `bash scripts/upload-r2.sh --ignore-times` re-sends everything once to add it.
+Uploaded files carry `Cache-Control: public, max-age=86400`, so browsers keep them for a day. Files uploaded before that have no header; `bash scripts/upload-r2.sh --ignore-times` re-sends everything once to add it. With the bucket set, the site passes that header through rather than adding its own, so a missing or refused file has no cache header and a browser retries it on the next visit instead of showing a broken thumbnail for a day.
 
 DocAI itself keeps its copies of the uploaded pages in its own local Docker volumes and database.
 

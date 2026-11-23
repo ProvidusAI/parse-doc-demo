@@ -21,9 +21,13 @@ const config: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
-      // page files, from disk or the bucket; Next's default is max-age=0, which re-checks ~1000 thumbnails on every
-      // visit. Not content-hashed, so a day rather than forever.
-      { source: "/showcase/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
+      // page files from disk: Next's default is max-age=0, which re-checks ~1000 thumbnails on every visit. Not
+      // content-hashed, so a day rather than forever. From the bucket, its own header passes through instead: every
+      // file carries this one (upload-r2.sh), while a 404 or a refused request carries none, so a browser does not
+      // keep a broken thumbnail for a day.
+      ...(process.env.NEXT_PUBLIC_DATA_URL
+        ? []
+        : [{ source: "/showcase/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] }]),
     ];
   },
 };
