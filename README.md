@@ -135,6 +135,15 @@ Only entries with `"status": "approved"` appear on the site. To replace a page, 
 
 Only pages without personal data are shown. That means no private names, ID or account numbers, faces or private signatures, and the same applies to the background wall. Where a good page contains personal details, they are redacted before the page is sent to DocAI.
 
+## Branches
+
+| Branch | Site | Takes pull requests from |
+|---|---|---|
+| `main` | [parsebench.providus.ai](https://parsebench.providus.ai) | `staging` only |
+| `staging` | [bench-staging.providus.ai](https://bench-staging.providus.ai) | any work branch |
+
+Branch your work off `staging` and open the pull request against `staging`. Once it has been checked on the staging site, open a pull request from `staging` to `main`. A pull request into `main` from any other branch fails the **Only staging into main** check (`.github/workflows/branch-flow.yml`) and cannot be merged.
+
 ## Tests
 
 ```bash
