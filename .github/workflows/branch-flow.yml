@@ -1,0 +1,25 @@
+# main only takes pull requests from staging: every change is merged and tried on staging (bench-staging.providus.ai)
+# first. The main ruleset requires this check, so a pull request into main from any other branch cannot be merged.
+name: Branch flow
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited] # edited: a pull request retargeted to main is checked again
+
+permissions: {}
+
+jobs:
+  from-staging:
+    name: Only staging into main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Source branch is staging
+        env:
+          HEAD: ${{ github.head_ref }}
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          if [ "$HEAD" != staging ] || [ "$SAME_REPO" != true ]; then
+            echo "::error::main only takes pull requests from staging. Point this pull request at staging instead."
+            exit 1
+          fi
