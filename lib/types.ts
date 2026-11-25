@@ -90,6 +90,12 @@ export interface PageSummary {
   /** 160px copy of `thumb` for the grid's small tiles; absent on pages generated before it existed */
   tile?: string;
   result: string;
+  /** facts the dataset page filters on (generator page_facts); absent on manifests written before them */
+  lang?: Lang;
+  /** "pdf", or "image" for photos and scans */
+  format?: "pdf" | "image";
+  /** content types DocAI found: table, chart, figure, formula, stamp */
+  has?: string[];
 }
 
 export interface Category {

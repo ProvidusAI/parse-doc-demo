@@ -1,16 +1,22 @@
 # ProvidusBench
 
-A showcase of **Providus DocAI** on real Arabic and Arabic-English documents. Visitors browse a wall of pages by category, open any page, and step through what DocAI actually produced for it, from OCR to the extracted schema. Every value on screen comes from a saved DocAI run; nothing is mocked.
+An open evaluation of Arabic and English document understanding, built by Providus AI. Visitors filter a dataset of real pages, open any page at its own address, and see exactly what **Providus DocAI** produced for it, from OCR to the extracted schema. Every value on the page views comes from a saved DocAI run.
+
+**The leaderboard (`/leaderboard`) shows SAMPLE data**: `lib/leaderboard.ts` holds placeholder scores, and every system there except DocAI is fictional, and the page itself does not label it as sample data. Replace `SYSTEMS` with measured results before the site is shown publicly as a benchmark.
+
+Pages, each also under `/ar` in Arabic: `/` overview, `/leaderboard`, `/dataset` (filters live in the address, e.g. `?cat=financial&has=table`), `/dataset/<page id>` one page with DocAI's output, `/methodology`.
 
 **Try DocAI:** [platform.providus.ai](https://platform.providus.ai/)
 
 ## What it shows
 
-1306 pages in 18 categories:
+1001 pages in 18 categories, from these sources:
 
 - **94 core pages.** 21 of them, one per document type, were run through every DocAI stage: financial, government, travel & transport, media, research, statistical, legal, business, administrative, educational and other. The other 73 are industry documents (chemical, education, health, manufacturing, marine, municipality, postal, sports) that a teammate had already parsed with the E4c OCR model.
 - **915 reviewed E4c pages** from the same teammate's review set.
 - **297 pages added on 2026-11-20** so every category except Postal (27) and Marine (28) has at least 30 pages. Each is one page from a different public document (government, university, company and international-body PDFs), in English, Arabic or both on the same page, parsed with `docai-arabic-ocr-e4c`.
+
+280 of these pages are not shown because they look like another page in their category: the same template or the same report layout. One page of each design stays. They are listed in `removed-pages.json`, and the site leaves them out when it reads the page list. 12 more are left out because they are blank (only a page number, a footer or a cover design); they are listed in `blank-pages.json`. Another 12 are left out because DocAI read no text from them (photos of receipts and tickets, a form, a manuscript, a chart), so their panel would be empty; they are listed in `no-text-pages.json`.
 
 Only the 21 full-run pages show split and extract; the rest show the parse stages. The **All** tab shows every page grouped by category. Click a page to open the inspector: the page first appears on its own while DocAI's scan plays, then the panel opens on Parsed chunks, with the page on the left and the 5 DocAI stages on the right:
 
@@ -61,13 +67,16 @@ The site runs 24/7 in Docker on the office Mac Studio, with an ngrok link. The s
 
 | Path | In git | What it is |
 |---|---|---|
-| `public/showcase/manifest.json`, `manifest.local.json` | no | The list the site renders: categories, pages, thumbnails |
+| `public/showcase/manifest.json`, `manifest.local.json` | no | The list the site renders: categories, pages, thumbnails, and each page's language, source format and content types (`lang`, `format`, `has`), which the dataset filters use. `--manifest` writes them; for a manifest written before them, `add_tiles` adds them from each `result.json` |
 | `public/showcase/<category>/<type>/result.json` | no | DocAI output for one page, normalised for all 5 stages |
 | `public/showcase/<category>/<type>/page.jpg`, `thumb.jpg`, `tile.jpg` | no | The page image DocAI rendered (max 2400px), its card thumbnail (480px) and the grid's small tile (160px; `--manifest` makes any that are missing) |
 | `public/showcase/wall.jpg` | yes | The background wall: one tiled image of 36 corpus pages |
 | `public/showcase/wall/` | no | The 160px thumbnails `wall.jpg` is built from |
 | `samples.json` | yes | Which corpus page is shown for each type, its language and its review status |
 | `wall.json` | yes | Corpus files used for the background wall |
+| `removed-pages.json` | yes | Pages left out of the site because they look like another page in their category |
+| `blank-pages.json` | yes | Pages left out of the site because they are blank (page number, footer or cover design only) |
+| `no-text-pages.json` | yes | Pages left out of the site because DocAI read no text from them |
 | `providus-arabic-english-dataset/` | no | The source corpus (about 660 MB), kept locally |
 | `generator/out/` | no | Upload copies and the local review page |
 | `public/showcase/e4c/` | no | The 915 reviewed E4c pages |
@@ -145,8 +154,8 @@ python3 -m unittest discover -s generator/tests -t .   # generator
 ## Project layout
 
 ```
-app/            Next.js app router entry, global styles, fonts
-components/     Landing, page wall, dataset browser, inspector, 7-stage panel
+app/            Routes (English, and Arabic under app/ar), global styles and tokens, fonts (IBM Plex Sans, Plex Sans Arabic, JetBrains Mono)
+components/     Site shell and nav, overview, dataset filters, page detail, inspector, stage panel, methodology
 lib/            Shared types, helpers, EN/AR UI strings, manifest loader
 generator/      DocAI client, page cutting, normalisation, batch runner (+ tests)
 public/showcase Generated DocAI outputs served by the site

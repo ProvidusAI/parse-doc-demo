@@ -1,20 +1,61 @@
+/* ProvidusBench design tokens. Brand colours follow providus.ai (night #0a0a0a, signal blue #6dbbff and its dark
+   companion #2b6faa); a quiet light surface carries everything people read. Three open-licence fonts: IBM Plex Sans
+   and IBM Plex Sans Arabic (one design across both scripts) and JetBrains Mono (providus.ai's face) for numbers,
+   labels and code. */
 :root {
-  --bg: #fff;
-  --fg: #000;
-  --t2: #404040;
-  --t3: #737373;
-  --muted: #f5f5f5;
-  --border: #e7e7e7;
-  --ring: #0077c7;
-  --ring-soft: rgba(0, 119, 199, 0.06);
-  --ring-hi: rgba(0, 119, 199, 0.18);
-  --veil: rgba(250, 250, 252, 0.88);
-  --ok: #1d7a4a;
-  --sans: var(--font-sans), "Overused Grotesk", system-ui, sans-serif;
-  --mono: var(--font-mono), ui-monospace, monospace;
-  --arabic: var(--font-arabic), "Noto Sans Arabic", sans-serif;
+  --paper: #fbfcfd;
+  --surface: #fff;
+  --wash: #f1f4f8;
+  --line: #e2e7ee;
+  --ink: #0d1520;
+  --ink-2: #4a5563;
+  --ink-3: #6b7685;
+  --brand: #2b6faa; /* links, the selected state, our own rows; text-safe on white */
+  --brand-hover: #235c8e;
+  --brand-bg: #eaf2f9;
+  --night: #0a0a0a; /* providus.ai ground, for the brand bands */
+  --night-line: rgba(255, 255, 255, 0.12);
+  --signal: #6dbbff; /* providus.ai blue, on dark only */
+  --good: #1f7a52;
+  --warn: #9a6412;
+  --warn-bg: #fdf5e6;
+
+  /* one key per DocAI element type, the same everywhere a page shows its boxes */
+  --k-title: #2b6faa;
+  --k-text: #6b7685;
+  --k-table: #1f7a52;
+  --k-figure: #b7791f;
+  --k-chrome: #a3acb8;
+
+  --sans: var(--font-plex), var(--font-plex-ar), system-ui, sans-serif;
+  --arabic: var(--font-plex-ar), var(--font-plex), system-ui, sans-serif;
+  --mono: var(--font-jetbrains), ui-monospace, "Cascadia Mono", Consolas, monospace;
+
   --nav-h: 64px;
-  --bar-h: 58px;
+  --page-w: 1280px;
+  --gutter: max(16px, 4vw);
+
+  /* older names the page inspector still uses */
+  --bg: var(--surface);
+  --fg: var(--ink);
+  --t2: var(--ink-2);
+  --t3: var(--ink-3);
+  --muted: var(--wash);
+  --border: var(--line);
+  --navy: var(--ink);
+  --blue: var(--brand);
+  --blue-hover: var(--brand-hover);
+  --blue-bg: var(--brand-bg);
+  --deep: var(--night);
+  --accent: var(--ink);
+  --ring: var(--brand);
+  --ring-soft: rgba(43, 111, 170, 0.06);
+  --ring-hi: rgba(43, 111, 170, 0.18);
+  --veil: rgba(251, 252, 253, 0.9);
+  --ok: var(--good);
+  --serif: var(--sans);
+  --naskh: var(--arabic);
+  --sans-ar: var(--arabic);
 }
 
 *,
@@ -29,11 +70,15 @@ html {
 }
 
 body {
-  font-family: var(--sans);
-  color: var(--fg);
-  background: var(--bg);
+  font: 16px/1.55 var(--sans);
+  color: var(--ink);
+  background: var(--paper);
   -webkit-font-smoothing: antialiased;
-  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+:lang(ar) {
+  font-family: var(--arabic);
 }
 
 button,
@@ -53,7 +98,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -66,38 +111,45 @@ a {
 }
 
 .lbl {
-  font: 11px var(--mono);
-  letter-spacing: 0.12em;
+  font: 500 11px var(--mono);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--t3);
+  color: var(--ink-3);
 }
 
-/* buttons (parsebench: 40px, mono 12px uppercase, .1em) */
+/* buttons: 40px; .btn-dark is the one filled action on a screen */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   height: 40px;
-  padding: 0 18px;
-  border: 1px solid var(--border);
-  background: #fff;
-  font: 500 12px var(--mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  font: 500 14px var(--sans);
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.15s, border-color 0.15s;
 }
 .btn:hover {
-  border-color: #000;
+  border-color: var(--ink-3);
 }
 .btn-dark {
-  background: #000;
+  background: var(--ink);
   color: #fff;
-  border-color: #000;
+  border-color: var(--ink);
 }
 .btn-dark:hover {
-  background: #222;
+  background: #22303f;
+  border-color: #22303f;
+}
+.btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
 }
 
 .sr-only {

@@ -1,6 +1,5 @@
-import Showcase from "@/components/Showcase";
-import { loadManifest } from "@/lib/manifest";
+import { OverviewPage } from "@/components/routes";
 
-export default async function Home() {
-  return <Showcase manifest={await loadManifest()} />;
+export default function Home() {
+  return <OverviewPage lang="en" />;
 }

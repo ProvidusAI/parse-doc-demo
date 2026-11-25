@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { STAGES, t, type Stage, type UiLang } from "@/lib/i18n";
+import { categoryLabel, pageLabel, STAGES, t, type Stage, type UiLang } from "@/lib/i18n";
 import { segmentTag } from "@/lib/segments";
 import type { ShowcaseResult } from "@/lib/types";
 import type { PageBox } from "./PageView";
@@ -126,8 +126,8 @@ export default function StagePanel({ result, lang, onLang, onView, onHighlight, 
         </div>
         <p className="lbl">{t(lang, "category")}</p>
         <div className={styles.tagrow}>
-          <span className={`${styles.tag} ${styles.dot}`}>{result.categoryLabel}</span>
-          <span className={styles.tag}>{result.subCategoryLabel}</span>
+          <span className={`${styles.tag} ${styles.dot}`}>{categoryLabel(lang, result.category, result.categoryLabel)}</span>
+          <span className={styles.tag}>{pageLabel(lang, result.subCategoryLabel)}</span>
         </div>
         <div className={styles.steps} ref={stepsRef}>
           {stages.map((s, k) => (

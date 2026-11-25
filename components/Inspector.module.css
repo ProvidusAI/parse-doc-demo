@@ -9,6 +9,15 @@
   justify-content: center;
   padding: 68px var(--pad-x) 16px;
 }
+/* the same view as a page of its own (/dataset/<id>): under the page header, one screen tall */
+.page {
+  position: relative;
+  display: flex;
+  max-width: var(--page-w);
+  height: clamp(560px, calc(100svh - var(--nav-h) - 150px), 1100px);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 28px;
+}
 .veil {
   position: absolute;
   inset: 0;
@@ -109,7 +118,7 @@
 }
 .arr:hover,
 .x:hover {
-  border-color: #000;
+  border-color: var(--accent);
 }
 .arr {
   top: 50%;
@@ -142,6 +151,10 @@
     display: block;
     padding: 72px 16px 88px;
     overflow-y: auto;
+  }
+  .page {
+    display: block;
+    height: auto;
   }
   .wrap,
   .wrap[data-phase="intro"] {

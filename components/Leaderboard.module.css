@@ -1,0 +1,278 @@
+/* The leaderboard: one plain table. Mono numerals, a ↑ on every metric, the best value in each column bold, ± margins,
+   shared ranks, our row marked. No heat colours or medals. */
+.wrap {
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 40px var(--gutter) 80px;
+}
+.preview {
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 72px var(--gutter);
+  border-top: 1px solid var(--line);
+}
+.head {
+  max-width: 760px;
+  margin-bottom: 20px;
+}
+.kicker {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.kicker:lang(ar) {
+  font: 500 14px var(--arabic);
+  letter-spacing: 0;
+}
+.h1,
+.h2 {
+  margin-top: 10px;
+  font: 600 clamp(28px, 3vw, 40px) / 1.15 var(--sans);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.h2 {
+  font-size: clamp(26px, 2.6vw, 34px);
+}
+.h1:lang(ar),
+.h2:lang(ar) {
+  font-family: var(--arabic);
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.sub {
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 14px;
+}
+.seg {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.seg button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+.meta {
+  font: 12px var(--mono);
+  color: var(--ink-3);
+}
+.meta:lang(ar) {
+  font: 13px var(--arabic);
+}
+
+.scroll {
+  position: relative; /* holds the screen-reader-only labels, which are absolutely placed, inside the scroll box */
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  white-space: nowrap;
+}
+.table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.table thead th {
+  background: var(--wash);
+  font: 500 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.table thead th:lang(ar) {
+  font: 600 13px var(--arabic);
+  letter-spacing: 0;
+}
+.table thead button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.table thead button:hover,
+.table thead th[aria-sort] {
+  color: var(--ink);
+}
+.table thead th[aria-sort] button {
+  box-shadow: 0 2px 0 var(--ink);
+}
+.rank {
+  width: 52px;
+  font: 500 13px var(--mono);
+  color: var(--ink-3);
+}
+.sys {
+  font-weight: 400;
+}
+.name {
+  display: block;
+  font-weight: 500;
+  color: var(--ink);
+}
+.kind {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.num {
+  text-align: end !important;
+  font: 13.5px var(--mono);
+  color: var(--ink-2);
+}
+.table thead .num,
+.table thead .overallHead {
+  text-align: end;
+}
+.num[data-best] {
+  font-weight: 500;
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--ink);
+}
+.overall {
+  min-width: 190px;
+  text-align: end !important;
+}
+.ov {
+  font: 500 15px var(--mono);
+  color: var(--ink);
+}
+.ov[data-best] {
+  font-weight: 600;
+}
+.ci {
+  margin-inline-start: 4px;
+  font: 12px var(--mono);
+  color: var(--ink-3);
+}
+/* where the overall score sits on 0–100, as a thin bar under the number */
+.track {
+  display: block;
+  height: 3px;
+  margin-top: 6px;
+  background: var(--line);
+}
+.track i {
+  display: block;
+  height: 100%;
+  background: var(--ink-3);
+}
+.ours > * {
+  background: var(--brand-bg);
+}
+.ours .sys {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+.ours .sys:dir(rtl) {
+  box-shadow: inset -3px 0 0 var(--brand);
+}
+.ours .kind {
+  color: var(--brand);
+  font-weight: 500;
+}
+.ours .track i {
+  background: var(--brand);
+}
+
+.tied {
+  margin-top: 10px;
+  font: 12px var(--mono);
+  color: var(--ink-3);
+}
+.tied:lang(ar) {
+  font: 13px var(--arabic);
+}
+.defs {
+  display: grid;
+  gap: 8px;
+  max-width: 820px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.defs div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 16px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.defs dt {
+  font-weight: 600;
+  color: var(--ink);
+}
+.defs dd {
+  margin: 0;
+}
+.disclosure {
+  max-width: 820px;
+  margin-top: 20px;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.more {
+  display: inline-block;
+  margin-top: 24px;
+  color: var(--brand);
+  font-weight: 500;
+}
+
+@media (max-width: 760px) {
+  /* the system name stays in view while the scores scroll sideways */
+  .table .sys {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    min-width: 170px;
+    white-space: normal;
+    background: var(--surface);
+  }
+  .ours .sys {
+    background: var(--brand-bg);
+  }
+  .rank {
+    width: 40px;
+  }
+  .defs div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}

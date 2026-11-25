@@ -1,0 +1,237 @@
+.wrap {
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 40px var(--gutter) 72px;
+}
+.head {
+  max-width: 760px;
+  margin-bottom: 32px;
+}
+.kicker {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.kicker:lang(ar) {
+  font: 500 14px var(--arabic);
+  letter-spacing: 0;
+}
+.h1 {
+  margin-top: 10px;
+  font: 600 clamp(28px, 3vw, 40px) / 1.15 var(--sans);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.h1:lang(ar) {
+  font-family: var(--arabic);
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.sub {
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+/* filters: plain lists with live counts; an option that would show nothing is disabled */
+.filters {
+  position: sticky;
+  top: calc(var(--nav-h) + 16px);
+  display: grid;
+  gap: 24px;
+  max-height: calc(100svh - var(--nav-h) - 32px);
+  overflow-y: auto;
+  padding-inline-end: 4px;
+}
+.filters fieldset {
+  display: grid;
+  gap: 1px;
+  min-width: 0; /* a fieldset is as wide as its content by default */
+  padding: 0;
+  border: 0;
+}
+.filters legend {
+  margin-bottom: 8px;
+}
+.filters legend:lang(ar) {
+  font: 600 13px var(--arabic);
+  letter-spacing: 0;
+}
+.opt {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-align: start;
+  cursor: pointer;
+}
+.opt b {
+  font: 12px var(--mono);
+  color: var(--ink-3);
+}
+.opt:hover {
+  background: var(--wash);
+  color: var(--ink);
+}
+.opt[aria-pressed="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+.opt[aria-pressed="true"] b {
+  color: #c9d1da;
+}
+.opt[data-check] span::before {
+  content: "";
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-inline-end: 8px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+.opt[data-check][aria-pressed="true"] span::before {
+  border-color: #fff;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.opt:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.opt:disabled:hover {
+  background: none;
+  color: var(--ink-2);
+}
+.clear {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.count {
+  margin-bottom: 14px;
+  font: 12.5px var(--mono);
+  color: var(--ink-3);
+}
+.count:lang(ar) {
+  font-family: var(--arabic);
+}
+.none {
+  padding: 48px 0;
+  color: var(--ink-2);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 24px 16px;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: grid;
+  gap: 4px;
+}
+/* every page at its own shape on one neutral mat, so receipts and spreads both read as pages */
+.mat {
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  margin-bottom: 6px;
+  padding: 10px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  transition: border-color 0.15s;
+}
+.mat img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(13, 21, 32, 0.14));
+}
+.card:hover .mat {
+  border-color: var(--ink-3);
+}
+.card:hover .name {
+  color: var(--brand);
+}
+.name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.meta {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.tags i {
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font: normal 11px / 1.7 var(--mono);
+  color: var(--ink-3);
+}
+.tags i:lang(ar) {
+  font: normal 11.5px / 1.7 var(--arabic);
+}
+.more {
+  display: flex;
+  margin: 32px auto 0;
+}
+
+@media (max-width: 860px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  /* phones: each filter group becomes a scrolling row of chips */
+  .filters {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    gap: 14px;
+  }
+  .filters fieldset {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters legend {
+    float: left;
+    width: 100%;
+  }
+  .opt {
+    flex: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 12px;
+  }
+}

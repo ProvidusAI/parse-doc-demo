@@ -1,0 +1,404 @@
+/* Overview. Option A, "specimen": the question on the left, a real page and DocAI's output on the right; then the
+   dataset in numbers, the top of the leaderboard, and one dark providus.ai band for business readers. */
+/* the hero band: the wall of corpus pages, washed almost white so the text stays clear, fading into the page below */
+.heroBand {
+  background:
+    linear-gradient(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.9) 70%, var(--paper)),
+    url("/showcase/wall.jpg") 6px 6px / 468px 612px repeat;
+}
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 56px var(--gutter) 64px;
+}
+.kicker {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.kicker:lang(ar),
+.bandKicker:lang(ar) {
+  font: 500 14px var(--arabic);
+  letter-spacing: 0;
+}
+.h1 {
+  margin: 14px 0 18px;
+  font: 600 clamp(36px, 4.2vw, 56px) / 1.06 var(--sans);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.h1:lang(ar) {
+  font: 600 clamp(32px, 3.6vw, 48px) / 1.3 var(--arabic);
+  letter-spacing: 0;
+}
+.lede {
+  max-width: 46ch;
+  margin-bottom: 26px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+.qa {
+  border-top: 1px solid var(--line);
+  margin-bottom: 28px;
+}
+.qa div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.qa dt {
+  font: 500 11.5px / 1.9 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.qa dt:lang(ar) {
+  font: 600 14px / 1.6 var(--arabic);
+  letter-spacing: 0;
+}
+.qa dd {
+  margin: 0;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.stats div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.stats dd {
+  margin: 0;
+  font: 500 24px / 1.2 var(--mono);
+  letter-spacing: -0.02em;
+}
+.stats dt {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* the specimen: the page cropped to its table, every cell a target; a card under it shows DocAI's output for the cell */
+.spec {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(13, 21, 32, 0.08);
+}
+.crop {
+  position: relative;
+  overflow: hidden;
+}
+.pg {
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+.pg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tbox {
+  position: absolute;
+  border: 1.5px solid var(--k-table);
+  background: color-mix(in srgb, var(--k-table) 4%, transparent);
+  pointer-events: none;
+}
+.hit {
+  position: absolute;
+  padding: 0;
+  border: 1.5px solid transparent;
+  background: none;
+  cursor: pointer;
+}
+.hit:hover {
+  border-color: var(--k-table);
+  background: color-mix(in srgb, var(--k-table) 8%, transparent);
+}
+.hit[aria-pressed="true"] {
+  border: 2px solid var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+.hit:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.callout {
+  position: relative;
+  margin: -30px 18px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(13, 21, 32, 0.14);
+}
+.calloutKind {
+  font: 500 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--k-table);
+}
+.calloutKind:lang(ar) {
+  font: 600 13px var(--arabic);
+  letter-spacing: 0;
+}
+/* always two lines tall: a short cell and a long one give the same card, so nothing moves under the pointer */
+.calloutText {
+  display: -webkit-box;
+  height: 3em;
+  margin-top: 6px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font: 500 18px / 1.5 var(--arabic);
+  color: var(--ink);
+}
+.hint {
+  padding: 12px 18px 10px;
+  font: 12px var(--mono);
+  color: var(--ink-3);
+}
+.hint:lang(ar) {
+  font: 13px var(--arabic);
+}
+.specMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  font: 12px var(--mono);
+  color: var(--ink-3);
+}
+.specMeta:lang(ar) {
+  font: 13px var(--arabic);
+}
+.specMeta a {
+  flex: none;
+  color: var(--brand);
+  font: 500 13px var(--sans);
+}
+
+/* sections below the hero */
+.section {
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 72px var(--gutter);
+  border-top: 1px solid var(--line);
+}
+.head {
+  max-width: 720px;
+  margin-bottom: 36px;
+}
+.h2 {
+  margin-top: 10px;
+  font: 600 clamp(26px, 2.6vw, 34px) / 1.2 var(--sans);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.h2:lang(ar) {
+  font-family: var(--arabic);
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.sub {
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+.composition {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 56px;
+}
+.cats ul,
+.split ul {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+  padding: 0;
+  list-style: none;
+}
+.cats a {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 44px;
+  gap: 14px;
+  align-items: center;
+  padding: 5px 6px;
+  border-radius: 3px;
+  font-size: 14px;
+}
+.cats a:hover {
+  background: var(--wash);
+}
+.cats a:hover .track i {
+  background: var(--brand-hover);
+}
+.catName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.track {
+  height: 8px;
+}
+/* one series, one hue; data end rounded, the start square on the baseline */
+.track i {
+  display: block;
+  width: var(--w);
+  height: 100%;
+  background: var(--brand);
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+.cats b,
+.split b {
+  font: 500 13px var(--mono);
+  text-align: end;
+}
+.splits {
+  display: grid;
+  gap: 28px;
+  align-content: start;
+}
+.split li {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+/* share of the whole, as a thin rule under the row */
+.split li i {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -1px;
+  width: var(--w);
+  height: 3px;
+  background: var(--brand);
+}
+.contains li {
+  padding: 0;
+}
+.contains a {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0;
+}
+.contains a:hover span {
+  color: var(--brand);
+}
+.langNote {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+
+/* the one dark band, in providus.ai's colours */
+.band {
+  background: var(--night);
+  color: #f0f4f8;
+}
+.bandIn {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 72px var(--gutter);
+}
+.bandKicker {
+  font: 500 12px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+.bandText {
+  max-width: 54ch;
+  margin: 14px 0 26px;
+  color: #a9b3bf;
+  font-size: 16.5px;
+}
+.band .ctas {
+  margin: 0;
+}
+.signal {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #04121f;
+}
+.signal:hover {
+  background: #8fcbff;
+  border-color: #8fcbff;
+}
+.ghost {
+  background: transparent;
+  border-color: var(--night-line);
+  color: #f0f4f8;
+}
+.ghost:hover {
+  border-color: #f0f4f8;
+}
+.facts {
+  display: grid;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--night-line);
+}
+.facts li {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--night-line);
+  font: 500 15px var(--mono);
+  letter-spacing: -0.01em;
+}
+.facts li:lang(ar) {
+  font: 500 16px var(--arabic);
+}
+
+@media (max-width: 1000px) {
+  .hero,
+  .composition,
+  .bandIn {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+@media (max-width: 640px) {
+  .hero {
+    padding-top: 36px;
+  }
+  .calloutText {
+    height: 4.5em;
+    -webkit-line-clamp: 3;
+  }
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+  .cats a {
+    grid-template-columns: 110px minmax(0, 1fr) 36px;
+  }
+  .section {
+    padding-block: 52px;
+  }
+}

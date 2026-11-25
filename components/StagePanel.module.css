@@ -41,7 +41,7 @@
   font-size: 12px;
 }
 .lang button[aria-pressed="true"] {
-  background: #000;
+  background: var(--accent);
   color: #fff;
 }
 .ph :global(.lbl) {
@@ -68,7 +68,7 @@
   content: "";
   width: 7px;
   height: 7px;
-  background: #000;
+  background: var(--accent);
   border-radius: 50%;
 }
 .steps {
@@ -98,7 +98,7 @@
   transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 .step:hover {
-  border-color: #000;
+  border-color: var(--accent);
 }
 .step i {
   font: 11px var(--mono);
@@ -110,7 +110,7 @@
   border: 1px solid var(--border);
 }
 .step.done {
-  color: #000;
+  color: var(--fg);
 }
 .step.done i {
   background: #e8f2fa;
@@ -118,9 +118,9 @@
   color: var(--ring);
 }
 .step[aria-current="step"] {
-  background: #000;
+  background: var(--accent);
   color: #fff;
-  border-color: #000;
+  border-color: var(--accent);
 }
 .step[aria-current="step"] i {
   border-color: #555;
@@ -290,7 +290,7 @@
 .toggle {
   width: 34px;
   height: 20px;
-  background: #000;
+  background: var(--accent);
   border-radius: 10px;
   position: relative;
   flex: none;
@@ -349,7 +349,10 @@
 }
 /* OCR engine · model · parse time above the chunks */
 .run {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* one row, the cards sharing it equally (OCR model, and parse time when there is one) */
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   margin-bottom: 14px;
 }
 .fhead {
@@ -389,7 +392,7 @@
   cursor: pointer;
 }
 .seg button[aria-pressed="true"] {
-  background: #000;
+  background: var(--accent);
   color: #fff;
 }
 .json {
@@ -415,7 +418,7 @@
   color: var(--t3);
 }
 .pf b {
-  color: #000;
+  color: var(--fg);
   font-weight: 500;
 }
 @media (max-width: 760px) {
@@ -513,8 +516,8 @@
   transition: border-color 0.15s, color 0.15s;
 }
 .export button:hover {
-  border-color: #000;
-  color: #000;
+  border-color: var(--accent);
+  color: var(--fg);
 }
 .export button[aria-busy="true"] {
   opacity: 0.5;

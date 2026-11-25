@@ -51,11 +51,11 @@ function setup(r = result) {
 const step = (name: RegExp | string) => fireEvent.click(screen.getByRole("button", { name }));
 const heading = () => screen.getByRole("heading", { level: 3 });
 
-test("starts on parsed chunks with the engine DocAI used", () => {
+test("starts on parsed chunks with the OCR model DocAI used", () => {
   setup();
   expect(heading()).toHaveTextContent("Parsed chunks & grounding");
   expect(screen.queryByRole("button", { name: /Parsing & OCR/ })).not.toBeInTheDocument();
-  expect(screen.getByText("OCR engine").closest("li")).toHaveTextContent("GLM-OCR");
+  expect(screen.queryByText("OCR engine")).not.toBeInTheDocument(); // the engine card is not shown
   expect(screen.getByText("OCR model").closest("li")).toHaveTextContent("docai-arabic-ocr-e4c");
   expect(screen.getAllByText("TABLE")).toHaveLength(2); // count chip + the chunk row tag
   expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
@@ -162,9 +162,9 @@ test("no cell-accuracy note is shown, even for estimated grids", () => {
   expect(screen.queryByText(/estimated/i)).not.toBeInTheDocument();
 });
 
-test("page with no segments still shows the engine row", () => {
+test("page with no segments still shows the run cards", () => {
   setup({ ...result, segments: [] });
-  expect(screen.getByText("OCR engine")).toBeInTheDocument();
+  expect(screen.getByText("OCR model")).toBeInTheDocument();
   expect(screen.getByText("Not returned by DocAI")).toBeInTheDocument();
 });
 
@@ -281,7 +281,7 @@ test("resets to first step for a new page", () => {
 test("no parse time recorded: no parse time card (never invented)", () => {
   setup({ ...result, upload: { ...result.upload, elapsedSeconds: null } });
   expect(screen.queryByText("Parse time")).not.toBeInTheDocument();
-  expect(screen.getByText("OCR engine")).toBeInTheDocument();
+  expect(screen.getByText("OCR model")).toBeInTheDocument();
 });
 
 test("a recorded parse time is shown", () => {
@@ -303,11 +303,6 @@ test("model-written names keep their own direction", () => {
   expect(screen.getByText("supplier_name")).toHaveAttribute("dir", "auto");
   step(/Split result/);
   expect(screen.getByText("invoice")).toHaveAttribute("dir", "auto");
-});
-
-test("paddle engine is named as such", () => {
-  setup({ ...result, upload: { ...result.upload, ocrEngine: "paddle-vl", ocrModel: "translate-studio/paddleocr-vl-1.6" } });
-  expect(screen.getByText("OCR engine").closest("li")).toHaveTextContent("PaddleOCR-VL");
 });
 
 test("choosing a step scrolls only the stepper, never the panel", () => {
