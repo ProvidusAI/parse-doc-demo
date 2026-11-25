@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { categoryLabel, pageLabel, type UiLang } from "@/lib/i18n";
 import { loadManifest, loadResult } from "@/lib/manifest";
 import Dataset from "./Dataset";
-import Leaderboard from "./Leaderboard";
 import Methodology from "./Methodology";
 import Overview, { HERO_PAGE } from "./Overview";
 import PageDetail from "./PageDetail";
@@ -69,14 +68,6 @@ export async function MethodologyPage({ lang }: { lang: UiLang }) {
   return (
     <Shell lang={lang}>
       <Methodology lang={lang} manifest={manifest} />
-    </Shell>
-  );
-}
-
-export function LeaderboardPage({ lang }: { lang: UiLang }) {
-  return (
-    <Shell lang={lang}>
-      <Leaderboard lang={lang} />
     </Shell>
   );
 }

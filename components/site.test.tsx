@@ -100,12 +100,9 @@ describe("overview", () => {
     expect(screen.queryByText(/حذف|حُذفت/)).not.toBeInTheDocument();
   });
 
-  test("the overview shows the top of the leaderboard and links to it", () => {
+  test("the leaderboard is hidden for now: not on the overview", () => {
     render(<Overview lang="en" manifest={m} hero={null} />);
-    expect(screen.queryByText(/Sample data/)).not.toBeInTheDocument();
-    const table = screen.getByRole("table");
-    expect(within(table).getAllByRole("row")).toHaveLength(6); // header + top 5
-    expect(screen.getByRole("link", { name: /See the full leaderboard/ })).toHaveAttribute("href", "/leaderboard");
+    expect(screen.queryByRole("link", { name: /leaderboard/i })).not.toBeInTheDocument();
   });
 
   test("the Arabic overview is in Arabic only", () => {
@@ -207,7 +204,7 @@ describe("nav", () => {
     nav.path = "/ar/dataset/financial/receipts";
     render(<Nav lang="ar" />);
     expect(screen.getByRole("link", { name: "EN" })).toHaveAttribute("href", "/dataset/financial/receipts");
-    expect(screen.getByRole("link", { name: "لوحة الصدارة" })).toHaveAttribute("href", "/ar/leaderboard");
+    expect(screen.queryByRole("link", { name: "لوحة الصدارة" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "مجموعة البيانات" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "جرّب DocAI" })).toHaveAttribute("href", "https://platform.providus.ai/");
   });

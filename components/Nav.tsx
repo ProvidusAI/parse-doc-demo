@@ -11,7 +11,6 @@ const remember = (lang: UiLang) => () => {
 
 const LINKS = [
   ["/", "nav.overview"],
-  ["/leaderboard", "nav.leaderboard"],
   ["/dataset", "nav.dataset"],
   ["/methodology", "nav.methodology"],
 ] as const;

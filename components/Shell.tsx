@@ -17,7 +17,6 @@ export default function Shell({ lang, children }: { lang: UiLang; children: Reac
           </div>
           <p className={styles.disclosure}>{t(lang, "foot.disclosure")}</p>
           <nav className={styles.links} aria-label="Footer">
-            <a href={localePath(lang, "/leaderboard")}>{t(lang, "nav.leaderboard")}</a>
             <a href={localePath(lang, "/dataset")}>{t(lang, "nav.dataset")}</a>
             <a href={localePath(lang, "/methodology")}>{t(lang, "nav.methodology")}</a>
             <a href="https://docs.providus.ai/introduction" target="_blank" rel="noreferrer">{t(lang, "nav.docs")}</a>

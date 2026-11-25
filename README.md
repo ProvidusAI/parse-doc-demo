@@ -2,9 +2,9 @@
 
 An open evaluation of Arabic and English document understanding, built by Providus AI. Visitors filter a dataset of real pages, open any page at its own address, and see exactly what **Providus DocAI** produced for it, from OCR to the extracted schema. Every value on the page views comes from a saved DocAI run.
 
-**The leaderboard (`/leaderboard`) shows SAMPLE data**: `lib/leaderboard.ts` holds placeholder scores, and every system there except DocAI is fictional, and the page itself does not label it as sample data. Replace `SYSTEMS` with measured results before the site is shown publicly as a benchmark.
+**The leaderboard is hidden for now**: its page and links are removed until it has real results. `components/Leaderboard.tsx` and `lib/leaderboard.ts` are kept, but `lib/leaderboard.ts` holds SAMPLE scores (every system there except DocAI is fictional). Replace `SYSTEMS` with measured results, then bring back `app/leaderboard`, `app/ar/leaderboard` and the nav, footer and overview links.
 
-Pages, each also under `/ar` in Arabic: `/` overview, `/leaderboard`, `/dataset` (filters live in the address, e.g. `?cat=financial&has=table`), `/dataset/<page id>` one page with DocAI's output, `/methodology`.
+Pages, each also under `/ar` in Arabic: `/` overview, `/dataset` (filters live in the address, e.g. `?cat=financial&has=table`), `/dataset/<page id>` one page with DocAI's output, `/methodology`.
 
 **Try DocAI:** [platform.providus.ai](https://platform.providus.ai/)
 

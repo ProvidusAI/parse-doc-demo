@@ -3,7 +3,6 @@ import { datasetStats } from "@/lib/dataset";
 import { localePath, pageHref } from "@/lib/locale";
 import type { Manifest, ShowcaseResult } from "@/lib/types";
 import HeroSpecimen from "./HeroSpecimen";
-import Leaderboard from "./Leaderboard";
 import styles from "./Overview.module.css";
 
 /** The page the hero shows: a Saudi tender annex (TAQEEM) where DocAI's boxes and text are both right, cell for cell. */
@@ -182,8 +181,6 @@ export default function Overview({ lang, manifest, hero }: { lang: UiLang; manif
           </div>
         </div>
       </section>
-
-      <Leaderboard lang={lang} preview />
 
       <section className={styles.band}>
         <div className={styles.bandIn}>
