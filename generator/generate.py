@@ -269,7 +269,7 @@ def build_manifest(samples, showcase: Path) -> dict:
         cat["pages"].append({"id": rid, "subCategoryLabel": e["subCategoryLabel"],
                              "fileName": e["sourcePath"].split("/")[-1],
                              "thumb": f"/showcase/{rid}/thumb.jpg", "result": f"/showcase/{rid}/result.json",
-                             **_tile(rid, showcase)})
+                             **_tile(rid, showcase), **_facts(rid, showcase)})
     return {"generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "categories": list(cats.values())}
 
 
@@ -281,14 +281,33 @@ def _tile(rid, showcase: Path) -> dict:
     return {"tile": f"/showcase/{rid}/tile.jpg"} if (out / "tile.jpg").exists() else {}
 
 
+# element types the dataset page filters on ("contains tables", ...)
+CONTENT_TYPES = ("table", "chart", "figure", "formula", "stamp")
+
+
+def page_facts(result: dict) -> dict:
+    """What the dataset page filters on: language tag, source format (a PDF, or an image: photo or scan) and which
+    content types DocAI found on the page."""
+    found = {s["type"] for s in result["segments"]}
+    return {"lang": result["lang"],
+            "format": "pdf" if result["upload"]["mimeType"] == "application/pdf" else "image",
+            "has": sorted(t for t in CONTENT_TYPES if t in found)}
+
+
+def _facts(rid, showcase: Path) -> dict:
+    f = showcase / rid / "result.json"
+    return page_facts(json.loads(f.read_text(encoding="utf-8"))) if f.exists() else {}
+
+
 def add_tiles(manifest: Path, showcase: Path) -> None:
-    """Tiles for a manifest this run doesn't rebuild (manifest.local.json: its page list comes from --import-review)."""
+    """Tiles and page facts for a manifest this run doesn't rebuild (manifest.local.json: its page list comes from
+    --import-review)."""
     if not manifest.exists():
         return
     m = json.loads(manifest.read_text(encoding="utf-8"))
     for c in m["categories"]:
         for p in c["pages"]:
-            p.update(_tile(p["id"], showcase))
+            p.update(_tile(p["id"], showcase), **_facts(p["id"], showcase))
     manifest.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
 
 

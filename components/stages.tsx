@@ -41,8 +41,6 @@ function Missing({ lang }: { lang: UiLang }) {
   return <p className={styles.missing}>{t(lang, "notReturned")}</p>;
 }
 
-const ENGINE_NAME: Record<string, string> = { glm: "GLM-OCR", "paddle-vl": "PaddleOCR-VL" };
-
 const stagger = (i: number, ms = 60) => ({ animationDelay: `${i * ms}ms` });
 
 function TableGrid({ table }: { table: NonNullable<Segment["table"]> }) {
@@ -150,7 +148,6 @@ export function ChunksStage({ result, lang, onHighlight, highlight = null, onCel
   const counts = result.segments.reduce<Record<string, number>>((m, s) => ({ ...m, [s.type]: (m[s.type] ?? 0) + 1 }), {});
   const u = result.upload;
   const run: [Parameters<typeof t>[1], string | null][] = [
-    ["upload.engine", u.ocrEngine && (ENGINE_NAME[u.ocrEngine] ?? u.ocrEngine)],
     ["upload.ocrModel", u.ocrModel],
   ];
   // no parse time recorded (pages parsed outside this site): no card rather than an empty one

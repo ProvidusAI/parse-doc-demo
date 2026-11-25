@@ -4,6 +4,10 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // dev only: let phones and laptops on the office Wi-Fi open `next dev` by this PC's address. Without it Next blocks
+  // its dev connection for any host but localhost and the page never turns interactive (nothing clicks). The ngrok
+  // domain is the shared preview link for reviewers.
+  allowedDevOrigins: ["172.16.0.105", "192.168.100.93", "bottling-juiciness-apricot.ngrok-free.dev"],
   ...(process.env.NEXT_OUTPUT === "standalone" && { output: "standalone" }),
   // With NEXT_PUBLIC_DATA_URL (the R2 bucket) set, browsers still ask this site for /showcase/...: the files come from
   // the bucket through here, same origin and HTTP/2, and Vercel's CDN caches them (vercel.json opts in). Straight from

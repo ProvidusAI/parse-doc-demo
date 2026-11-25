@@ -126,7 +126,8 @@ class GenerateTest(unittest.TestCase):
     def test_local_manifest_lists_review_and_added_pages(self):
         for rid in ("e4c/a_p1", "added/financial/x_p1"):
             (self.showcase / rid).mkdir(parents=True)
-            (self.showcase / rid / "result.json").write_text(json.dumps({"source": {"path": "financial/invoices/a.png", "page": 1}}))
+            (self.showcase / rid / "result.json").write_text(json.dumps({"source": {"path": "financial/invoices/a.png", "page": 1}, "lang": "en",
+                                                                         "upload": {"mimeType": "image/png"}, "segments": []}))
         review = [{**entry(status="approved"), "id": "e4c/a_p1"}]
         added = [{**entry(status="approved"), "id": "added/financial/x_p1"}, {**entry(status="rejected"), "id": "added/financial/y_p1"}]
         generate.write_local_manifest(review, added, self.showcase)
@@ -136,7 +137,8 @@ class GenerateTest(unittest.TestCase):
     def test_skip_existing_and_no_partial_write(self):
         done = self.showcase / "financial" / "invoices"
         done.mkdir(parents=True)
-        (done / "result.json").write_text(json.dumps({"source": {"path": "financial/invoices/a.png", "page": 1}}))
+        (done / "result.json").write_text(json.dumps({"source": {"path": "financial/invoices/a.png", "page": 1}, "lang": "en",
+                                                                         "upload": {"mimeType": "image/png"}, "segments": []}))
         client = FakeClient()
         self.assertIsNone(self.run_entry(entry(), client))
         self.assertEqual(client.calls, [])
@@ -205,12 +207,14 @@ class GenerateTest(unittest.TestCase):
             self.run_entry(entry(sub), FakeClient())
         samples = [entry("invoices", status="approved"), entry("receipts", status="candidate")]
         m = generate.build_manifest(samples, self.showcase)
+        r = json.loads((self.showcase / "financial" / "invoices" / "result.json").read_text(encoding="utf-8"))
+        facts = generate.page_facts(r)
         self.assertNotIn("wall", m)  # the background is public/showcase/wall.jpg, not a list
         self.assertEqual(m["categories"], [{"key": "financial", "label": "Financial", "pages": [
             {"id": "financial/invoices", "subCategoryLabel": "Invoices", "fileName": "a.png",
              "thumb": "/showcase/financial/invoices/thumb.jpg",
              "result": "/showcase/financial/invoices/result.json",
-             "tile": "/showcase/financial/invoices/tile.jpg"}]}])
+             "tile": "/showcase/financial/invoices/tile.jpg", **facts}]}])
 
     def test_manifest_backfills_tiles_for_older_pages(self):
         self.run_entry(entry(), FakeClient())
@@ -229,8 +233,36 @@ class GenerateTest(unittest.TestCase):
         local.write_text(json.dumps({"categories": [{"key": "financial", "pages": pages}]}), encoding="utf-8")
         generate.add_tiles(local, self.showcase)
         got = json.loads(local.read_text(encoding="utf-8"))["categories"][0]["pages"]
-        self.assertEqual(got, [{"id": "financial/invoices", "thumb": "t", "tile": "/showcase/financial/invoices/tile.jpg"},
+        facts = generate.page_facts(json.loads((self.showcase / "financial" / "invoices" / "result.json").read_text(encoding="utf-8")))
+        self.assertEqual(got, [{"id": "financial/invoices", "thumb": "t", "tile": "/showcase/financial/invoices/tile.jpg", **facts},
                                {"id": "gone/page", "thumb": "t"}])  # no thumbnail on disk: no tile, no broken link
+
+
+class PageFactsTest(unittest.TestCase):
+    """What the dataset page filters on, read from a page's result.json into the manifest."""
+
+    def test_language_source_format_and_content(self):
+        seg = lambda t: {"type": t}
+        r = {"lang": "ar-en", "upload": {"mimeType": "application/pdf"},
+             "segments": [seg("text"), seg("table"), seg("table"), seg("stamp"), seg("logo"), seg("chart")]}
+        self.assertEqual(generate.page_facts(r), {"lang": "ar-en", "format": "pdf", "has": ["chart", "stamp", "table"]})
+
+    def test_photos_and_scans_count_as_images(self):
+        r = {"lang": "en", "upload": {"mimeType": "image/jpeg"}, "segments": [{"type": "text"}]}
+        self.assertEqual(generate.page_facts(r), {"lang": "en", "format": "image", "has": []})
+
+    def test_add_tiles_also_adds_facts_from_result(self):
+        root = Path(tempfile.mkdtemp())
+        out = root / "financial" / "invoices"
+        out.mkdir(parents=True)
+        (out / "result.json").write_text(json.dumps(
+            {"lang": "en", "upload": {"mimeType": "image/png"}, "segments": [{"type": "formula"}]}), encoding="utf-8")
+        local = root / "manifest.local.json"
+        local.write_text(json.dumps({"categories": [{"key": "financial", "pages": [{"id": "financial/invoices"}]}]}),
+                         encoding="utf-8")
+        generate.add_tiles(local, root)
+        got = json.loads(local.read_text(encoding="utf-8"))["categories"][0]["pages"][0]
+        self.assertEqual(got, {"id": "financial/invoices", "lang": "en", "format": "image", "has": ["formula"]})
 
 
 def parsed_entry(status="approved"):

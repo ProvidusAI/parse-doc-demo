@@ -124,7 +124,7 @@
   position: absolute;
   z-index: 3;
   border-radius: 50%;
-  border: 2px solid #000;
+  border: 2px solid var(--accent);
   background-color: #fff;
   background-repeat: no-repeat;
   box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.45);
@@ -154,7 +154,7 @@
 }
 .tools button:hover:not(:disabled) {
   background: var(--muted);
-  color: #000;
+  color: var(--fg);
 }
 .tools button:disabled {
   opacity: 0.35;
@@ -174,7 +174,7 @@
   background: var(--border);
 }
 .tools .mag[aria-pressed="true"] {
-  background: #000;
+  background: var(--accent);
   color: #fff;
 }
 /* phones: the page takes its own height (the inspector scrolls), so the frame follows the page's shape */

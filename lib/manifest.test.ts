@@ -1,4 +1,4 @@
-import { mergeManifests } from "./manifest";
+import { hidePages, mergeManifests } from "./manifest";
 import type { Manifest, PageSummary } from "./types";
 
 const page = (id: string): PageSummary => ({ id, subCategoryLabel: id, fileName: `${id}.jpg`, thumb: "", result: "" });
@@ -27,3 +27,18 @@ test("no local manifest: the committed one as it is", () => {
   expect(mergeManifests(base, null)).toBe(base);
 });
 
+
+test("listed pages are left out; categories keep their order and the rest of their pages", () => {
+  const m: Manifest = {
+    generatedAt: "t",
+    categories: [
+      { key: "financial", label: "Financial", pages: [page("a"), page("b"), page("c")] },
+      { key: "research", label: "Research", pages: [page("d")] },
+    ],
+  };
+  expect(hidePages(m, ["b", "d"]).categories.map((c) => [c.key, c.pages.map((p) => p.id)])).toEqual([
+    ["financial", ["a", "c"]],
+    ["research", []],
+  ]);
+  expect(m.categories[0].pages).toHaveLength(3); // the input is not changed
+});

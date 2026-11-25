@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Inter_Tight } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-// Note: Inter Tight stands in for Overused Grotesk (not on npm); swap to next/font/local when a licensed woff2 exists.
-const sans = Inter_Tight({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-sans" });
-const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
-const arabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500"], variable: "--font-arabic" });
+// Three open-licence fonts: IBM Plex Sans and IBM Plex Sans Arabic share one design across both scripts; JetBrains
+// Mono (providus.ai's face) sets numbers, labels and code.
+const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex" });
+const plexAr = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500", "600"], variable: "--font-plex-ar" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-jetbrains" });
 
 export const metadata: Metadata = {
-  title: "ProvidusBench · Document intelligence for Arabic & English",
+  title: "ProvidusBench · Open evaluation of Arabic & English document understanding",
   description:
-    "Real Arabic and English pages run end-to-end through Providus DocAI: parsing, OCR, grounded chunks, splitting and schema extraction.",
+    "Real Arabic and English pages, every DocAI output in the open, and a transparent method for scoring document AI.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} ${arabic.variable}`}>
+    <html lang="en" className={`${plex.variable} ${plexAr.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

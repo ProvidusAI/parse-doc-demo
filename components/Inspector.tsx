@@ -14,6 +14,11 @@ interface Props {
   index: number;
   onIndex(i: number): void;
   onClose(): void;
+  /** the panel's starting language: the site's */
+  lang?: UiLang;
+  /** "page": laid out in a page of its own (/dataset/<id>) instead of over the dataset: no veil, no close button, no
+   * opening scan, and the page keeps its scrollbar */
+  variant?: "modal" | "page";
 }
 
 /** how long the opening scan plays before the panel slides in; matches the `scan` keyframe in PageView.module.css */
@@ -36,18 +41,19 @@ const savedSplit = () => {
   }
 };
 
-export default function Inspector({ pages, index, onIndex, onClose }: Props) {
+export default function Inspector({ pages, index, onIndex, onClose, lang: siteLang = "en", variant = "modal" }: Props) {
+  const modal = variant === "modal";
   const [loaded, setLoaded] = useState<{ url: string; result: ShowcaseResult } | null>(null);
   const [error, setError] = useState(false);
   const [boxes, setBoxes] = useState<PageBox[]>([]);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [cell, setCell] = useState<PageBox | null>(null);
-  const [reduced] = useState(reducedMotion);
+  const [reduced] = useState(() => !modal || reducedMotion());
   const [phase, setPhase] = useState<"intro" | "ready">(reduced ? "ready" : "intro");
   const [scanning, setScanning] = useState(!reduced);
   // panel slides in only as the intro ends; on later pages it just appears
   const [entering, setEntering] = useState(false);
-  const [lang, setLang] = useState<UiLang>("en");
+  const [lang, setLang] = useState<UiLang>(siteLang);
   const [split, setSplit] = useState(savedSplit);
   const wrapRef = useRef<HTMLDivElement>(null);
   const resizing = useRef<number | null>(null);
@@ -158,42 +164,54 @@ export default function Inspector({ pages, index, onIndex, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const { onIndex, onClose, index, n } = nav.current;
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (modal) onClose();
+      }
       else if (e.key === "ArrowRight") onIndex(nextIndex(index, n, 1));
       else if (e.key === "ArrowLeft") onIndex(nextIndex(index, n, -1));
     };
     window.addEventListener("keydown", onKey);
     const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
+    if (modal) {
+      document.body.style.overflow = "hidden";
+      closeRef.current?.focus();
+    }
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
     };
-  }, []);
+  }, [modal]);
 
   return (
-    <div className={styles.modal} role="dialog" aria-modal="true" aria-label={summary.subCategoryLabel}>
-      <div className={styles.veil} onClick={onClose} />
-      <button ref={closeRef} type="button" className={styles.x} aria-label={t("en", "close")} onClick={onClose}>
-        ×
-      </button>
-      <button
+    <div
+      className={modal ? styles.modal : styles.page}
+      {...(modal ? { role: "dialog", "aria-modal": true } : { role: "region" })}
+      aria-label={summary.subCategoryLabel}
+    >
+      {modal && <div className={styles.veil} onClick={onClose} />}
+      {modal && (
+        <button ref={closeRef} type="button" className={styles.x} aria-label={t("en", "close")} onClick={onClose}>
+          ×
+        </button>
+      )}
+      {modal && <button
         type="button"
         className={`${styles.arr} ${styles.left}`}
         aria-label={t("en", "prev")}
         onClick={() => onIndex(nextIndex(index, n, -1))}
       >
         ‹
-      </button>
-      <button
-        type="button"
-        className={`${styles.arr} ${styles.right}`}
-        aria-label={t("en", "next")}
-        onClick={() => onIndex(nextIndex(index, n, 1))}
-      >
-        ›
-      </button>
+      </button>}
+      {modal && (
+        <button
+          type="button"
+          className={`${styles.arr} ${styles.right}`}
+          aria-label={t("en", "next")}
+          onClick={() => onIndex(nextIndex(index, n, 1))}
+        >
+          ›
+        </button>
+      )}
 
       <div
         className={styles.wrap}

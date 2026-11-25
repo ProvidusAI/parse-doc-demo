@@ -1,3 +1,5 @@
+import { PAGE_LABELS_AR } from "./page-labels-ar";
+
 export type UiLang = "en" | "ar";
 
 const en = {
@@ -19,11 +21,6 @@ const en = {
   category: "Category",
   stepOf: "Step {n} of {total}",
   notReturned: "Not returned by DocAI",
-  noMatch: "No pages match",
-  hint: "Click a page to see what DocAI produced · ← → to move between types",
-  hintGrid: "⌘/Ctrl + scroll to zoom · Drag to pan · Click to inspect",
-  docTypes: "{n} document types · 1 page each",
-  "upload.engine": "OCR engine",
   "upload.ocrModel": "OCR model",
   "upload.elapsed": "Parse time",
   chunks: "{n} chunks",
@@ -44,6 +41,45 @@ const en = {
   magnifier: "Magnifier",
   "export.excel": "Download as Excel",
   "export.csv": "Download as CSV",
+  // site chrome: nav, hero, dataset bar
+  "nav.overview": "Overview",
+  "nav.leaderboard": "Leaderboard",
+  "nav.dataset": "Dataset",
+  "nav.methodology": "Methodology",
+  "nav.home": "ProvidusBench home",
+  "foot.disclosure": "ProvidusBench is built by Providus AI, which also builds DocAI. Every DocAI output on this site is shown exactly as it came back.",
+  "foot.contact": "Talk to us",
+  "foot.company": "Providus AI",
+  "nav.docs": "Docs",
+  "nav.try": "Try DocAI",
+  "nav.lang": "Site language",
+  "lang.ar-en": "Arabic or bilingual",
+  "lang.en": "English",
+  "format.pdf": "PDF",
+  "format.image": "Photo or scan",
+  "has.table": "Tables",
+  "has.chart": "Charts",
+  "has.figure": "Figures",
+  "has.formula": "Formulas",
+  "has.stamp": "Stamps",
+  "ds.kicker": "The dataset",
+  "ds.title": "Every page, with what DocAI read from it",
+  "ds.sub": "{n} real pages in {c} categories. Filter by what a page is and what it contains, then open it to see DocAI's full output.",
+  "ds.filters": "Filters",
+  "ds.category": "Category",
+  "ds.language": "Language",
+  "ds.source": "Source",
+  "ds.contains": "Contains",
+  "ds.allCategories": "All categories",
+  "ds.any": "Any",
+  "ds.clear": "Clear filters",
+  "ds.showing": "Showing {shown} of {n} pages",
+  "ds.more": "Show more pages",
+  "ds.none": "No page matches all of these filters.",
+  "pd.dataset": "Dataset",
+  "pd.of": "{i} of {n} in {category}",
+  "pd.prev": "Previous page",
+  "pd.next": "Next page",
 };
 
 export type UiKey = keyof typeof en;
@@ -67,11 +103,6 @@ const ar: Record<UiKey, string> = {
   category: "الفئة",
   stepOf: "الخطوة {n} من {total}",
   notReturned: "لم يُرجعه DocAI",
-  noMatch: "لا توجد صفحات مطابقة",
-  hint: "انقر على صفحة لترى ما أنتجه DocAI · استخدم ← → للتنقّل بين الأنواع",
-  hintGrid: "⌘/Ctrl مع التمرير للتكبير · اسحب للتنقّل · انقر للفحص",
-  docTypes: "{n} أنواع مستندات · صفحة واحدة لكلٍّ منها",
-  "upload.engine": "محرّك التعرّف الضوئي",
   "upload.ocrModel": "نموذج التعرّف الضوئي",
   "upload.elapsed": "مدة التحليل",
   chunks: "{n} مقاطع",
@@ -92,12 +123,81 @@ const ar: Record<UiKey, string> = {
   magnifier: "المكبّر",
   "export.excel": "تنزيل بصيغة Excel",
   "export.csv": "تنزيل بصيغة CSV",
+  "nav.overview": "نظرة عامة",
+  "nav.leaderboard": "لوحة الصدارة",
+  "nav.dataset": "مجموعة البيانات",
+  "nav.methodology": "المنهجية",
+  "nav.home": "الصفحة الرئيسية لـ ProvidusBench",
+  "foot.disclosure": "طوّرت Providus AI منصة ProvidusBench، وهي أيضاً مطوّرة DocAI. تُعرض كل مخرجات DocAI على هذا الموقع كما وردت دون تعديل.",
+  "foot.contact": "تواصل معنا",
+  "foot.company": "Providus AI",
+  "nav.docs": "التوثيق",
+  "nav.try": "جرّب DocAI",
+  "nav.lang": "لغة الموقع",
+  "lang.ar-en": "عربية أو ثنائية اللغة",
+  "lang.en": "إنجليزية",
+  "format.pdf": "PDF",
+  "format.image": "صورة أو مسح ضوئي",
+  "has.table": "جداول",
+  "has.chart": "مخططات",
+  "has.figure": "أشكال",
+  "has.formula": "معادلات",
+  "has.stamp": "أختام",
+  "ds.kicker": "مجموعة البيانات",
+  "ds.title": "كل صفحة، مع ما قرأه منها DocAI",
+  "ds.sub": "{n} صفحة حقيقية في {c} فئة. صفِّ الصفحات حسب نوعها ومحتواها، ثم افتح أي صفحة لترى مخرجات DocAI كاملة.",
+  "ds.filters": "التصفية",
+  "ds.category": "الفئة",
+  "ds.language": "اللغة",
+  "ds.source": "المصدر",
+  "ds.contains": "تحتوي على",
+  "ds.allCategories": "كل الفئات",
+  "ds.any": "الكل",
+  "ds.clear": "إلغاء التصفية",
+  "ds.showing": "عرض {shown} من {n} صفحة",
+  "ds.more": "عرض المزيد من الصفحات",
+  "ds.none": "لا توجد صفحة تطابق كل هذه الشروط.",
+  "pd.dataset": "مجموعة البيانات",
+  "pd.of": "{i} من {n} في {category}",
+  "pd.prev": "الصفحة السابقة",
+  "pd.next": "الصفحة التالية",
 };
 
 const STRINGS: Record<UiLang, Record<UiKey, string>> = { en, ar };
 
 export function t(lang: UiLang, key: UiKey, vars: Record<string, string | number> = {}): string {
   return STRINGS[lang][key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
+}
+
+const CATEGORY_AR: Record<string, string> = {
+  administrative: "الإدارة",
+  business: "الأعمال",
+  chemical: "الكيمياء",
+  educational: "التعليم",
+  financial: "المالية",
+  government: "الحكومة",
+  health: "الصحة",
+  legal: "القانون",
+  manufacturing: "التصنيع",
+  marine: "البحرية",
+  media: "الإعلام",
+  municipality: "البلديات",
+  other: "أخرى",
+  postal: "البريد",
+  research: "البحث العلمي",
+  sports: "الرياضة",
+  statistical: "الإحصاء",
+  travel_transport: "السفر والنقل",
+};
+
+/** A category's name in `lang`; the manifest's English label when there is no Arabic one yet. */
+export function categoryLabel(lang: UiLang, key: string, english: string): string {
+  return (lang === "ar" && CATEGORY_AR[key]) || english;
+}
+
+/** A page type's name in `lang` (see lib/page-labels-ar.ts); the English name when there is no Arabic one yet. */
+export function pageLabel(lang: UiLang, english: string): string {
+  return (lang === "ar" && PAGE_LABELS_AR[english]) || english;
 }
 
 export const STAGES = ["chunks", "splitRules", "splitResult", "extractRules", "extracted"] as const;
