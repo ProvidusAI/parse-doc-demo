@@ -77,7 +77,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-:lang(ar) {
+/* not on the new homepage (components/bench), which sets its own faces for Arabic */
+:lang(ar):not(.pb, .pb *) {
   font-family: var(--arabic);
 }
 
