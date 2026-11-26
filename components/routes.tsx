@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { categoryLabel, pageLabel, type UiLang } from "@/lib/i18n";
+import { pageHref } from "@/lib/locale";
 import { loadManifest, loadResult } from "@/lib/manifest";
+import BenchFrame from "./bench/BenchFrame";
 import Dataset from "./Dataset";
 import Methodology from "./Methodology";
 import Overview, { HERO_PAGE } from "./Overview";
@@ -44,10 +46,11 @@ export async function pageMetadata(lang: UiLang, id: string[]): Promise<Metadata
 
 export async function DatasetPagePage({ lang, id }: { lang: UiLang; id: string[] }) {
   const { m, c, index } = await findPage(id);
+  const detail = <PageDetail lang={lang} category={{ key: c.key, label: c.label }} pages={c.pages} index={index} />;
   return (
-    <Shell lang={lang}>
-      <PageDetail lang={lang} category={{ key: c.key, label: c.label }} pages={c.pages} index={index} />
-    </Shell>
+    <BenchFrame lang={lang} cats={m.categories.length} other={pageHref(lang === "en" ? "ar" : "en", c.pages[index].id)}>
+      {detail}
+    </BenchFrame>
   );
 }
 

@@ -69,3 +69,30 @@
   justify-content: center;
   padding: 0;
 }
+
+/* in the new homepage's look (components/bench/BenchFrame) */
+:global(.bench) .head {
+  padding-top: 56px;
+}
+:global(.bench) .crumbs {
+  font: 12px var(--mono);
+  text-transform: uppercase;
+}
+:global(.bench) .h1 {
+  font: 400 clamp(32px, 3.4vw, 48px) / 1.12 var(--sans);
+  letter-spacing: -0.05em;
+  color: var(--ink);
+}
+:global(.bench) .facts li {
+  padding: 4px 8px;
+  border-color: #d4d4d4;
+  font: 12px var(--mono);
+  text-transform: uppercase;
+}
+:global(.bench) .facts .file {
+  text-transform: none;
+}
+:global(.bench) .step {
+  font-size: 12px;
+  text-transform: uppercase;
+}

@@ -154,7 +154,9 @@ describe("page detail", () => {
     expect(screen.getByText("1 of 2 in Financial")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Next page" })).toHaveAttribute("href", "/dataset/financial/invoices");
     expect(screen.getByRole("link", { name: "Previous page" })).toHaveAttribute("href", "/dataset/financial/invoices"); // wraps
-    expect(screen.getByRole("link", { name: "Financial" })).toHaveAttribute("href", "/dataset?cat=financial");
+    // back to the homepage's gallery
+    expect(screen.getByRole("link", { name: "Dataset" })).toHaveAttribute("href", "/#dataset");
+    expect(screen.queryByRole("link", { name: "Financial" })).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument(); // a page, not a modal
   });
 

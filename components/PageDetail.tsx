@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { categoryLabel, pageLabel, t, type UiKey, type UiLang } from "@/lib/i18n";
-import { localePath, pageHref } from "@/lib/locale";
+import { HOME, pageHref } from "@/lib/locale";
 import { nextIndex } from "@/lib/showcase";
 import type { PageSummary } from "@/lib/types";
 import Inspector from "./Inspector";
@@ -23,7 +23,8 @@ export default function PageDetail({ lang, category, pages, index }: Props) {
   const n = pages.length;
   const href = (i: number) => pageHref(lang, pages[i].id);
   const catName = categoryLabel(lang, category.key, category.label);
-  const back = `${localePath(lang, "/dataset")}?cat=${category.key}`;
+  // a page opens from the homepage's gallery and goes back to it
+  const back = `${HOME[lang]}#dataset`;
   const facts = [
     page.lang && t(lang, `lang.${page.lang}`),
     page.format && t(lang, `format.${page.format}`),
@@ -34,9 +35,9 @@ export default function PageDetail({ lang, category, pages, index }: Props) {
     <>
       <header className={styles.head}>
         <nav className={styles.crumbs} aria-label="Breadcrumb">
-          <a href={localePath(lang, "/dataset")}>{t(lang, "pd.dataset")}</a>
+          <a href={back}>{t(lang, "pd.dataset")}</a>
           <span aria-hidden="true">/</span>
-          <a href={back}>{catName}</a>
+          <span>{catName}</span>
         </nav>
         <div className={styles.row}>
           <div>
